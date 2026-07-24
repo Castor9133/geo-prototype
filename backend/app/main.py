@@ -24,6 +24,7 @@ from app.core.database import engine
 from app.core.logging_utils import configure_logging, log_event
 from app.api import router as api_router
 from app.web.company_pages import router as company_pages_router
+from app.web.retired_pages import router as retired_pages_router
 from app.web.tutorial_pages import router as tutorial_pages_router
 from app.version import PRODUCT_VERSION
 
@@ -43,8 +44,13 @@ async def _seed_settings(db):
         get_default_llm_provider_config,
         get_default_frontend_module_config,
         get_default_homepage_runtime_config,
+        _build_frontend_module_config,
     )
-    from app.services.navigation_settings import get_default_navigation_menu
+    from app.services.navigation_settings import (
+        NAVIGATION_MENU_SETTING_KEY,
+        ensure_suite_in_navigation_menu,
+        get_default_navigation_menu,
+    )
 
     defaults = [
         {"key": "site_name", "value": "GEOrank", "category": "basic", "is_public": True},
@@ -82,6 +88,22 @@ async def _seed_settings(db):
         result = await db.execute(select(Setting).where(Setting.key == item["key"]))
         if not result.scalar_one_or_none():
             db.add(Setting(**item))
+
+    # 旧库可能已有不含 Suite 的菜单；启动时补齐，并剥离已删除的专家/教程/GitHub 入口
+    menu_result = await db.execute(
+        select(Setting).where(Setting.key == NAVIGATION_MENU_SETTING_KEY)
+    )
+    menu_setting = menu_result.scalar_one_or_none()
+    if menu_setting is not None:
+        menu_setting.value = ensure_suite_in_navigation_menu(menu_setting.value)
+        menu_setting.is_public = True
+
+    modules_result = await db.execute(select(Setting).where(Setting.key == "frontend_modules"))
+    modules_setting = modules_result.scalar_one_or_none()
+    if modules_setting is not None:
+        modules_setting.value = _build_frontend_module_config(
+            {"frontend_modules": modules_setting.value}
+        )
 
     await db.commit()
 
@@ -282,6 +304,7 @@ async def request_logging_middleware(request: Request, call_next):
 app.include_router(api_router, prefix="/api")
 app.include_router(company_pages_router)
 app.include_router(tutorial_pages_router)
+app.include_router(retired_pages_router)
 
 
 @app.get("/api/health")

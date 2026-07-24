@@ -1,0 +1,57 @@
+{
+  "entity_name": "GEO 示范栏目",
+  "demo_data": true,
+  "label": "演示数据（可替换为 Flow 真实向量化率）",
+  "coverage": {
+    "approved_cards": 7,
+    "checklist_total": 7,
+    "rate": 1.0
+  },
+  "embedding": {
+    "chunk_total": 24,
+    "chunk_embedded": 24,
+    "rate": 1.0
+  },
+  "evidence_production": {
+    "articles_with_citations": 3,
+    "articles_total": 3,
+    "rate": 1.0
+  },
+  "cards": [
+    {
+      "fact_id": "col-demo-f-001",
+      "claim": "GEO 示范栏目是面向智能化时代的内容工程演示栏目。",
+      "review_status": "approved"
+    },
+    {
+      "fact_id": "col-demo-f-002",
+      "claim": "栏目隶属于广电数科演示体系，用于验证知识工程与 RAG 生产闭环。",
+      "review_status": "approved"
+    },
+    {
+      "fact_id": "col-demo-f-003",
+      "claim": "官方入口以 localhost Suite / GEOFlow 演示环境为准。",
+      "review_status": "approved"
+    },
+    {
+      "fact_id": "col-demo-f-004",
+      "claim": "核心能力包括事实卡、受约束生成与可信观测抽样。",
+      "review_status": "approved"
+    },
+    {
+      "fact_id": "col-demo-f-005",
+      "claim": "禁用表述：不得宣称「已保证进入全部大模型答案」。",
+      "review_status": "approved"
+    },
+    {
+      "fact_id": "col-demo-f-006",
+      "claim": "高频 FAQ：什么是 GEO 示范栏目？如何进入 Suite？",
+      "review_status": "approved"
+    },
+    {
+      "fact_id": "col-demo-f-007",
+      "claim": "更新频率：演示资产按试点迭代，非真实播出排期。",
+      "review_status": "approved"
+    }
+  ]
+}

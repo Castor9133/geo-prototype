@@ -68,15 +68,13 @@
             analytics_tracking_code: '',
             navigation_menu: {
                 items: [
+                    { id: 'suite', label: 'GEO Suite', url: '/suite', target: '_self', enabled: true },
                     { id: 'companies', label: '公司', url: '/companies', target: '_blank', enabled: true },
                     { id: 'diagnostic', label: '诊断', url: '/diagnostic', target: '_blank', enabled: true },
                     { id: 'solutions', label: '问答', url: '/solutions', target: '_blank', enabled: true },
                     { id: 'plans', label: '方案', url: '/plans', target: '_blank', enabled: true },
                     { id: 'keywords', label: '拓词', url: '/keywords', target: '_blank', enabled: true },
                     { id: 'tools', label: '工具', url: '/tools', target: '_blank', enabled: true },
-                    { id: 'experts', label: '专家', url: '/experts', target: '_blank', enabled: true },
-                    { id: 'tutorial', label: '教程', url: '/tutorial', target: '_blank', enabled: true },
-                    { id: 'github', label: 'GitHub', url: 'https://github.com/yaojingang/GEORank', target: '_blank', enabled: true },
                 ],
             },
         },
@@ -138,6 +136,16 @@
             }
         },
 
+        ensureSuiteNavigationItem(items) {
+            if (items.some(item => item.id === 'suite' || item.url === '/suite')) {
+                return items.slice(0, 12);
+            }
+            return [
+                { id: 'suite', label: 'GEO Suite', url: '/suite', target: '_self', enabled: true },
+                ...items,
+            ].slice(0, 12);
+        },
+
         normalizeNavigationMenu(value) {
             const source = Array.isArray(value?.items) && value.items.length
                 ? value.items
@@ -148,8 +156,18 @@
                 url: this.normalizeNavigationUrl(item?.url),
                 target: item?.target === '_self' ? '_self' : '_blank',
                 enabled: item?.enabled !== false,
-            })).filter(item => item.enabled && item.label && item.url);
-            return {items: items.length ? items : this.defaults.navigation_menu.items.map(item => ({...item}))};
+            })).filter(item => item.enabled && item.label && item.url)
+                .filter(item => {
+                    const id = String(item.id || '').toLowerCase();
+                    const url = String(item.url || '').toLowerCase();
+                    if (id === 'experts' || id === 'tutorial' || id === 'github') return false;
+                    if (url === '/experts' || url.startsWith('/experts/')) return false;
+                    if (url === '/tutorial' || url.startsWith('/tutorial/')) return false;
+                    if (url.includes('github.com/yaojingang/georank')) return false;
+                    return true;
+                });
+            const fallback = this.defaults.navigation_menu.items.map(item => ({...item}));
+            return {items: this.ensureSuiteNavigationItem(items.length ? items : fallback)};
         },
 
         applyNavigation(root = document) {
@@ -330,8 +348,6 @@
                 'nav.plans': '方案',
                 'nav.keywords': '拓词',
                 'nav.tools': '工具',
-                'nav.experts': '专家',
-                'nav.tutorial': '教程',
                 'header.submitCompany': '提交公司',
                 'header.mobileMenu': '打开菜单',
                 'home.submitCompany': '提交公司',
@@ -482,8 +498,6 @@
                 'nav.plans': 'Plans',
                 'nav.keywords': 'Keywords',
                 'nav.tools': 'Tools',
-                'nav.experts': 'Experts',
-                'nav.tutorial': 'Tutorials',
                 'header.submitCompany': 'Submit company',
                 'header.mobileMenu': 'Open menu',
                 'home.submitCompany': 'Submit company',
@@ -694,16 +708,14 @@
                 GEOrank
             </a>
             <div class="hidden md:flex items-center gap-5" data-site-navigation data-navigation-variant="desktop">
+                <a href="/suite" data-nav-link data-navigation-item="suite" class="font-manrope font-medium tracking-tight text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">GEO Suite</a>
                 <a href="/companies" data-nav-link data-i18n="nav.companies" class="font-manrope font-medium tracking-tight text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">公司</a>
                 <a href="/diagnostic" data-nav-link data-i18n="nav.diagnostic" class="font-manrope font-medium tracking-tight text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">诊断</a>
                 <a href="/solutions" data-nav-link data-i18n="nav.solutions" class="font-manrope font-medium tracking-tight text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">问答</a>
                 <a href="/plans" data-nav-link data-i18n="nav.plans" class="font-manrope font-medium tracking-tight text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">方案</a>
                 <a href="/keywords" data-nav-link data-i18n="nav.keywords" class="font-manrope font-medium tracking-tight text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">拓词</a>
                 <a href="/tools" data-nav-link data-i18n="nav.tools" class="font-manrope font-medium tracking-tight text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">工具</a>
-                <a href="/experts" data-nav-link data-i18n="nav.experts" class="font-manrope font-medium tracking-tight text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">专家</a>
-                <a href="/tutorial" data-nav-link data-i18n="nav.tutorial" class="font-manrope font-medium tracking-tight text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">教程</a>
-                <a href="https://github.com/yaojingang/GEORank" target="_blank" rel="noopener noreferrer" data-nav-link data-navigation-item="github" class="font-manrope font-medium tracking-tight text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">GitHub</a>
-            </div>
+</div>
         </div>
         <div class="header-actions flex items-center gap-2 md:gap-3">
             <a href="/login" data-auth-trigger data-profile-link class="auth-trigger header-profile-button" aria-label="登录 / 个人中心" data-i18n-aria-label="auth.triggerSignedOut">
@@ -724,23 +736,22 @@
     </div>
     <div id="mobile-menu" class="hidden md:hidden bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
         <div class="flex flex-col px-6 py-4 space-y-3" data-site-navigation data-navigation-variant="mobile">
+            <a href="/suite" data-nav-link data-navigation-item="suite" class="font-manrope font-medium py-2 text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors">GEO Suite</a>
             <a href="/companies" data-nav-link data-i18n="nav.companies" class="font-manrope font-medium py-2 text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors">公司</a>
             <a href="/diagnostic" data-nav-link data-i18n="nav.diagnostic" class="font-manrope font-medium py-2 text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors">诊断</a>
             <a href="/solutions" data-nav-link data-i18n="nav.solutions" class="font-manrope font-medium py-2 text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors">问答</a>
             <a href="/plans" data-nav-link data-i18n="nav.plans" class="font-manrope font-medium py-2 text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors">方案</a>
             <a href="/keywords" data-nav-link data-i18n="nav.keywords" class="font-manrope font-medium py-2 text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors">拓词</a>
             <a href="/tools" data-nav-link data-i18n="nav.tools" class="font-manrope font-medium py-2 text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors">工具</a>
-            <a href="/experts" data-nav-link data-i18n="nav.experts" class="font-manrope font-medium py-2 text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors">专家</a>
-            <a href="/tutorial" data-nav-link data-i18n="nav.tutorial" class="font-manrope font-medium py-2 text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors">教程</a>
-            <a href="https://github.com/yaojingang/GEORank" target="_blank" rel="noopener noreferrer" data-nav-link data-navigation-item="github" class="font-manrope font-medium py-2 text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors">GitHub</a>
-        </div>
+</div>
     </div>
 </nav>`;
 
 const FOOTER_HTML = `
 <footer class="w-full mt-auto border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950">
     <div class="max-w-7xl mx-auto px-6 md:px-8 py-6">
-        <p class="font-inter text-sm text-slate-400 dark:text-slate-500 text-center" data-footer-rights>© 2026 GEORankHub · 公益性 GEO 研究平台 · 独立第三方 · <strong><a href="https://github.com/yaojingang/GEORank" target="_blank" rel="noopener noreferrer">GitHub</a>开源</strong></p>
+        <p class="font-inter text-sm text-slate-400 dark:text-slate-500 text-center" data-footer-rights>© 2026 GEORankHub · 公益性 GEO 研究平台 · 独立第三方 · <strong>
+开源</strong></p>
     </div>
 </footer>`;
 
@@ -859,9 +870,7 @@ const FOOTER_HTML = `
             if (normalized === '/plans' || normalized.startsWith('/plans/')) return '/plans';
             if (normalized === '/keywords' || normalized.startsWith('/keywords/')) return '/keywords';
             if (normalized === '/tools' || normalized.startsWith('/tools/')) return '/tools';
-            if (normalized === '/experts' || normalized.startsWith('/experts/')) return '/experts';
             if (normalized === '/profile') return '/profile';
-            if (normalized === '/tutorial' || normalized.startsWith('/tutorial/')) return '/tutorial';
             return normalized;
         },
 
@@ -894,19 +903,6 @@ const FOOTER_HTML = `
                 return decodeURIComponent(segments[1]);
             }
             return new URLSearchParams(window.location.search).get('id') || '';
-        },
-
-        buildTutorialDetail(slug, query = {}) {
-            if (!slug) return this.buildUrl('/tutorial', query);
-            return this.buildUrl(`/tutorial/${encodeURIComponent(slug)}`, query);
-        },
-
-        readTutorialSlug() {
-            const segments = this.getSegments();
-            if (segments[0] === 'tutorial' && segments[1]) {
-                return decodeURIComponent(segments[1]);
-            }
-            return new URLSearchParams(window.location.search).get('slug') || '';
         },
 
         buildDiagnosticPath({ reportId = '', url = '', companyId = '' } = {}) {
@@ -1020,14 +1016,15 @@ const FOOTER_HTML = `
                     : Routes.buildUrl('/companies');
             }
 
-            if (rawPath === '/tutorial.html') {
-                return params.get('slug')
-                    ? Routes.buildTutorialDetail(params.get('slug'))
-                    : Routes.buildUrl('/tutorial');
-            }
-
-            if (normalizedPath === '/tutorial' && params.get('slug')) {
-                return Routes.buildTutorialDetail(params.get('slug'));
+            if (
+                rawPath === '/tutorial.html'
+                || rawPath === '/experts.html'
+                || normalizedPath === '/tutorial'
+                || normalizedPath.startsWith('/tutorial/')
+                || normalizedPath === '/experts'
+                || normalizedPath.startsWith('/experts/')
+            ) {
+                return Routes.buildUrl('/suite');
             }
 
             if (rawPath === '/diagnostic.html') {
@@ -1085,10 +1082,6 @@ const FOOTER_HTML = `
                 return Routes.buildUrl('/tools');
             }
 
-            if (rawPath === '/experts.html') {
-                return Routes.buildUrl('/experts');
-            }
-
             if (rawPath === '/profile.html') {
                 return Routes.buildUrl('/profile');
             }
@@ -1098,9 +1091,7 @@ const FOOTER_HTML = `
                 rawPath === '/solutions.html' ||
                 rawPath === '/plans.html' ||
                 rawPath === '/tools.html' ||
-                rawPath === '/experts.html' ||
                 rawPath === '/profile.html' ||
-                rawPath === '/tutorial.html' ||
                 rawPath === '/keywords.html'
             ) {
                 return Routes.buildUrl(normalizedPath || '/');
@@ -1130,12 +1121,10 @@ const FOOTER_HTML = `
             modules: [
                 { key: 'companies', name: '公司', path: '/companies', enabled: true, protected_paths: ['/company', '/companies', '/c', '/submit-company'] },
                 { key: 'diagnostic', name: '诊断', path: '/diagnostic', enabled: true, protected_paths: ['/diagnostic'] },
-                { key: 'solutions', name: '问答', path: '/solutions', enabled: true, protected_paths: ['/solutions'] },
+                { key: 'solutions', name: '问答', path: '/solutions', enabled: true, protected_paths: [] },
                 { key: 'plans', name: '方案', path: '/plans', enabled: true, protected_paths: ['/plans'] },
                 { key: 'keywords', name: '拓词', path: '/keywords', enabled: true, protected_paths: ['/keywords'] },
                 { key: 'tools', name: '工具', path: '/tools', enabled: true, protected_paths: ['/tools'] },
-                { key: 'experts', name: '专家', path: '/experts', enabled: true, protected_paths: ['/experts'] },
-                { key: 'tutorial', name: '教程', path: '/tutorial', enabled: true, protected_paths: ['/tutorial'] },
             ],
         },
         state: {
@@ -1150,8 +1139,6 @@ const FOOTER_HTML = `
             '/plans': 'plans',
             '/keywords': 'keywords',
             '/tools': 'tools',
-            '/experts': 'experts',
-            '/tutorial': 'tutorial',
         },
 
         async load() {
@@ -1211,6 +1198,7 @@ const FOOTER_HTML = `
             const rawByKey = new Map(rawModules.map(item => [String(item.key || '').toLowerCase(), item]));
             const modules = defaults.modules.map(item => {
                 const raw = rawByKey.get(item.key) || {};
+                const enabled = raw.enabled !== undefined ? raw.enabled !== false : item.enabled !== false;
                 return {
                     ...item,
                     name: raw.name || item.name,
@@ -1218,7 +1206,7 @@ const FOOTER_HTML = `
                     protected_paths: item.key === 'companies'
                         ? item.protected_paths
                         : (Array.isArray(raw.protected_paths) ? raw.protected_paths : item.protected_paths),
-                    enabled: raw.enabled !== false,
+                    enabled,
                 };
             });
             if (!modules.some(item => item.enabled)) {
@@ -1738,6 +1726,11 @@ const FOOTER_HTML = `
         },
 
         openModal(mode = 'login', options = {}) {
+            // 本地演示：彻底禁用登录弹层
+            if (this.isDemoOpenAccess()) {
+                this.closeModal();
+                return;
+            }
             this.ensureModal();
             this.setMode(mode);
             const modal = document.getElementById(this.MODAL_ID);
@@ -1812,8 +1805,60 @@ const FOOTER_HTML = `
             }
         },
 
+        isDemoOpenAccess() {
+            if (window.GEORANK_OPEN_DEMO === true) return true;
+            const host = String(window.location.hostname || '').toLowerCase();
+            if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return true;
+            return Boolean(window.GEOrank?.APIKeyStore?.policy?.allow_anonymous_ai_usage);
+        },
+
+        demoHomePath() {
+            return Routes.buildUrl('/suite') || '/suite';
+        },
+
+        /** 演示模式：隐藏登录入口，登录/注册/个人中心跳首页 */
+        applyDemoNoAuthUi() {
+            if (!this.isDemoOpenAccess()) return;
+            document.querySelectorAll('[data-auth-trigger], [data-auth-menu]').forEach((el) => {
+                el.classList.add('hidden');
+                el.setAttribute('hidden', 'hidden');
+                el.style.display = 'none';
+            });
+            document.querySelectorAll('a[href="/login"], a[href="/register"], a[href="/login.html"], a[href="/register.html"]').forEach((el) => {
+                if (el.matches('[data-auth-trigger]')) return;
+                el.classList.add('hidden');
+                el.style.display = 'none';
+                el.setAttribute('href', this.demoHomePath());
+            });
+            const badge = document.querySelector('[data-demo-mode-badge]');
+            const actions = document.querySelector('.header-actions');
+            if (badge) {
+                badge.classList.remove('hidden');
+                badge.style.display = '';
+            } else if (actions) {
+                const created = document.createElement('span');
+                created.dataset.demoModeBadge = '1';
+                created.className = 'inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100';
+                created.textContent = '演示模式 · 免登录';
+                actions.insertBefore(created, actions.firstChild);
+            }
+            this.closeModal();
+        },
+
+        redirectAwayFromAuthPages() {
+            if (!this.isDemoOpenAccess()) return false;
+            const path = Routes.normalizePath(window.location.pathname);
+            if (path === '/login' || path === '/register' || path === '/profile') {
+                window.location.replace(this.demoHomePath());
+                return true;
+            }
+            return false;
+        },
+
         requireAuth(options = {}) {
             if (this.isAuthenticated()) return true;
+            // 本地演示 / 后台已开放匿名 AI 时，不拦截功能页
+            if (this.isDemoOpenAccess()) return true;
             const translatedReason = options.reasonKey ? I18N.t(options.reasonKey) : '';
             this.openModal(options.mode || 'login', {
                 reason: translatedReason || options.reason || I18N.t('auth.requireReason'),
@@ -1822,6 +1867,7 @@ const FOOTER_HTML = `
         },
 
         bindHeader() {
+            this.applyDemoNoAuthUi();
             const trigger = document.querySelector('[data-auth-trigger]');
             const menu = document.querySelector('[data-auth-menu]');
             if (!trigger || trigger.dataset.bound === '1') {
@@ -1830,6 +1876,11 @@ const FOOTER_HTML = `
             }
             trigger.dataset.bound = '1';
             trigger.addEventListener('click', (event) => {
+                if (this.isDemoOpenAccess()) {
+                    event.preventDefault();
+                    window.location.href = this.demoHomePath();
+                    return;
+                }
                 if (trigger.matches('[data-profile-link]')) return;
                 event.preventDefault();
                 if (!this.isAuthenticated()) {
@@ -1892,6 +1943,7 @@ const FOOTER_HTML = `
         },
 
         maybePromptFirstVisit() {
+            if (this.isDemoOpenAccess()) return;
             const path = Routes.normalizePath(window.location.pathname);
             if (this.isAuthenticated()) return;
             if (path.startsWith('/admin') || path === '/login' || path === '/register') return;
@@ -1905,7 +1957,7 @@ const FOOTER_HTML = `
                 || path === '/c'
                 || path.startsWith('/c/')
             ) return;
-            if (path === '/experts' || path.startsWith('/experts/')) return;
+            if (path === '/solutions' || path.startsWith('/solutions/')) return;
             let submitAutoOpenFlag = false;
             try {
                 submitAutoOpenFlag = sessionStorage.getItem('georank_open_submit_company') === '1';
@@ -2002,18 +2054,26 @@ const FOOTER_HTML = `
         init() {
             if (this.state.initialized) return;
             this.state.initialized = true;
+            if (this.redirectAwayFromAuthPages()) return;
             this.syncState();
-            this.ensureModal();
+            if (!this.isDemoOpenAccess()) {
+                this.ensureModal();
+            }
             this.bindHeader();
+            this.applyDemoNoAuthUi();
             if (this.state.token && !this.state.user) {
                 void this.fetchMe().catch(() => this.clearSession());
             }
             document.addEventListener('componentLoaded', (event) => {
                 if (event.detail?.targetSelector === '#header-container') {
                     this.bindHeader();
+                    this.applyDemoNoAuthUi();
                 }
             });
-            document.addEventListener('georank:auth-changed', () => this.renderHeader());
+            document.addEventListener('georank:auth-changed', () => {
+                this.renderHeader();
+                this.applyDemoNoAuthUi();
+            });
             this.maybePromptFirstVisit();
         },
     };

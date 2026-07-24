@@ -9,23 +9,23 @@ from urllib.parse import urlsplit
 
 NAVIGATION_MENU_SETTING_KEY = "navigation_menu"
 MAX_NAVIGATION_ITEMS = 12
+SUITE_NAVIGATION_ITEM: dict[str, Any] = {
+    "id": "suite",
+    "label": "GEO Suite",
+    "url": "/suite",
+    "target": "_self",
+    "enabled": True,
+}
+REMOVED_NAVIGATION_IDS = frozenset({"experts", "tutorial", "github"})
 DEFAULT_NAVIGATION_MENU = {
     "items": [
+        deepcopy(SUITE_NAVIGATION_ITEM),
         {"id": "companies", "label": "公司", "url": "/companies", "target": "_blank", "enabled": True},
         {"id": "diagnostic", "label": "诊断", "url": "/diagnostic", "target": "_blank", "enabled": True},
         {"id": "solutions", "label": "问答", "url": "/solutions", "target": "_blank", "enabled": True},
         {"id": "plans", "label": "方案", "url": "/plans", "target": "_blank", "enabled": True},
         {"id": "keywords", "label": "拓词", "url": "/keywords", "target": "_blank", "enabled": True},
         {"id": "tools", "label": "工具", "url": "/tools", "target": "_blank", "enabled": True},
-        {"id": "experts", "label": "专家", "url": "/experts", "target": "_blank", "enabled": True},
-        {"id": "tutorial", "label": "教程", "url": "/tutorial", "target": "_blank", "enabled": True},
-        {
-            "id": "github",
-            "label": "GitHub",
-            "url": "https://github.com/yaojingang/GEORank",
-            "target": "_blank",
-            "enabled": True,
-        },
     ]
 }
 
@@ -36,6 +36,49 @@ class NavigationMenuValidationError(ValueError):
 
 def get_default_navigation_menu() -> dict[str, list[dict[str, Any]]]:
     return deepcopy(DEFAULT_NAVIGATION_MENU)
+
+
+def _has_suite_navigation_item(items: list[Any]) -> bool:
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        item_id = str(item.get("id") or "").strip().lower()
+        item_url = str(item.get("url") or "").strip().rstrip("/").lower()
+        if item_id == "suite" or item_url == "/suite":
+            return True
+    return False
+
+
+def ensure_suite_in_navigation_menu(payload: Any) -> dict[str, list[dict[str, Any]]]:
+    """Ensure GEO Suite appears; strip deleted public entries (experts/tutorial/github)."""
+    if not isinstance(payload, dict) or not isinstance(payload.get("items"), list) or not payload["items"]:
+        return get_default_navigation_menu()
+
+    items = [
+        deepcopy(item)
+        for item in payload["items"]
+        if isinstance(item, dict)
+        and str(item.get("id") or "").strip().lower() not in REMOVED_NAVIGATION_IDS
+        and not _is_removed_navigation_url(item.get("url"))
+    ]
+    if not items:
+        return get_default_navigation_menu()
+    if _has_suite_navigation_item(items):
+        return {"items": items}
+
+    merged = [deepcopy(SUITE_NAVIGATION_ITEM), *items]
+    if len(merged) > MAX_NAVIGATION_ITEMS:
+        merged = [merged[0], *merged[1:MAX_NAVIGATION_ITEMS]]
+    return {"items": merged}
+
+
+def _is_removed_navigation_url(value: Any) -> bool:
+    url = str(value or "").strip().rstrip("/").lower()
+    if not url:
+        return False
+    if url in {"/experts", "/tutorial"} or url.startswith("/experts/") or url.startswith("/tutorial/"):
+        return True
+    return "github.com/yaojingang/georank" in url
 
 
 def _normalize_navigation_url(value: Any, index: int) -> str:

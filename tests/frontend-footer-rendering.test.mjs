@@ -5,13 +5,13 @@ import test from 'node:test';
 import {fileURLToPath} from 'node:url';
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const copyrightText = '© 2026 GEORankHub · 公益性 GEO 研究平台 · 独立第三方 · GitHub开源';
+const copyrightText = '© 2026 GEORankHub · 公益性 GEO 研究平台 · 独立第三方';
 const githubHref = 'https://github.com/yaojingang/GEORank';
-const oldCopyrightPattern = /© 2024-2026 GEOrank|All rights reserved|footer\.rights/;
+const oldCopyrightPattern = /© 2024-2026 GEOrank|All rights reserved|footer\.rights|GitHub开源/;
 
 const stripMarkup = (html) => html.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
 
-test('shared frontend footer keeps one fixed linked copyright', async () => {
+test('shared frontend footer keeps one fixed copyright without GitHub entry', async () => {
   const [component, commonScript] = await Promise.all([
     readFile(path.join(projectRoot, 'dist', 'components', 'footer.html'), 'utf8'),
     readFile(path.join(projectRoot, 'dist', 'js', 'common.js'), 'utf8')
@@ -19,9 +19,8 @@ test('shared frontend footer keeps one fixed linked copyright', async () => {
 
   for (const [surface, source] of [['component', component], ['fallback', commonScript]]) {
     assert.match(source, /data-footer-rights/, surface);
-    assert.match(source, new RegExp(`href="${githubHref}"`), surface);
-    assert.match(source, /target="_blank" rel="noopener noreferrer"/, surface);
-    assert.match(source, /<strong><a[^>]+>GitHub<\/a>开源<\/strong>/, surface);
+    assert.doesNotMatch(source, new RegExp(`href="${githubHref}"`), surface);
+    assert.doesNotMatch(source, /GitHub开源/, surface);
     assert.ok(stripMarkup(source).includes(copyrightText), surface);
     assert.doesNotMatch(source, oldCopyrightPattern, surface);
   }
@@ -39,7 +38,7 @@ test('every static frontend page mounts the shared footer loader', async () => {
     assert.match(source, /<script src="\/js\/common\.js\?v=[^"]+"><\/script>/, file);
   }
 
-  assert.equal(footerPages.length, 13);
+  assert.equal(footerPages.length, 14);
 });
 
 test('custom homepage source and published mirrors use the same copyright', async () => {
@@ -51,8 +50,8 @@ test('custom homepage source and published mirrors use the same copyright', asyn
   for (const file of files) {
     const source = await readFile(path.join(projectRoot, file), 'utf8');
     assert.ok(stripMarkup(source).includes(copyrightText), file);
-    assert.match(source, new RegExp(`href="${githubHref}"`), file);
-    assert.match(source, /<strong><a[^>]+>GitHub<\/a>开源<\/strong>/, file);
+    assert.doesNotMatch(source, new RegExp(`href="${githubHref}"`), file);
+    assert.doesNotMatch(source, /GitHub开源/, file);
     assert.doesNotMatch(source, oldCopyrightPattern, file);
   }
 });

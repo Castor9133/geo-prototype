@@ -7,6 +7,11 @@ from sqlalchemy import select
 
 from app.core.deps import DbSession
 from app.models.settings import Setting
+from app.services.navigation_settings import (
+    NAVIGATION_MENU_SETTING_KEY,
+    ensure_suite_in_navigation_menu,
+    get_default_navigation_menu,
+)
 from app.services.runtime_settings import get_frontend_module_config, get_homepage_runtime_config
 from app.services.settings_security import decrypt_setting_value, is_sensitive_setting
 
@@ -25,11 +30,15 @@ async def get_public_settings(db: DbSession, response: Response):
     settings = result.scalars().all()
 
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    return {
+    payload = {
         s.key: decrypt_setting_value(s.value, s.key, s.category)
         for s in settings
         if not is_sensitive_setting(s.key, s.category)
     }
+    payload[NAVIGATION_MENU_SETTING_KEY] = ensure_suite_in_navigation_menu(
+        payload.get(NAVIGATION_MENU_SETTING_KEY) or get_default_navigation_menu()
+    )
+    return payload
 
 
 @router.get("/frontend-modules")

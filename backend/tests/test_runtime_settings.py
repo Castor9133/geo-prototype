@@ -145,11 +145,18 @@ class RuntimeSettingsTests(unittest.TestCase):
         config = _build_frontend_module_config({})
 
         self.assertEqual(config["default_module"], "companies")
-        self.assertGreaterEqual(len(config["modules"]), 8)
+        self.assertEqual(len(config["modules"]), 6)
         self.assertTrue(all(module["enabled"] for module in config["modules"]))
         modules = {module["key"]: module for module in config["modules"]}
+        self.assertEqual(
+            set(modules),
+            {"companies", "diagnostic", "solutions", "plans", "keywords", "tools"},
+        )
+        self.assertNotIn("experts", modules)
+        self.assertNotIn("tutorial", modules)
         self.assertEqual(modules["companies"]["path"], "/companies")
         self.assertNotIn("/", modules["companies"]["protected_paths"])
+        self.assertEqual(modules["solutions"]["protected_paths"], [])
 
     def test_build_frontend_module_config_moves_default_to_enabled_module(self):
         config = _build_frontend_module_config(
@@ -163,8 +170,6 @@ class RuntimeSettingsTests(unittest.TestCase):
                         {"key": "plans", "enabled": False},
                         {"key": "keywords", "enabled": False},
                         {"key": "tools", "enabled": True},
-                        {"key": "experts", "enabled": False},
-                        {"key": "tutorial", "enabled": False},
                         {"key": "unknown", "enabled": True},
                     ],
                 }
@@ -177,6 +182,8 @@ class RuntimeSettingsTests(unittest.TestCase):
         self.assertFalse(modules["diagnostic"]["enabled"])
         self.assertTrue(modules["tools"]["enabled"])
         self.assertNotIn("unknown", modules)
+        self.assertNotIn("experts", modules)
+        self.assertNotIn("tutorial", modules)
 
     def test_build_homepage_runtime_config_defaults_to_builtin_homepage(self):
         config = _build_homepage_runtime_config({})

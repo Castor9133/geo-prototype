@@ -11,9 +11,7 @@ export type LegacyPageId =
   | 'plans'
   | 'keywords'
   | 'tools'
-  | 'experts'
   | 'profile'
-  | 'tutorial'
   | 'login'
   | 'register';
 

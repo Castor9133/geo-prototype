@@ -13,15 +13,13 @@
     const ADMIN_ALIAS_BASES = new Set(['admin', 'manage', 'console', 'backend', 'control', 'dashboard']);
     const ADMIN_ALIAS_PATTERN = /^admin-[A-Za-z0-9][A-Za-z0-9_-]{1,42}$/;
     const DEFAULT_NAVIGATION_MENU_ITEMS = [
+        { id: 'suite', label: 'GEO Suite', url: '/suite', target: '_self', enabled: true },
         { id: 'companies', label: '公司', url: '/companies', target: '_blank', enabled: true },
         { id: 'diagnostic', label: '诊断', url: '/diagnostic', target: '_blank', enabled: true },
         { id: 'solutions', label: '问答', url: '/solutions', target: '_blank', enabled: true },
         { id: 'plans', label: '方案', url: '/plans', target: '_blank', enabled: true },
         { id: 'keywords', label: '拓词', url: '/keywords', target: '_blank', enabled: true },
         { id: 'tools', label: '工具', url: '/tools', target: '_blank', enabled: true },
-        { id: 'experts', label: '专家', url: '/experts', target: '_blank', enabled: true },
-        { id: 'tutorial', label: '教程', url: '/tutorial', target: '_blank', enabled: true },
-        { id: 'github', label: 'GitHub', url: 'https://github.com/yaojingang/GEORank', target: '_blank', enabled: true },
     ];
     const ADMIN_PAGE_TITLES = Object.freeze({
         dashboard: '仪表盘',
@@ -29,9 +27,7 @@
         diagnostics: '诊断管理',
         solutions: '问答管理',
         keywords: '拓词管理',
-        tutorials: '教程管理',
-        'tutorials-edit': '教程编辑',
-        experts: '专家管理',
+        'trust-obs': '可信观测',
         users: '用户管理',
         settings: '系统设置',
     });
@@ -104,10 +100,8 @@
         return withAppOrigin(`/c/${encodeURIComponent(identifier)}`);
     }
 
-    function buildPublicTutorialDetailHref(pathKey, slug = '') {
-        const identifier = pathKey || slug;
-        if (!identifier) return withAppOrigin('/tutorial');
-        return withAppOrigin(`/tutorial/${encodeURIComponent(identifier)}`);
+    function buildPublicTutorialDetailHref(_pathKey, _slug = '') {
+        return withAppOrigin('/suite');
     }
 
     function getPathname(urlOrPath) {
@@ -153,9 +147,16 @@
 
     function normalizeAdminModulePath(path) {
         const cleanPath = canonicalizeAdminPath(path);
-        if (cleanPath.includes('tutorials-edit') || cleanPath.includes('content-edit')) return '/admin/tutorials';
-        if (cleanPath.includes('tutorials') || cleanPath.includes('content')) return '/admin/tutorials';
-        if (cleanPath.includes('experts')) return '/admin/experts';
+        if (
+            cleanPath.includes('tutorials-edit')
+            || cleanPath.includes('content-edit')
+            || cleanPath.includes('tutorials')
+            || cleanPath.includes('content')
+            || cleanPath.includes('experts')
+        ) {
+            return '/admin';
+        }
+        if (cleanPath.includes('trust-obs')) return '/admin/trust-obs';
         if (cleanPath.includes('keywords')) return '/admin/keywords';
         if (cleanPath.includes('diagnostics')) return '/admin/diagnostics';
         if (cleanPath.includes('solutions')) return '/admin/solutions';
@@ -546,11 +547,8 @@
         <a href="${withAppOrigin('/admin/keywords')}" data-admin-link class="sidebar-link">
             <span class="material-symbols-outlined text-lg">manage_search</span><span>拓词管理</span>
         </a>
-        <a href="${withAppOrigin('/admin/tutorials')}" data-admin-link class="sidebar-link">
-            <span class="material-symbols-outlined text-lg">menu_book</span><span>教程管理</span>
-        </a>
-        <a href="${withAppOrigin('/admin/experts')}" data-admin-link class="sidebar-link">
-            <span class="material-symbols-outlined text-lg">person_search</span><span>专家管理</span>
+        <a href="${withAppOrigin('/admin/trust-obs')}" data-admin-link class="sidebar-link">
+            <span class="material-symbols-outlined text-lg">monitoring</span><span>可信观测</span>
         </a>
         <p class="px-3 mt-6 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">平台管理</p>
         <a href="${withAppOrigin('/admin/users')}" data-admin-link class="sidebar-link">
@@ -944,14 +942,14 @@ ${pointDots}`;
     async function initDashboard() {
         renderTopbar('仪表盘');
         try {
-            const [stats, recentCompanies, failures, draftTutorials, recentSolutions, keywordSummary] = await Promise.all([
+            const [stats, recentCompanies, failures, recentSolutions, keywordSummary] = await Promise.all([
                 api('GET', '/api/admin/dashboard'),
                 api('GET', '/api/admin/companies?size=5&sort=created_at'),
                 api('GET', '/api/admin/ops/recent-failures?limit=4'),
-                api('GET', '/api/admin/tutorials?content_type=tutorial&status_filter=draft&size=3'),
                 api('GET', '/api/admin/solutions/conversations?size=3'),
                 api('GET', '/api/admin/keywords/summary'),
             ]);
+            const draftTutorials = { items: [], total: 0, summary: {} };
 
             // 统计卡片
             const setStatValue = (id, value) => {
@@ -4662,6 +4660,47 @@ ${pages.map(p => p === '…'
             console.warn('[admin] load homepage settings failed', err);
         }
 
+        let geoflowPayload = null;
+        function renderGeoflowIntegration(payload) {
+            geoflowPayload = payload || {};
+            const status = payload?.status || {};
+            const banner = document.getElementById('geoflow-status-banner');
+            if (banner) {
+                banner.textContent = status.configured
+                    ? `实况模式：已连接到 ${status.public_base_url || payload.public_base_url || 'GEOFlow'}`
+                    : '预览模式：前台可演示移交载荷；启用并填写 Token 后进入实况';
+                banner.className = status.configured
+                    ? 'rounded-xl border border-emerald-100 bg-emerald-50/70 px-4 py-3 text-xs text-emerald-900 mb-6'
+                    : 'rounded-xl border border-amber-100 bg-amber-50/80 px-4 py-3 text-xs text-amber-900 mb-6';
+            }
+            const enabledEl = document.getElementById('geoflow-enabled');
+            if (enabledEl) enabledEl.checked = Boolean(payload.enabled);
+            const setVal = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.value = value ?? '';
+            };
+            setVal('geoflow-base-url', payload.base_url || '');
+            setVal('geoflow-public-base-url', payload.public_base_url || '');
+            setVal('geoflow-api-token', payload.api_token || '');
+            setVal('geoflow-cta-label', payload.public_cta_label || '发送到 GEOFlow');
+            setVal('geoflow-prompt-id', payload.prompt_id ?? '');
+            setVal('geoflow-ai-model-id', payload.ai_model_id ?? '');
+            setVal('geoflow-default-company-id', payload.default_company_id ?? '');
+            setVal('geoflow-draft-limit', payload.draft_limit ?? 3);
+            setVal('geoflow-article-limit', payload.article_limit ?? 3);
+            setVal('geoflow-timeout', payload.timeout_seconds ?? 30);
+            const autoStart = document.getElementById('geoflow-auto-start');
+            if (autoStart) autoStart.checked = Boolean(payload.auto_start);
+            const needReview = document.getElementById('geoflow-need-review');
+            if (needReview) needReview.checked = payload.need_review !== false;
+        }
+        try {
+            geoflowPayload = await api('GET', '/api/admin/integrations/geoflow');
+            renderGeoflowIntegration(geoflowPayload);
+        } catch (err) {
+            console.warn('[admin] load geoflow integration failed', err);
+        }
+
         window.addEventListener('beforeunload', event => {
             if (!homepageEditorState?.dirty) return;
             event.preventDefault();
@@ -5005,6 +5044,53 @@ ${pages.map(p => p === '…'
                 } finally {
                     llmProviderSaveBtn.textContent = '保存 API 池';
                     llmProviderSaveBtn.disabled = false;
+                }
+            };
+        }
+
+        const geoflowSaveBtn = document.getElementById('geoflow-save');
+        if (geoflowSaveBtn) {
+            geoflowSaveBtn.onclick = async () => {
+                try {
+                    geoflowSaveBtn.textContent = '保存中...';
+                    geoflowSaveBtn.disabled = true;
+                    const promptRaw = document.getElementById('geoflow-prompt-id')?.value;
+                    const modelRaw = document.getElementById('geoflow-ai-model-id')?.value;
+                    const payload = {
+                        enabled: Boolean(document.getElementById('geoflow-enabled')?.checked),
+                        base_url: document.getElementById('geoflow-base-url')?.value || '',
+                        public_base_url: document.getElementById('geoflow-public-base-url')?.value || '',
+                        api_token: document.getElementById('geoflow-api-token')?.value || '',
+                        public_cta_label: document.getElementById('geoflow-cta-label')?.value || '发送到 GEOFlow',
+                        prompt_id: promptRaw ? Number(promptRaw) : null,
+                        ai_model_id: modelRaw ? Number(modelRaw) : null,
+                        default_company_id: document.getElementById('geoflow-default-company-id')?.value || null,
+                        draft_limit: Number(document.getElementById('geoflow-draft-limit')?.value || 3),
+                        article_limit: Number(document.getElementById('geoflow-article-limit')?.value || 3),
+                        timeout_seconds: Number(document.getElementById('geoflow-timeout')?.value || 30),
+                        auto_start: Boolean(document.getElementById('geoflow-auto-start')?.checked),
+                        need_review: Boolean(document.getElementById('geoflow-need-review')?.checked),
+                    };
+                    geoflowPayload = await api('PUT', '/api/admin/integrations/geoflow', payload);
+                    renderGeoflowIntegration(geoflowPayload);
+                    toast('GEO Suite 集成已保存');
+                } catch (err) {
+                    toast('保存 GEO Suite 失败: ' + err.message, 'error');
+                } finally {
+                    geoflowSaveBtn.textContent = '保存 GEO Suite';
+                    geoflowSaveBtn.disabled = false;
+                }
+            };
+        }
+        const geoflowResetBtn = document.getElementById('geoflow-reset');
+        if (geoflowResetBtn) {
+            geoflowResetBtn.onclick = async () => {
+                try {
+                    geoflowPayload = await api('POST', '/api/admin/integrations/geoflow/reset');
+                    renderGeoflowIntegration(geoflowPayload);
+                    toast('已恢复 GEO Suite 默认配置');
+                } catch (err) {
+                    toast('恢复默认失败: ' + err.message, 'error');
                 }
             };
         }
@@ -5852,16 +5938,160 @@ ${pages.map(p => p === '…'
         }
     }
 
+    async function initTrustObs() {
+        let latestDetail = null;
+
+        function escapePre(text) {
+            return String(text || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        function setAgg(run) {
+            const agg = (run && run.aggregate) || {};
+            const setText = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = value;
+            };
+            setText('agg-mention', agg.mention ?? '--');
+            setText('agg-citation', agg.citation ?? '--');
+            setText('agg-absent', agg.absent ?? '--');
+            setText('agg-total', agg.total_samples ?? '--');
+            setText('agg-status', (run && run.status) || '--');
+            const note = document.getElementById('trust-method-note');
+            if (note) {
+                note.textContent = (run && run.method_note)
+                    || 'API 自动采样（非网页抓取）；标签为启发式粗分，可人工改标。';
+            }
+        }
+
+        async function loadProbes() {
+            const data = await api('GET', '/api/admin/trust-obs/probes');
+            const list = document.getElementById('trust-probe-list');
+            if (!list) return;
+            const items = data.items || [];
+            list.innerHTML = items.length
+                ? items.map((p) => `<li><code class="text-primary">${escapeHtml(p.probe_key)}</code> ${escapeHtml(p.question)}</li>`).join('')
+                : '<li>暂无探针</li>';
+        }
+
+        async function openRun(runId) {
+            const detail = await api('GET', `/api/admin/trust-obs/runs/${runId}`);
+            latestDetail = detail;
+            setAgg(detail);
+            const panel = document.getElementById('trust-sample-panel');
+            const box = document.getElementById('trust-samples');
+            if (!panel || !box) return;
+            panel.hidden = false;
+            const samples = detail.samples || [];
+            const labels = ['mention', 'citation', 'recommendation', 'co_mention', 'absent', 'error'];
+            box.innerHTML = samples.map((s) => `
+                <div class="rounded-lg border border-slate-100 p-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                        <strong>${escapeHtml(s.probe_key)} #${s.sample_index}</strong>
+                        <select data-relabel="${s.id}" class="form-input text-xs py-1 w-40">
+                            ${labels.map((l) => `<option value="${l}" ${l === s.primary_label ? 'selected' : ''}>${l}</option>`).join('')}
+                        </select>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-1">${escapeHtml(s.question)}</p>
+                    <pre class="whitespace-pre-wrap text-xs bg-slate-50 rounded p-2 max-h-48 overflow-auto">${escapePre(s.raw_answer)}</pre>
+                </div>
+            `).join('') || '<p class="text-slate-400">无样本</p>';
+            box.querySelectorAll('[data-relabel]').forEach((select) => {
+                select.addEventListener('change', async () => {
+                    await api('PATCH', `/api/admin/trust-obs/samples/${select.getAttribute('data-relabel')}`, {
+                        primary_label: select.value,
+                    });
+                    await loadRuns();
+                });
+            });
+        }
+
+        async function loadRuns() {
+            const data = await api('GET', '/api/admin/trust-obs/runs?limit=20');
+            const tbody = document.getElementById('trust-runs-tbody');
+            if (!tbody) return;
+            const items = data.items || [];
+            if (!items.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-12 text-slate-400 text-sm">尚无运行，请点击「运行一轮采样」</td></tr>';
+                setAgg(null);
+                return;
+            }
+            setAgg(items[0]);
+            tbody.innerHTML = items.map((run) => {
+                const agg = run.aggregate || {};
+                const created = run.created_at ? new Date(run.created_at).toLocaleString('zh-CN', { hour12: false }) : '--';
+                const badge = run.status === 'completed' ? 'badge-success' : (run.status === 'failed' ? 'badge-warning' : 'badge-info');
+                return `<tr>
+                    <td>${escapeHtml(created)}</td>
+                    <td><span class="badge ${badge}">${escapeHtml(run.status)}</span></td>
+                    <td>${escapeHtml(run.model_name || '--')}</td>
+                    <td>${agg.total_samples ?? '--'}</td>
+                    <td>${agg.mention ?? 0} / ${agg.citation ?? 0} / ${agg.absent ?? 0}</td>
+                    <td class="text-right"><button type="button" class="text-primary text-xs font-semibold" data-run="${run.id}">查看样本</button></td>
+                </tr>`;
+            }).join('');
+            tbody.querySelectorAll('[data-run]').forEach((btn) => {
+                btn.addEventListener('click', () => openRun(btn.getAttribute('data-run')));
+            });
+        }
+
+        document.getElementById('trust-run-btn')?.addEventListener('click', async () => {
+            const btn = document.getElementById('trust-run-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined text-sm">progress_activity</span>运行中…';
+            try {
+                const detail = await api('POST', '/api/admin/trust-obs/runs', { repeats: 2 });
+                latestDetail = detail;
+                await loadRuns();
+                if (detail.id) await openRun(detail.id);
+                if (detail.status === 'failed') {
+                    toast(detail.error_message || '运行失败，请检查 LLM 配置', 'error');
+                } else {
+                    toast('采样完成', 'success');
+                }
+            } catch (error) {
+                toast(error.message || '运行失败', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined text-sm">play_arrow</span>运行一轮采样';
+            }
+        });
+        document.getElementById('trust-refresh-probes')?.addEventListener('click', () => {
+            loadProbes().catch((error) => toast(error.message || '刷新失败', 'error'));
+        });
+        document.getElementById('trust-export-btn')?.addEventListener('click', () => {
+            const blob = new Blob([JSON.stringify(latestDetail || { message: '请先查看某一轮运行' }, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `trust-obs-run-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+        });
+
+        try {
+            await loadProbes();
+            await loadRuns();
+        } catch (error) {
+            const tbody = document.getElementById('trust-runs-tbody');
+            if (tbody) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-12 text-red-500 text-sm">${escapeHtml(error.message || '加载失败（可能尚未迁移表）')}</td></tr>`;
+            }
+        }
+    }
+
     // ─── 页面入口检测 ────────────────────────────────────────────────────────
     function detectPage() {
         const path = window.location.pathname;
+        if (path.includes('trust-obs')) return 'trust-obs';
         if (path.includes('diagnostics')) return 'diagnostics';
         if (path.includes('solutions')) return 'solutions';
         if (path.includes('keywords')) return 'keywords';
-        if (path.includes('experts')) return 'experts';
         if (path.includes('companies')) return 'companies';
-        if (path.includes('tutorials-edit') || path.includes('content-edit')) return 'tutorials-edit';
-        if (path.includes('tutorials') || path.includes('content')) return 'tutorials';
+        if (path.includes('experts') || path.includes('tutorials') || path.includes('content-edit') || path.includes('content')) {
+            return 'removed';
+        }
         if (path.includes('users')) return 'users';
         if (path.includes('settings')) return 'settings';
         return 'dashboard';
@@ -5882,14 +6112,16 @@ ${pages.map(p => p === '…'
             setupAdminPreviewDrawer();
 
             const page = detectPage();
+            if (page === 'removed') {
+                window.location.replace(withAppOrigin('/admin'));
+                return;
+            }
             if (page === 'dashboard') await initDashboard();
             else if (page === 'companies') await initCompanies();
             else if (page === 'diagnostics') await initDiagnostics();
             else if (page === 'solutions') await initSolutions();
             else if (page === 'keywords') await initKeywords();
-            else if (page === 'experts') await initExperts();
-            else if (page === 'tutorials') await initContent();
-            else if (page === 'tutorials-edit') await initContentEdit();
+            else if (page === 'trust-obs') await initTrustObs();
             else if (page === 'users') await initUsers();
             else if (page === 'settings') await initSettings();
 

@@ -104,6 +104,19 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL: str = "text-embedding-3-small"
     EMBEDDING_DIMENSIONS: int = 1536
 
+    # 本地 / Suite 演示：允许未登录调用诊断、拓词、问答等 AI 接口
+    GEORANK_ALLOW_ANONYMOUS_AI: bool = False
+
+    # ----- GEO Suite / GEOFlow 集成 -----
+    GEOFLOW_ENABLED: bool = False
+    GEOFLOW_BASE_URL: str = "http://host.docker.internal:18080"
+    GEOFLOW_PUBLIC_BASE_URL: str = "http://localhost:18080"
+    GEOFLOW_API_TOKEN: str = ""
+    # Phase1/2：SSO 换票与发布回写共用 HMAC 密钥（两边 .env 保持一致）
+    GEOSUITE_SSO_SECRET: str = ""
+    GEOSUITE_CALLBACK_SECRET: str = ""
+    GEOSUITE_PUBLIC_URL: str = "http://localhost:3009"
+
     @property
     def effective_llm_key(self) -> str:
         """优先使用 LLM_API_KEY，否则回退到 OPENAI_API_KEY"""

@@ -78,3 +78,11 @@ tmp/
 *.jsonl
 !skills/georank/evals/output/cases.jsonl
 *.parquet
+
+.local-admin-password.txt
+
+
+# Local demo captures
+.tmp-*.png
+.tmp-admin-*.png
+

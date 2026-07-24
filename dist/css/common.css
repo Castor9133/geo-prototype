@@ -90,9 +90,27 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ===== Material Icons 配置 ===== */
+/* 必须自带 font-family：仅依赖 Google Fonts 注入时，延迟/失败会把 edit_note 等字面量当正文溢出错位 */
 .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined', sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 1.25rem;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'liga';
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     vertical-align: middle;
+    overflow: hidden;
+    max-width: 1.5em;
+    max-height: 1.5em;
 }
 
 .material-symbols-outlined.filled {

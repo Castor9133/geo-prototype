@@ -5,9 +5,7 @@ export default {
     solutions: 'Solutions',
     plans: 'Plans',
     keywords: 'Keywords',
-    tools: 'Tools',
-    experts: 'Experts',
-    tutorial: 'Tutorials'
+    tools: 'Tools'
   },
   auth: {
     login: 'Log in',
@@ -366,14 +364,14 @@ export default {
       notLoaded: 'Not loaded',
       totalScore: 'Total score',
       content: 'Content',
-      citation: 'Citation',
+      citation: 'Endorsement signal',
       summaryLabel: 'AI diagnostic summary',
       generatedSummary: 'Overall recommendations generated',
       priorityAction: 'Priority action',
       generatedAt: 'Generated at',
       schemaSignals: 'Structured signals',
       contentSignals: 'Content signals',
-      metaCitation: 'Meta and citations',
+      metaCitation: 'Meta and endorsement signals',
       recommendations: 'Recommendations',
       noRecommendations: 'No structured recommendations have been generated for this report yet.',
       emptyReport: 'Select a historical report on the left or start a new diagnostic above.',
@@ -413,6 +411,10 @@ export default {
       send: 'Send',
       sidebarEyebrow: 'Workbench Meta',
       sidebarTitle: 'Context Sidebar',
+      sendToGeoflow: 'Send to GEOFlow',
+      sendingToGeoflow: 'Sending…',
+      geoflowNeedConversation: 'Generate a conversation first, then send it to GEOFlow.',
+      geoflowSuccess: 'Handoff to GEOFlow completed',
       guardTitle: 'Solutions Workbench',
       guardDescription: 'Solution generation requires sign-in. 2.0 carries streaming conversations, history, and future exports on the unified session layer.'
     },

@@ -4,10 +4,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {useTranslations} from 'next-intl';
 
 import type { SolutionConversationDetail, SolutionConversationSummary, SolutionStreamEvent, UserOut } from '@georank/api-sdk';
-import { ApiRequestError, getSolutionConversation, listSolutionConversations, streamSolutionChat } from '@georank/api-sdk';
+import {
+  ApiRequestError,
+  getSolutionConversation,
+  handoffToGeoflow,
+  listSolutionConversations,
+  streamSolutionChat
+} from '@georank/api-sdk';
+import {getStoredToken, getVerifiedSession} from '@georank/auth';
 import {localizeHref} from '@georank/i18n/routing';
-
-import { SessionGuard } from '../auth/session-guard';
 
 type SolutionsWorkbenchProps = {
   locale: string;
@@ -68,7 +73,7 @@ function SolutionsWorkbenchInner({
 }: {
   locale: string;
   token: string;
-  user: UserOut;
+  user: UserOut | null;
   initialConversationId?: string;
 }) {
   const t = useTranslations('web.solutions');
@@ -82,8 +87,13 @@ function SolutionsWorkbenchInner({
   const [railCollapsed, setRailCollapsed] = useState(false);
   const [recommendedCount, setRecommendedCount] = useState(0);
   const [followups, setFollowups] = useState<Array<{ label: string; prompt: string }>>([]);
+  const [geoflowBusy, setGeoflowBusy] = useState(false);
 
   const loadConversations = useCallback(async () => {
+    if (!token) {
+      setConversations([]);
+      return;
+    }
     const next = await listSolutionConversations(token);
     setConversations(next);
     if (!activeConversationId && next[0]) {
@@ -219,12 +229,12 @@ function SolutionsWorkbenchInner({
 
   const contextMeta = useMemo(
     () => [
-      { label: t('account'), value: user.phone || user.username },
+      { label: t('account'), value: user?.phone || user?.username || '—' },
       { label: t('historyCount'), value: String(conversations.length) },
       { label: t('messageCount'), value: String(messages.length) },
       { label: t('recommendedCompanies'), value: String(recommendedCount) }
     ],
-    [conversations.length, messages.length, recommendedCount, t, user.phone, user.username]
+    [conversations.length, messages.length, recommendedCount, t, user?.phone, user?.username]
   );
 
   return (
@@ -361,6 +371,41 @@ function SolutionsWorkbenchInner({
             </div>
           ))}
         </div>
+        <div className="tool-form__row" style={{marginTop: '1rem'}}>
+          <button
+            className="tool-button tool-button--primary"
+            disabled={geoflowBusy || !activeConversationId || messages.length === 0}
+            type="button"
+            onClick={() => {
+              if (!activeConversationId) {
+                setError(t('geoflowNeedConversation'));
+                return;
+              }
+              setGeoflowBusy(true);
+              setError('');
+              void handoffToGeoflow({
+                source: 'solutions',
+                conversation_id: activeConversationId
+              })
+                .then((result) => {
+                  setError('');
+                  if (result.mode === 'live' && result.geoflow_admin_url) {
+                    window.open(result.geoflow_admin_url, '_blank', 'noopener');
+                  } else if (result.suite_path) {
+                    window.location.href = result.suite_path;
+                  }
+                })
+                .catch((reason: unknown) => {
+                  setError(reason instanceof Error ? reason.message : t('geoflowNeedConversation'));
+                })
+                .finally(() => {
+                  setGeoflowBusy(false);
+                });
+            }}
+          >
+            {geoflowBusy ? t('sendingToGeoflow') : t('sendToGeoflow')}
+          </button>
+        </div>
       </aside>
     </div>
   );
@@ -368,20 +413,53 @@ function SolutionsWorkbenchInner({
 
 export function SolutionsWorkbench({ locale, initialConversationId }: SolutionsWorkbenchProps) {
   const t = useTranslations('web.solutions');
+  const [ready, setReady] = useState(false);
+  const [token, setToken] = useState('');
+  const [user, setUser] = useState<UserOut | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function bootstrap() {
+      const nextToken = getStoredToken() || '';
+      if (!nextToken) {
+        if (!cancelled) {
+          setToken('');
+          setUser(null);
+          setReady(true);
+        }
+        return;
+      }
+
+      const nextUser = await getVerifiedSession();
+      if (cancelled) return;
+      setToken(nextUser ? nextToken : '');
+      setUser(nextUser);
+      setReady(true);
+    }
+
+    void bootstrap();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!ready) {
+    return (
+      <section className="panel tool-auth">
+        <span className="page-eyebrow">{t('eyebrow')}</span>
+        <h2 className="card-title">{t('title')}</h2>
+        <p className="card-subtitle">{t('subtitle')}</p>
+      </section>
+    );
+  }
+
   return (
-    <SessionGuard
+    <SolutionsWorkbenchInner
+      initialConversationId={initialConversationId}
       locale={locale}
-      title={t('guardTitle')}
-      description={t('guardDescription')}
-    >
-      {({ token, user }) => (
-        <SolutionsWorkbenchInner
-          initialConversationId={initialConversationId}
-          locale={locale}
-          token={token}
-          user={user}
-        />
-      )}
-    </SessionGuard>
+      token={token}
+      user={user}
+    />
   );
 }

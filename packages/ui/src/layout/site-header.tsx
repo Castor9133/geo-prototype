@@ -79,13 +79,12 @@ export function SiteHeader({locale = 'zh-CN'}: SiteHeaderProps) {
       <div className="site-header__inner">
         <a className="site-header__brand" href={localizeHref(locale, '/')}>GEOrank</a>
         <nav className="site-header__nav">
+          <a href={localizeHref(locale, '/suite')}>GEO Suite</a>
           <a href={localizeHref(locale, '/companies')}>{nav('companies')}</a>
           <a href={localizeHref(locale, '/diagnostic')}>{nav('diagnostic')}</a>
           <a href={localizeHref(locale, '/solutions')}>{nav('solutions')}</a>
           <a href={localizeHref(locale, '/keywords')}>{nav('keywords')}</a>
           <a href={localizeHref(locale, '/tools')}>{nav('tools')}</a>
-          <a href={localizeHref(locale, '/experts')}>{nav('experts')}</a>
-          <a href={localizeHref(locale, '/tutorial')}>{nav('tutorial')}</a>
         </nav>
         <div className="site-header__actions">
           <LanguageSwitcher locale={locale} variant="site" />

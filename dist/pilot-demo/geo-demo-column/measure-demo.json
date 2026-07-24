@@ -1,0 +1,31 @@
+{
+  "demo_data": true,
+  "badge": "API 自动采样（非网页抓取）",
+  "method_note": "演示回落数据：后台尚未跑完真实采样时，Suite 可展示本卡。真实结果以 /api/admin/trust-obs/runs/latest 为准。",
+  "run": {
+    "id": "demo-run",
+    "status": "completed",
+    "prompt_version": "probe-v1",
+    "locale": "zh-CN",
+    "device": "api",
+    "login_state": "api-key",
+    "model_name": "demo",
+    "repeats": 2,
+    "aggregate": {
+      "total_samples": 10,
+      "mention": 4,
+      "citation": 2,
+      "recommendation": 1,
+      "co_mention": 1,
+      "absent": 2,
+      "error": 0,
+      "counts": {
+        "mention": 4,
+        "citation": 2,
+        "recommendation": 1,
+        "co_mention": 1,
+        "absent": 2
+      }
+    }
+  }
+}

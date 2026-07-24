@@ -8,3 +8,14 @@ services:
   api:
     ports:
       - "127.0.0.1:${GEORANK_API_PORT:-8000}:8000"
+    environment:
+      # 本地演示：诊断 / 拓词 / 问答无需登录
+      GEORANK_ALLOW_ANONYMOUS_AI: ${GEORANK_ALLOW_ANONYMOUS_AI:-true}
+
+  worker:
+    environment:
+      GEORANK_ALLOW_ANONYMOUS_AI: ${GEORANK_ALLOW_ANONYMOUS_AI:-true}
+
+  crawler:
+    environment:
+      GEORANK_ALLOW_ANONYMOUS_AI: ${GEORANK_ALLOW_ANONYMOUS_AI:-true}

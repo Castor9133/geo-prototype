@@ -27,6 +27,7 @@
     const initialPrompt = initialRouteState.prompt || '';
     const initialChannelKey = initialRouteState.channelKey || '';
     const Auth = window.GEOrank?.Auth;
+    const Workflow = window.GEOrank?.SuiteWorkflow;
 
     const DEFAULT_QA_CHANNELS = {
         default_channel_key: 'geo-basics',
@@ -160,6 +161,12 @@
 
     async function init() {
         bindStaticEvents();
+        Workflow?.mountBar({
+            stepId: 'solutions',
+            nextHref: Workflow.buildHref('keywords'),
+            nextLabel: '下一步：拓词',
+            hint: '全套工作流第 2 步：完成问答后可发送到 GEOFlow，或继续拓词。',
+        });
         document.addEventListener('georank:auth-changed', function (event) {
             state.token = getAuthToken();
             state.isAuthenticated = Boolean(state.token);
@@ -276,6 +283,12 @@
             const copyButton = event.target.closest('[data-solution-action="copy-link"]');
             if (copyButton) {
                 void copyCurrentConversationLink();
+                return;
+            }
+
+            const geoflowButton = event.target.closest('[data-solution-action="send-geoflow"]');
+            if (geoflowButton) {
+                void sendCurrentConversationToGeoflow(geoflowButton);
             }
         });
 
@@ -568,9 +581,6 @@
     }
 
     async function sendMessage(overrideText) {
-        if (Auth && !Auth.requireAuth({ reasonKey: 'auth.reasonSolutions' })) {
-            return;
-        }
         if (state.sending) return;
         const text = String(overrideText || elements.chatInput?.value || '').trim();
         if (!text) return;
@@ -633,6 +643,7 @@
             updateInputHelper();
             setFeedback('回答已生成，可导出、继续追问，或快速记录反馈。', 'info');
             setStatus('回答已更新。', 'success');
+            guideSuiteAfterSolutions();
 
             if (state.isAuthenticated) {
                 await loadHistory();
@@ -881,6 +892,18 @@
                 >
                     <span class="material-symbols-outlined text-sm">content_copy</span>
                     复制当前公开链接
+                </button>
+            `);
+        }
+        if (shouldShowCopy) {
+            actions.push(`
+                <button
+                    type="button"
+                    data-solution-action="send-geoflow"
+                    class="flex w-full items-center justify-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-800 transition-colors hover:border-emerald-200 hover:bg-emerald-100"
+                >
+                    <span class="material-symbols-outlined text-sm">sync_alt</span>
+                    发送到 GEOFlow
                 </button>
             `);
         }
@@ -1363,6 +1386,66 @@
         } catch (error) {
             console.error('[solutions] claim failed', error);
             setStatus(error.message || '保存当前问答失败，请稍后重试。', 'error');
+        }
+    }
+
+    function guideSuiteAfterSolutions() {
+        if (!Workflow || !state.currentConversationId) return;
+        Workflow.markComplete('solutions', {
+            conversation_id: state.currentConversationId,
+        });
+        Workflow.mountBar({
+            stepId: 'solutions',
+            force: true,
+            hint: '问答已完成：可发送到 GEOFlow，或进入拓词沉淀选题。',
+            nextHref: Workflow.buildHref('keywords'),
+            nextLabel: '下一步：拓词',
+        });
+        const host = document.getElementById('solutions-empty-state')?.parentElement
+            || document.querySelector('.solutions-chat-stage')
+            || document.getElementById('solutions-workspace');
+        Workflow.mountNextCard(host, {
+            id: 'suite-wf-next-solutions',
+            prepend: true,
+            stepId: 'solutions',
+            title: '问答完成 · 继续全套工作流',
+            copy: '可把当前会话发送到 GEOFlow 做内容生产，或先去拓词沉淀关键词资产。',
+            primaryHref: Workflow.buildHref('keywords'),
+            primaryLabel: '进入拓词',
+            secondaryHref: '/suite?step=handoff',
+            secondaryLabel: '回 Suite 移交',
+        });
+    }
+
+    async function sendCurrentConversationToGeoflow(button) {
+        if (!state.currentConversationId) {
+            setStatus('请先生成一轮问答，再发送到 GEOFlow。', 'error');
+            return;
+        }
+        const handoff = window.GEOrank?.GeoflowHandoff;
+        if (!handoff) {
+            setStatus('GEOFlow 集成脚本未加载。', 'error');
+            return;
+        }
+        if (button) {
+            button.disabled = true;
+            button.textContent = '发送中…';
+        }
+        try {
+            const result = await handoff.send({
+                source: 'solutions',
+                conversation_id: state.currentConversationId,
+            });
+            setStatus(handoff.formatResultMessage(result), 'success');
+            handoff.openResult(result);
+        } catch (error) {
+            console.error('[solutions] geoflow handoff failed', error);
+            setStatus(error.message || '发送到 GEOFlow 失败。', 'error');
+        } finally {
+            if (button) {
+                button.disabled = false;
+                button.innerHTML = '<span class="material-symbols-outlined text-sm">sync_alt</span>发送到 GEOFlow';
+            }
         }
     }
 

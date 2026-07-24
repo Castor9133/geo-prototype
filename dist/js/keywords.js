@@ -8,6 +8,7 @@
 
     const API_BASE = '';
     const Auth = window.GEOrank?.Auth;
+    const Workflow = window.GEOrank?.SuiteWorkflow;
     const PREVIEW_COUNT = 8;
     const SAMPLE_PAYLOAD = {
         seeds: ['GEO服务商'],
@@ -184,6 +185,7 @@
     const dimGrid = document.getElementById('dim-grid');
     const downloadBtn = document.getElementById('download-csv-btn');
     const refineBtn = document.getElementById('refine-btn');
+    const sendGeoflowBtn = document.getElementById('send-geoflow-btn');
     const feedbackEl = document.getElementById('keyword-feedback');
     const totalCountEl = document.getElementById('total-kw-count');
     const seedDisplayEl = document.getElementById('seed-kw-display');
@@ -216,13 +218,13 @@
         generateBtn.disabled = next;
         refineBtn.disabled = next;
         downloadBtn.disabled = next || !flatList.length;
+        if (sendGeoflowBtn) sendGeoflowBtn.disabled = next || !flatList.length;
         if (next) {
             generateBtn.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm">progress_activity</span><span>生成中...</span>';
             skeletonEl.classList.remove('hidden');
             resultsPanel.classList.add('hidden');
         } else {
-            generateBtn.textContent = '生成词包';
-            skeletonEl.classList.add('hidden');
+            generateBtn.textContent = '生成词包';            skeletonEl.classList.add('hidden');
         }
     }
 
@@ -407,6 +409,43 @@
         renderGrid();
         resultsPanel.classList.remove('hidden');
         refineBtn.disabled = Boolean(options.disableRefine);
+        if (!options.isExample) {
+            guideSuiteAfterKeywords(options.seedLabel || tags.join('、'));
+        }
+    }
+
+    function guideSuiteAfterKeywords(seedLabel) {
+        if (!Workflow || !flatList.length) return;
+        Workflow.markComplete('keywords', {
+            seed: seedLabel || '',
+            count: flatList.length,
+        });
+        Workflow.setCurrent('handoff');
+        Workflow.mountBar({
+            stepId: 'keywords',
+            force: true,
+            hint: '拓词已完成：可发送到 GEOFlow，或回 Suite 查看进度。',
+            nextHref: '/suite?step=handoff',
+            nextLabel: '回 Suite · 移交',
+        });
+        Workflow.mountNextCard(resultsPanel, {
+            id: 'suite-wf-next-keywords',
+            prepend: true,
+            stepId: 'keywords',
+            title: '拓词完成 · 发送到 GEOFlow',
+            copy: '词包已记入 GEO Suite。点击「发送到 GEOFlow」创建内容任务（preview 也可演示），完成后回 Suite 回看。',
+            primaryHref: '#send-geoflow-btn',
+            primaryLabel: '发送到 GEOFlow',
+            secondaryHref: '/suite?step=review',
+            secondaryLabel: '返回 Suite',
+        });
+        const primary = document.querySelector('#suite-wf-next-keywords a.suite-wf-next__btn--primary');
+        if (primary) {
+            primary.addEventListener('click', (event) => {
+                event.preventDefault();
+                void sendToGeoflow();
+            });
+        }
     }
 
     async function generate() {
@@ -460,6 +499,55 @@
         URL.revokeObjectURL(url);
     }
 
+    async function sendToGeoflow() {
+        if (!flatList.length) {
+            setFeedback('请先生成词包，再发送到 GEOFlow。');
+            return;
+        }
+        const handoff = window.GEOrank?.GeoflowHandoff;
+        if (!handoff) {
+            setFeedback('GEOFlow 集成脚本未加载。');
+            return;
+        }
+        const keywords = flatList
+            .slice()
+            .sort((a, b) => (b.rec || 0) - (a.rec || 0))
+            .map((item) => item.kw)
+            .filter(Boolean)
+            .slice(0, 12);
+        const seedLabel = tags.join('、') || keywords[0] || 'GEO 拓词';
+        if (sendGeoflowBtn) {
+            sendGeoflowBtn.disabled = true;
+            sendGeoflowBtn.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm">progress_activity</span>发送中…';
+        }
+        try {
+            const result = await handoff.send({
+                source: 'keywords',
+                task_name: `GEORank 拓词 · ${seedLabel}`.slice(0, 120),
+                keywords,
+                brief: [
+                    `# GEORank 拓词移交`,
+                    ``,
+                    `种子词：${seedLabel}`,
+                    ``,
+                    `## 推荐关键词`,
+                    ...keywords.map((item) => `- ${item}`),
+                    ``,
+                    `请据此生成适合 AI 搜索引用的 GEO 内容资产。`,
+                ].join('\n'),
+            });
+            setFeedback(handoff.formatResultMessage(result), 'success');
+            handoff.openResult(result);
+        } catch (error) {
+            setFeedback(error.message || '发送到 GEOFlow 失败。');
+        } finally {
+            if (sendGeoflowBtn) {
+                sendGeoflowBtn.disabled = !flatList.length;
+                sendGeoflowBtn.innerHTML = '<span class="material-symbols-outlined text-sm">sync_alt</span>发送到 GEOFlow';
+            }
+        }
+    }
+
     inputEl.addEventListener('compositionstart', () => { composing = true; });
     inputEl.addEventListener('compositionend', () => { composing = false; });
     inputEl.addEventListener('keydown', (event) => {
@@ -495,6 +583,14 @@
     });
     downloadBtn.addEventListener('click', downloadCSV);
     refineBtn.addEventListener('click', generate);
+    sendGeoflowBtn?.addEventListener('click', () => { void sendToGeoflow(); });
+
+    Workflow?.mountBar({
+        stepId: 'keywords',
+        nextHref: '/suite?step=handoff',
+        nextLabel: '下一步：移交 Flow',
+        hint: '全套工作流第 3 步：生成词包后发送到 GEOFlow。',
+    });
 
     renderResults(clonePayload(SAMPLE_PAYLOAD), {
         isExample: true,

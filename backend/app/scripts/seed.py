@@ -294,15 +294,26 @@ async def seed():
     async with async_session() as db:
         from sqlalchemy import select
 
-        # 1. 创建用户
+        # 1. 创建用户（admin 若已存在且设置了 GEORANK_SEED_ADMIN_PASSWORD，则强制同步密码/角色）
         admin_user = None
+        force_admin_password = bool(os.getenv("GEORANK_SEED_ADMIN_PASSWORD"))
         for user_data in SEED_USERS:
             result = await db.execute(select(User).where(User.email == user_data["email"]))
             existing = result.scalar_one_or_none()
             if existing:
                 if user_data["role"] == UserRole.ADMIN:
                     admin_user = existing
-                print(f"  · 用户已存在，跳过: {user_data['email']}")
+                    if force_admin_password:
+                        existing.hashed_password = _hash(user_data["password"])
+                        existing.username = user_data["username"]
+                        existing.role = UserRole.ADMIN
+                        existing.is_active = True
+                        existing.is_verified = True
+                        print(f"  ✓ 已同步管理员密码: {user_data['email']}")
+                    else:
+                        print(f"  · 用户已存在，跳过: {user_data['email']}")
+                else:
+                    print(f"  · 用户已存在，跳过: {user_data['email']}")
                 continue
 
             user = User(

@@ -65,6 +65,8 @@ SETTINGS_CATEGORY_HINTS = {
     "frontend_modules": "frontend",
     "homepage_runtime": "frontend",
     "navigation_menu": "frontend",
+    "geoflow_integration": "integrations",
+    "geoflow_api_token": "api_keys",
 }
 
 

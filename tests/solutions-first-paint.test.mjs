@@ -24,7 +24,7 @@ test('the solutions workspace ships its visible first-frame modules in final for
   assert.match(header, /data-nav-link/);
   assert.match(header, /data-auth-trigger/);
   assert.match(header, />GEORank<\/a>/);
-  assert.match(header, /data-navigation-item="github"/);
+  assert.doesNotMatch(header, /data-navigation-item="github"/);
   assert.match(header, /data-navigation-item="solutions"[^>]*text-blue-600/);
   assert.doesNotMatch(source, /fonts\.googleapis\.com\/css2\?family=Manrope/);
   assert.equal(channelButtons.length, 5);

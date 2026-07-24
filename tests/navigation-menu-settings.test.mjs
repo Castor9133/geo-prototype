@@ -42,9 +42,14 @@ test('shared static pages render configured labels, URLs, and opening targets sa
   assert.match(script, /link\.setAttribute\('target',\s*item\.target\)/);
   assert.match(script, /link\.setAttribute\('rel',\s*'noopener noreferrer'\)/);
 
-  const fallbackHeader = script.match(/const HEADER_HTML = `([\s\S]*?)`;\n\nconst FOOTER_HTML/)?.[1] || '';
+  const headerStart = script.indexOf('const HEADER_HTML = `');
+  const footerStart = script.indexOf('\nconst FOOTER_HTML = `', headerStart);
+  assert.notEqual(headerStart, -1);
+  assert.notEqual(footerStart, -1);
+  const fallbackHeader = script.slice(headerStart + 'const HEADER_HTML = `'.length, footerStart).replace(/`;\s*$/, '');
   assert.equal((fallbackHeader.match(/data-site-navigation/g) || []).length, 2);
   assert.equal((header.match(/data-site-navigation/g) || []).length, 2);
+  assert.match(fallbackHeader, /href="\/suite"/);
 });
 
 test('custom homepage loads the trusted navigation runtime', async () => {
@@ -56,6 +61,22 @@ test('custom homepage loads the trusted navigation runtime', async () => {
   assert.match(runtime, /api\/settings\/public/);
   assert.match(runtime, /document\.createElement\('a'\)/);
   assert.match(runtime, /link\.textContent\s*=\s*item\.label/);
+  assert.match(runtime, /id:\s*'suite'/);
+  assert.match(runtime, /url:\s*'\/suite'/);
   assert.match(activeHomepage, /data-georank-navigation-runtime/);
   assert.match(activeHomepage, /src="\/js\/site-navigation\.js"/);
+  assert.match(activeHomepage, /href="\/suite"/);
+  assert.match(activeHomepage, /GEO Suite/);
+});
+
+test('shared header fallback includes GEO Suite and home logo', async () => {
+  const [script, header] = await Promise.all([
+    read('dist/js/common.js'),
+    read('dist/components/header.html')
+  ]);
+
+  assert.match(script, /id:\s*'suite',\s*label:\s*'GEO Suite',\s*url:\s*'\/suite'/);
+  assert.match(script, /ensureSuiteNavigationItem/);
+  assert.match(header, /href="\/suite"/);
+  assert.match(header, /href="\/"[^>]*data-logo-link/);
 });

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <title>GEO Suite - 全套工作流</title>
+    <meta name="description" content="GEO Suite：诊断 → 知识生产 → 信任素材 → 可信观测。">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,500;8..60,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/public-tailwind.css?v=20260724-suite-proto">
+    <link rel="stylesheet" href="/css/common.css?v=20260724-suite-proto">
+    <link rel="stylesheet" href="/css/suite.css?v=20260724-suite-proto">
+</head>
+<body class="suite-page text-on-surface antialiased">
+    <div id="header-container"></div>
+
+    <section class="suite-hero">
+        <div class="suite-hero__grid" aria-hidden="true"></div>
+        <div class="suite-hero__inner">
+            <div class="suite-brand">
+                <span class="suite-brand__mark" aria-hidden="true"></span>
+                <span class="suite-brand__name">GEO Suite</span>
+            </div>
+            <h1>内容工程闭环：找到 · 引用 · 信任</h1>
+            <p class="suite-hero__lead">
+                一条可演示故事线：诊断就绪 → 问答/拓词 → live 移交 GEOFlow → 回看 → 事实卡看板 → L3 信任素材 → 可信观测抽样。
+                合成栏目「GEO 示范栏目」用于方法验证；测量与生产解耦。
+            </p>
+            <div class="suite-cta-row">
+                <a class="suite-btn suite-btn--primary" id="suite-start-cta" href="/diagnostic?from=suite&amp;workflow=1&amp;step=diagnostic">
+                    <span class="material-symbols-outlined text-sm">play_arrow</span>
+                    从第 1 步开始
+                </a>
+                <a class="suite-btn suite-btn--ghost" id="suite-continue-cta" href="/suite?step=diagnostic">
+                    <span class="material-symbols-outlined text-sm">route</span>
+                    继续当前步骤
+                </a>
+                <a class="suite-btn suite-btn--ghost" id="suite-open-geoflow" href="http://localhost:18080/geo_admin" target="_blank" rel="noreferrer">
+                    <span class="material-symbols-outlined text-sm">open_in_new</span>
+                    打开 GEOFlow
+                </a>
+            </div>
+            <div class="suite-status" id="suite-status" data-mode="preview">
+                <span class="material-symbols-outlined text-sm">hub</span>
+                <span id="suite-status-text">正在检查 GEOFlow 连接…</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="suite-workflow" id="suite-workflow" aria-label="GEO Suite 分步工作流">
+        <div class="suite-workflow__head">
+            <div>
+                <p class="suite-eyebrow">工作流中枢</p>
+                <h2 class="suite-workflow__title">按步骤走通全套体验</h2>
+            </div>
+            <div class="suite-workflow__meta">
+                <span id="suite-progress-label">进度 0%</span>
+                <button type="button" class="suite-reset-btn" id="suite-reset-workflow">重置进度</button>
+            </div>
+        </div>
+
+        <div class="suite-progress" aria-hidden="true">
+            <div class="suite-progress__bar" id="suite-progress-bar"></div>
+        </div>
+
+        <ol class="suite-stepper" id="suite-stepper"></ol>
+
+        <article class="suite-step-panel" id="suite-step-panel">
+            <div class="suite-step-panel__icon" id="suite-step-icon" aria-hidden="true">
+                <span class="material-symbols-outlined">monitoring</span>
+            </div>
+            <div class="suite-step-panel__body">
+                <p class="suite-eyebrow" id="suite-step-eyebrow">步骤 1 / 8</p>
+                <h3 id="suite-step-title">诊断网站</h3>
+                <p id="suite-step-desc">检查 Schema、内容结构、Meta 与外链背书就绪信号（≠ AI 答案引用率）。</p>
+                <div class="suite-step-panel__actions" id="suite-step-actions"></div>
+            </div>
+            <div class="suite-step-panel__side">
+                <p class="suite-side-label">本步状态</p>
+                <p class="suite-side-value" id="suite-step-state">未开始</p>
+                <p class="suite-side-note" id="suite-step-note">完成后可点「进入下一步」，进度会记在本机浏览器。</p>
+            </div>
+        </article>
+
+        <div class="suite-extra-panel" id="suite-extra-panel" hidden></div>
+
+        <div class="suite-handoff-card" id="suite-last-handoff" hidden>
+            <div class="suite-handoff-card__head">
+                <span class="material-symbols-outlined">outbox</span>
+                <h3>最近一次移交</h3>
+                <span class="suite-handoff-card__mode" id="suite-handoff-mode">preview</span>
+            </div>
+            <p id="suite-handoff-message">暂无移交记录。</p>
+            <div class="suite-handoff-card__meta" id="suite-handoff-meta"></div>
+            <div class="suite-handoff-card__meta" id="suite-callback-events" hidden></div>
+            <div class="suite-cta-row suite-cta-row--compact" id="suite-handoff-actions"></div>
+        </div>
+    </section>
+
+    <section class="suite-panels">
+        <div class="suite-panel">
+            <h2>演示路径（URL）</h2>
+            <p>刷新即可看到进度；也可用 query 直接落到某一步。</p>
+            <ol class="suite-demo-list">
+                <li><code>/suite</code> → 工作流中枢</li>
+                <li><code>/diagnostic?from=suite&amp;workflow=1</code> → 诊断</li>
+                <li><code>/keywords?from=suite&amp;workflow=1</code> → 拓词并 live handoff</li>
+                <li><code>/suite?step=review</code> → 回看 / 回调</li>
+                <li><code>/suite?step=knowledge</code> → 事实卡看板</li>
+                <li><code>/suite?step=trust_asset</code> → L3 信任素材</li>
+                <li><code>/suite?step=measure</code> → 可信观测结果</li>
+                <li><code>/admin/trust-obs</code> → 运行探针后台</li>
+            </ol>
+        </div>
+        <div class="suite-panel">
+            <h2>集成状态</h2>
+            <p id="suite-integration-copy">未连接时仍可预览移交载荷；配置 Token 后即可创建真实 GEOFlow 任务。</p>
+            <div class="suite-link-list">
+                <a href="/admin/settings" id="suite-admin-settings"><span>后台配置 GEO Suite</span><span class="material-symbols-outlined text-sm">settings</span></a>
+                <a href="/suite" id="suite-docs-link"><span>回到 Suite 工作流</span><span class="material-symbols-outlined text-sm">route</span></a>
+            </div>
+            <p class="suite-note mt-4" id="suite-next-steps">本地可用 scripts/start-geo-suite.ps1 同时拉起两边服务。</p>
+        </div>
+    </section>
+
+    <div id="footer-container"></div>
+    <script src="/js/common.js?v=20260724-demo-no-auth"></script>
+    <script src="/js/geoflow-handoff.js?v=20260724-suite-proto"></script>
+    <script src="/js/suite-workflow.js?v=20260724-suite-proto"></script>
+    <script src="/js/suite-extra.js?v=20260724-suite-proto"></script>
+    <script src="/js/suite.js?v=20260724-suite-proto"></script>
+</body>
+</html>

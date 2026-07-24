@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <title>可信观测 - Admin | GEOrank</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script src="../js/tailwind.config.js"></script>
+    <link rel="stylesheet" href="../css/common.css?v=20260613-common-hidden-fix">
+    <link rel="stylesheet" href="../css/admin.css?v=20260615-admin-kami-controls">
+</head>
+<body class="bg-slate-50 text-on-surface antialiased">
+    <div class="admin-layout">
+        <aside id="admin-sidebar" class="admin-sidebar"></aside>
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+        <div class="admin-main">
+            <div id="admin-topbar"></div>
+            <script src="../js/admin.js?v=20260724-trust-obs"></script>
+
+            <main class="p-6 lg:p-8 space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 class="text-2xl font-extrabold font-headline tracking-tight">可信观测</h1>
+                        <p class="text-sm text-on-surface-variant mt-1">
+                            用单一 OpenAI-compatible API 自动问探针题并粗分类。徽章：API 自动采样（非网页抓取）。
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button id="trust-run-btn" class="btn admin-btn-primary px-5 py-2.5 rounded-lg text-sm inline-flex items-center gap-2">
+                            <span class="material-symbols-outlined text-sm">play_arrow</span>
+                            运行一轮采样
+                        </button>
+                        <a href="/suite?step=measure" class="btn admin-btn-secondary px-5 py-2.5 rounded-lg text-sm inline-flex items-center gap-2">
+                            <span class="material-symbols-outlined text-sm">hub</span>
+                            打开 Suite 测量步
+                        </a>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 xl:grid-cols-5 gap-4">
+                    <div class="stat-card"><p id="agg-mention" class="text-2xl font-extrabold">--</p><p class="text-xs text-on-surface-variant mt-1">mention</p></div>
+                    <div class="stat-card"><p id="agg-citation" class="text-2xl font-extrabold">--</p><p class="text-xs text-on-surface-variant mt-1">citation</p></div>
+                    <div class="stat-card"><p id="agg-absent" class="text-2xl font-extrabold">--</p><p class="text-xs text-on-surface-variant mt-1">absent</p></div>
+                    <div class="stat-card"><p id="agg-total" class="text-2xl font-extrabold">--</p><p class="text-xs text-on-surface-variant mt-1">样本总数</p></div>
+                    <div class="stat-card"><p id="agg-status" class="text-lg font-extrabold">--</p><p class="text-xs text-on-surface-variant mt-1">最近运行状态</p></div>
+                </div>
+
+                <section class="bg-white rounded-xl border border-slate-100 p-5 space-y-3">
+                    <div class="flex items-center justify-between gap-3">
+                        <h2 class="text-base font-bold font-headline">探针题库（probe-v1）</h2>
+                        <button id="trust-refresh-probes" class="btn admin-btn-secondary px-3 py-2 rounded-lg text-xs">刷新探针</button>
+                    </div>
+                    <ul id="trust-probe-list" class="text-sm space-y-2 text-on-surface-variant"></ul>
+                </section>
+
+                <section class="bg-white rounded-xl border border-slate-100 overflow-hidden">
+                    <div class="flex items-center justify-between px-6 py-5 border-b border-slate-50">
+                        <div>
+                            <h2 class="text-base font-bold font-headline">最近运行</h2>
+                            <p id="trust-method-note" class="text-xs text-on-surface-variant mt-1">方法说明将显示在此</p>
+                        </div>
+                        <button id="trust-export-btn" class="btn admin-btn-secondary px-3 py-2 rounded-lg text-xs">导出 JSON</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>时间</th>
+                                    <th>状态</th>
+                                    <th>模型</th>
+                                    <th>样本</th>
+                                    <th>mention / citation / absent</th>
+                                    <th class="text-right">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="trust-runs-tbody">
+                                <tr><td colspan="6" class="text-center py-12 text-slate-400 text-sm">加载中...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="bg-white rounded-xl border border-slate-100 p-6" id="trust-sample-panel" hidden>
+                    <h2 class="text-base font-bold font-headline mb-3">样本明细</h2>
+                    <div id="trust-samples" class="space-y-3 text-sm"></div>
+                </section>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

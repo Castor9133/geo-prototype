@@ -18,7 +18,6 @@ const publicStaticFrontendFiles = [
   'company-submit.html',
   'company.html',
   'diagnostic.html',
-  'experts.html',
   'index.html',
   'keywords.html',
   'login.html',
@@ -26,31 +25,49 @@ const publicStaticFrontendFiles = [
   'profile.html',
   'register.html',
   'solutions.html',
-  'tools.html',
-  'tutorial.html'
+  'tools.html'
 ];
 const moduleControllerPaths = [
   'company-submit-page.js',
   'company.js',
   'diagnostic.js',
-  'experts.js',
   'index.js',
   'keywords.js',
   'plans.js',
   'solutions.js',
   'submit-company.js',
-  'tools.js',
-  'tutorial.js'
+  'tools.js'
 ].map((file) => path.join(projectRoot, 'dist', 'js', file));
 const serverRenderedFrontendPaths = [
-  path.join(projectRoot, 'backend', 'app', 'web', 'company_pages.py'),
-  path.join(projectRoot, 'backend', 'app', 'web', 'tutorial_pages.py')
+  path.join(projectRoot, 'backend', 'app', 'web', 'company_pages.py')
 ];
+const removedProductFrontendFiles = [
+  'experts.html',
+  'tutorial.html',
+  'js/experts.js',
+  'js/tutorial.js',
+  'css/experts.css',
+  'css/tutorial.css',
+  'admin/experts.html',
+  'admin/tutorials.html',
+  'admin/tutorials-edit.html'
+];
+
+test('removed product modules no longer ship static frontend assets', async () => {
+  const {access} = await import('node:fs/promises');
+  for (const relative of removedProductFrontendFiles) {
+    await assert.rejects(
+      () => access(path.join(frontendHtmlDir, relative)),
+      {code: 'ENOENT'},
+      relative
+    );
+  }
+});
 
 test('every static frontend page paints without a whole-document opacity gate', async () => {
   const htmlFiles = publicStaticFrontendFiles;
 
-  assert.equal(htmlFiles.length, 13);
+  assert.equal(htmlFiles.length, 11);
   for (const file of htmlFiles) {
     const html = await readFile(path.join(frontendHtmlDir, file), 'utf8');
     assert.doesNotMatch(
@@ -239,8 +256,12 @@ test('the immediate header is complete before asynchronous configuration loads',
   assert.match(inlineHeader, /data-nav-link/);
   assert.match(inlineHeader, /data-auth-trigger/);
   assert.match(inlineHeader, /id="mobile-menu-toggle"/);
-  assert.match(inlineHeader, /data-navigation-item="github"/);
-  assert.match(header, /data-navigation-item="github"/);
+  assert.doesNotMatch(inlineHeader, /data-navigation-item="github"/);
+  assert.doesNotMatch(inlineHeader, /href="\/experts"/);
+  assert.doesNotMatch(inlineHeader, /href="\/tutorial"/);
+  assert.doesNotMatch(header, /data-navigation-item="github"/);
+  assert.doesNotMatch(header, /href="\/experts"/);
+  assert.doesNotMatch(header, /href="\/tutorial"/);
   assert.doesNotMatch(source, /HEADER_SHELL_HTML/);
   assert.match(
     source,

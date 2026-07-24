@@ -19,6 +19,7 @@ from app.models.ai_usage import (
     UserDailyUsage,
 )
 from app.models.homepage import HomepageRelease
+from app.models.trust_obs import TrustObsProbe, TrustObsRun, TrustObsSample
 
 __all__ = [
     "Company",
@@ -42,4 +43,7 @@ __all__ = [
     "AITokenReservation",
     "AIQuotaAuditLog",
     "HomepageRelease",
+    "TrustObsProbe",
+    "TrustObsRun",
+    "TrustObsSample",
 ]

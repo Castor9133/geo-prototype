@@ -742,7 +742,10 @@ class HomepageAssetTests(unittest.TestCase):
                 hashlib.sha256(payload).hexdigest(),
             )
 
-        self.assertIn("/tutorial", source_root.joinpath("index.html").read_text(encoding="utf-8"))
+        self.assertIn("/suite", source_root.joinpath("index.html").read_text(encoding="utf-8"))
+        self.assertNotIn('href="/experts"', source_root.joinpath("index.html").read_text(encoding="utf-8"))
+        self.assertNotIn('href="/tutorial"', source_root.joinpath("index.html").read_text(encoding="utf-8"))
+        self.assertNotIn("github.com/yaojingang/GEORank", source_root.joinpath("index.html").read_text(encoding="utf-8"))
 
     def test_reads_original_homepage_html_for_editing(self):
         original = '<html><body onload="boot()"><h1>Original</h1><script>boot()</script></body></html>'

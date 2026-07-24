@@ -34,14 +34,21 @@ DEFAULT_DIAGNOSTIC_RULE_WEIGHTS = {
 DEFAULT_SOLUTION_TEMPLATES = {
     "system_prompt": (
         "你是 GEOrank 平台的 AI 问答顾问，专注于解释 GEO（生成式引擎优化）、"
-        "AI 搜索可见性、内容结构、品牌引用和增长策略。根据用户问题、诊断上下文"
-        "和公司知识库，给出清晰、可信、可执行的回答。"
+        "AI 搜索可见性、内容结构、品牌实体一致性与可执行增长动作。"
+        "根据用户问题、诊断上下文和公司知识库，给出清晰、可信、可审计的回答。"
+        "口径约束：诊断里的 citation/引用维是「页面外链与权威链就绪度」，"
+        "不是「AI 答案引用率」；爬虫 PV、页面分也不得表述为引用结果。"
+        "证据不足时明确说明不确定，不要编造数据或保证上榜/引用。"
     ),
     "response_instruction": (
-        "请优先回答用户问题本身。需要科普时先解释概念，需要执行时再给步骤；"
-        "如果公司知识库能提供帮助，可推荐 1-3 家相关公司并说明匹配原因。"
+        "请优先回答用户问题本身。需要科普时先解释概念，需要执行时再给可验证步骤；"
+        "如果公司知识库能提供帮助，可推荐 1-3 家相关公司并说明匹配原因与依据来源。"
+        "涉及效果衡量时，区分代理信号（页面就绪、分发、爬虫访问）与答案面板抽样结果。"
     ),
-    "streaming_system_prompt": "你是 GEOrank AI 问答顾问，基于 GEO 知识、诊断上下文和公司知识库回答用户问题。",
+    "streaming_system_prompt": (
+        "你是 GEOrank AI 问答顾问，基于 GEO 知识、诊断上下文和公司知识库回答用户问题。"
+        "勿把页面 citation 就绪信号或爬虫 PV 说成 AI 答案引用率；少空写，结论需可执行。"
+    ),
 }
 DEFAULT_SOLUTION_CHANNELS = {
     "default_channel_key": "geo-basics",
@@ -62,40 +69,49 @@ DEFAULT_SOLUTION_CHANNELS = {
         {
             "key": "diagnostic-explain",
             "name": "诊断报告解读",
-            "description": "把 GEO 诊断分数、Schema、内容结构、Meta 和引用问题解释成可理解的行动建议。",
+            "description": "把 GEO 诊断分数、Schema、内容结构、Meta 与页面外链就绪度解释成可理解的行动建议。",
             "icon": "monitoring",
             "enabled": True,
-            "system_hint": "围绕诊断上下文解释问题原因、影响和优先级，输出清晰的下一步动作。",
+            "system_hint": (
+                "围绕诊断上下文解释问题原因、影响和优先级，输出清晰的下一步动作；"
+                "明确 citation 维是页面权威链/外链就绪度，不是 AI 答案引用率。"
+            ),
             "sample_questions": [
                 "帮我解释这份 GEO 诊断报告里最重要的三个问题。",
-                "Schema 分低会怎样影响 AI 引用？",
+                "Schema 分低会怎样影响答案引擎对页面的理解与摘取？",
                 "如果只能先修一个问题，应该先修什么？",
             ],
         },
         {
             "key": "content-structure",
             "name": "内容结构优化",
-            "description": "围绕官网页面、教程、FAQ、案例和结构化答案，生成适合 AI 读取的内容建议。",
+            "description": "围绕官网页面、教程、FAQ、案例和结构化答案，生成适合答案引擎读取的内容建议。",
             "icon": "article",
             "enabled": True,
-            "system_hint": "从标题层级、首段直答、FAQ、案例、引用和 Schema 角度给建议。",
+            "system_hint": (
+                "从标题层级、首段直答、FAQ、案例、权威信源与 Schema 角度给建议；"
+                "强调实体一致与可核查事实，避免空泛「提升引用率」话术。"
+            ),
             "sample_questions": [
-                "一个 SaaS 官网首页怎样写更容易被 AI 摘要？",
+                "一个 SaaS 官网首页怎样写更容易被答案引擎摘要？",
                 "帮我设计一组适合 AI 搜索的 FAQ。",
-                "产品页应该如何增加可被引用的内容块？",
+                "产品页应该如何增加可抽取的答案块与事实卡？",
             ],
         },
         {
             "key": "brand-visibility",
             "name": "品牌可见性问答",
-            "description": "回答品牌在 ChatGPT、Perplexity、Gemini 等 AI 答案中被理解、引用和推荐的问题。",
+            "description": "回答品牌在答案引擎中被正确理解、提及与推荐所需的实体与信源建设问题。",
             "icon": "travel_explore",
             "enabled": True,
-            "system_hint": "把品牌实体、第三方引用、权威背书、官网资料和行业语境联系起来回答。",
+            "system_hint": (
+                "把品牌实体、第三方信源、权威背书、官网资料和行业语境联系起来回答；"
+                "说明提及/引用需答案面板抽样验证，页面分不能代替引用率。"
+            ),
             "sample_questions": [
                 "AI 为什么没有推荐我的品牌？",
                 "如何让 AI 更准确理解我们的公司定位？",
-                "品牌引用和第三方提及应该怎么建设？",
+                "品牌提及与第三方信源应该怎么建设？",
             ],
         },
         {
@@ -104,7 +120,10 @@ DEFAULT_SOLUTION_CHANNELS = {
             "description": "把问答结论进一步拆成 30/60/90 天计划、任务优先级和团队分工。",
             "icon": "checklist",
             "enabled": True,
-            "system_hint": "输出可执行计划，按阶段、负责人、交付物和衡量指标组织。",
+            "system_hint": (
+                "输出可执行计划，按阶段、负责人、交付物和衡量指标组织；"
+                "指标需区分代理信号与答案抽样，勿承诺保证引用率。"
+            ),
             "sample_questions": [
                 "给我一份 30/60/90 天 GEO 执行计划。",
                 "市场团队和内容团队应该如何分工做 GEO？",
@@ -178,7 +197,7 @@ DEFAULT_FRONTEND_MODULES = {
             "path": "/solutions",
             "description": "GEO AI 问答和会话页",
             "enabled": True,
-            "protected_paths": ["/solutions"],
+            "protected_paths": [],
         },
         {
             "key": "plans",
@@ -203,22 +222,6 @@ DEFAULT_FRONTEND_MODULES = {
             "description": "JSON-LD、llms.txt、标题和知识库等小工具",
             "enabled": True,
             "protected_paths": ["/tools"],
-        },
-        {
-            "key": "experts",
-            "name": "专家",
-            "path": "/experts",
-            "description": "GEO 专家人物频道",
-            "enabled": True,
-            "protected_paths": ["/experts"],
-        },
-        {
-            "key": "tutorial",
-            "name": "教程",
-            "path": "/tutorial",
-            "description": "教程内容和详情页",
-            "enabled": True,
-            "protected_paths": ["/tutorial"],
         },
     ],
 }
@@ -585,10 +588,11 @@ def _build_frontend_module_config(values: dict[str, Any]) -> dict[str, Any]:
     for default_module in defaults["modules"]:
         key = default_module["key"]
         override = raw_by_key.get(key) or {}
+        enabled = _pick_bool(override.get("enabled"), default_module["enabled"])
         modules.append(
             {
                 **default_module,
-                "enabled": _pick_bool(override.get("enabled"), default_module["enabled"]),
+                "enabled": enabled,
             }
         )
 
@@ -869,4 +873,13 @@ async def get_ai_usage_policy_config(force_refresh: bool = False) -> dict[str, A
     if force_refresh:
         await invalidate_runtime_settings_cache()
     values = await _load_runtime_settings()
-    return _build_ai_usage_policy_config(values)
+    policy = _build_ai_usage_policy_config(values)
+    # 演示环境可通过环境变量强制开放匿名 AI（不改库内策略记录）
+    try:
+        from app.core.config import settings
+
+        if bool(getattr(settings, "GEORANK_ALLOW_ANONYMOUS_AI", False)):
+            policy = {**policy, "allow_anonymous_ai_usage": True}
+    except Exception:
+        pass
+    return policy

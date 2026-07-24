@@ -68,15 +68,17 @@ export async function listSolutionConversations(
 }
 
 export async function getSolutionConversation(
-  token: string,
+  token: string | null | undefined,
   conversationId: string
 ): Promise<SolutionConversationDetail> {
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
   const response = await fetch(
     `${API_BASE}/api/solutions/conversations/${encodeURIComponent(conversationId)}`,
     {
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
+      headers,
       cache: 'no-store'
     }
   );
@@ -84,18 +86,21 @@ export async function getSolutionConversation(
 }
 
 export async function streamSolutionChat(
-  token: string,
+  token: string | null | undefined,
   body: SolutionChatRequest,
   onEvent: (event: SolutionStreamEvent) => void,
   signal?: AbortSignal
 ) {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...getByokHeaders()
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
   const response = await fetch(`${API_BASE}/api/solutions/chat/stream`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-      ...getByokHeaders()
-    },
+    headers,
     body: JSON.stringify(body),
     signal
   });

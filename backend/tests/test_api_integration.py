@@ -2921,10 +2921,10 @@ class ApiIntegrationTests(unittest.TestCase):
 
         self.assertFalse(self.run_async(_report_exists()))
 
-    def test_anonymous_solutions_chat_requires_login_for_platform_quota(self):
+    def test_anonymous_solutions_chat_can_use_platform_quota(self):
         with patch(
             "app.api.routes.solutions._run_rag",
-            new=AsyncMock(return_value=("不应执行", [])),
+            new=AsyncMock(return_value=("匿名公开问答可用", [], True)),
         ) as run_rag:
             chat_response = self.run_async(
                 self.client.post(
@@ -2933,8 +2933,9 @@ class ApiIntegrationTests(unittest.TestCase):
                 )
             )
 
-        self.assertEqual(chat_response.status_code, 401, chat_response.text)
-        run_rag.assert_not_awaited()
+        self.assertEqual(chat_response.status_code, 200, chat_response.text)
+        run_rag.assert_awaited()
+        self.assertEqual(chat_response.json()["reply"], "匿名公开问答可用")
 
     def test_authenticated_user_can_claim_public_solution_conversation(self):
         async def _create_legacy_public_conversation():

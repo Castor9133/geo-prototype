@@ -168,11 +168,6 @@ export function AdminDashboard({token, userLabel}: AdminDashboardProps) {
               <strong>8</strong>
               <p>{t('keywordsCopy')}</p>
             </Link>
-            <Link className="admin-queue-card" href={localizeHref(locale, '/tutorials')}>
-              <span className="admin-queue-card__title">{t('tutorialsTitle')}</span>
-              <strong>{dashboard.total_contents || 0}</strong>
-              <p>{t('tutorialsCopy')}</p>
-            </Link>
           </div>
         </article>
 

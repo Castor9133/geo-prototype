@@ -3,7 +3,20 @@ API 路由汇总
 """
 from fastapi import APIRouter
 
-from app.api.routes import auth, companies, diagnostics, solutions, content, admin, settings, keywords, experts, usage
+from app.api.routes import (
+    auth,
+    companies,
+    diagnostics,
+    solutions,
+    content,
+    admin,
+    settings,
+    keywords,
+    experts,
+    usage,
+    integrations,
+    trust_obs,
+)
 
 router = APIRouter()
 
@@ -15,5 +28,7 @@ router.include_router(content.router,      prefix="/content",     tags=["内容"
 router.include_router(keywords.router,     prefix="/keywords",    tags=["拓词"])
 router.include_router(experts.router,      prefix="/experts",     tags=["专家"])
 router.include_router(usage.router,        prefix="/usage",       tags=["AI 用量"])
+router.include_router(integrations.router, prefix="/integrations", tags=["集成"])
+router.include_router(trust_obs.router,   prefix="/admin/trust-obs", tags=["可信观测"])
 router.include_router(admin.router,        prefix="/admin",       tags=["后台管理"])
 router.include_router(settings.router,     prefix="/settings",    tags=["站点配置"])

@@ -837,6 +837,9 @@ async def resolve_ai_access(
 ) -> AIRequestAccess:
     policy = await get_ai_usage_policy_config()
     module_key = module.strip().lower()
+    # 公开问答可匿名使用平台额度；全局日预算仍生效，且不放开诊断等其它模块。
+    if not current_user and module_key == "solutions":
+        policy = {**policy, "allow_anonymous_ai_usage": True}
     input_tokens = estimate_token_count(prompt_text)
     provider_override = parse_byok_override(request, policy)
     if provider_override:

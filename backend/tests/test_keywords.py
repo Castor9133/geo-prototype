@@ -12,7 +12,11 @@ from app.core.database import async_session, engine
 from app.core.config import settings
 from app.main import app
 from app.models.settings import Setting
-from app.services.keyword_expansion import DIMENSIONS, expand_keywords
+from app.services.keyword_expansion import (
+    DIMENSIONS,
+    _is_low_quality_keyword,
+    expand_keywords,
+)
 from app.services.runtime_settings import invalidate_runtime_settings_cache
 
 
@@ -72,6 +76,24 @@ class KeywordExpansionServiceTests(unittest.IsolatedAsyncioTestCase):
         scenario_keywords = [item["keyword"] for item in payload["dimensions"][1]["items"]]
         self.assertTrue(any("家长" in keyword or "学生" in keyword for keyword in scenario_keywords))
         self.assertFalse(any("B2B" in keyword or "SaaS" in keyword for keyword in scenario_keywords))
+
+    async def test_media_seed_uses_content_media_profile(self):
+        with patch(
+            "app.services.keyword_expansion.ai_client.complete",
+            new=AsyncMock(side_effect=RuntimeError("gateway unavailable")),
+        ):
+            payload = await expand_keywords(["广电栏目 GEO"])
+
+        self.assertEqual(payload["profile"]["name"], "内容媒体")
+        question_keywords = [
+            item["keyword"] for item in next(d for d in payload["dimensions"] if d["key"] == "question")["items"]
+        ]
+        self.assertTrue(any("如何" in kw or "怎么" in kw for kw in question_keywords))
+
+    def test_low_quality_keyword_filter_rejects_empty_stacking(self):
+        self.assertTrue(_is_low_quality_keyword("GEO平台", "GEO", "semantic"))
+        self.assertTrue(_is_low_quality_keyword("GEO优化", "GEO优化", "scenario"))
+        self.assertFalse(_is_low_quality_keyword("如何开始做GEO优化", "GEO优化", "question"))
 
 
 class KeywordExpansionApiTests(unittest.IsolatedAsyncioTestCase):

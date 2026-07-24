@@ -14,14 +14,54 @@ import re
 from app.services.ai_client import ai_client
 
 DIMENSIONS = [
-    {"key": "semantic", "name": "语义拓展", "icon": "hub", "description": "同义词、相关术语、长尾变体"},
-    {"key": "scenario", "name": "场景覆盖", "icon": "category", "description": "使用场景、上下文、应用情境"},
-    {"key": "commercial", "name": "商业意图", "icon": "shopping_cart", "description": "购买信号、比较、定价查询"},
-    {"key": "ranking", "name": "推荐榜单", "icon": "emoji_events", "description": "最佳、推荐、Top 类查询"},
-    {"key": "review", "name": "产品评测", "icon": "rate_review", "description": "评测、对比、优缺点查询"},
-    {"key": "brand", "name": "品牌关联", "icon": "business", "description": "品牌名、产品名、替代方案"},
-    {"key": "question", "name": "问答长尾", "icon": "help", "description": "如何、怎么、为什么类查询"},
-    {"key": "technical", "name": "技术方案", "icon": "engineering", "description": "部署、集成、API、架构类查询"},
+    {
+        "key": "semantic",
+        "name": "语义拓展",
+        "icon": "hub",
+        "description": "同义/近义、行业术语、实体别名与可检索长尾变体（保持实体一致）",
+    },
+    {
+        "key": "scenario",
+        "name": "场景覆盖",
+        "icon": "category",
+        "description": "行业场景、角色场景、使用情境与任务语境词（含传媒/运营场景）",
+    },
+    {
+        "key": "commercial",
+        "name": "商业意图",
+        "icon": "shopping_cart",
+        "description": "采购、比价、选型、报价、合作等转化向查询",
+    },
+    {
+        "key": "ranking",
+        "name": "推荐榜单",
+        "icon": "emoji_events",
+        "description": "推荐、排行、哪家好、选型清单类比较查询",
+    },
+    {
+        "key": "review",
+        "name": "产品评测",
+        "icon": "rate_review",
+        "description": "评测、对比、优缺点、值不值、避坑类查询",
+    },
+    {
+        "key": "brand",
+        "name": "品牌关联",
+        "icon": "business",
+        "description": "品牌/栏目/产品名、竞品与替代方案关联词",
+    },
+    {
+        "key": "question",
+        "name": "问答长尾",
+        "icon": "help",
+        "description": "问题式自然语言查询（如何/怎么/为什么/是否/有哪些）",
+    },
+    {
+        "key": "technical",
+        "name": "技术方案",
+        "icon": "engineering",
+        "description": "落地方法、流程、指标、集成与实施类专业查询",
+    },
 ]
 
 DIMENSION_MAP = {item["key"]: item for item in DIMENSIONS}
@@ -32,17 +72,105 @@ PROFILE_LIBRARY = {
         "company_hint": "提供“{seed}”相关软件、咨询或服务的企业",
         "business_model": "偏 B2B / 企业服务 / 解决方案导向",
         "target_users": ["企业负责人", "市场团队", "增长团队", "内容团队"],
-        "keyword_strategy": "优先覆盖服务采购、方案对比、团队场景和实施决策。",
+        "keyword_strategy": "优先覆盖采购选型、方案对比、落地实施与可测量成效；少用空泛平台/工具堆砌。",
         "blocked_terms": [],
         "templates": {
-            "semantic": ["{s}", "{s}平台", "{s}工具", "{s}解决方案", "智能{s}", "企业级{s}", "{s}优化", "{s}系统", "{s}服务", "{s}引擎"],
-            "scenario": ["B2B {s}", "企业 {s}", "品牌 {s}", "SaaS {s}", "增长场景 {s}", "AI 搜索场景 {s}", "内容团队 {s}", "市场部 {s}", "官网 {s}", "咨询场景 {s}"],
-            "commercial": ["{s}价格", "{s}服务报价", "{s}多少钱", "{s}采购指南", "{s}试用", "{s}哪个好", "{s}对比价格", "{s}实施费用", "{s}方案报价", "{s}预算"],
-            "ranking": ["最佳{s}", "{s}推荐", "{s}排行榜", "{s}Top10", "{s}服务商推荐", "国产{s}推荐", "{s}榜单", "{s}哪家好", "{s}头部厂商", "{s}优选"],
-            "review": ["{s}评测", "{s}对比", "{s}优缺点", "{s}测评", "{s}案例分析", "{s}实测", "{s}口碑", "{s}选型", "{s}体验", "{s}使用感受"],
-            "brand": ["{s}品牌", "{s}服务商", "{s}厂商", "{s}公司", "{s}竞品", "{s}替代方案", "{s}官网", "{s}产品矩阵", "{s}合作伙伴", "{s}生态"],
-            "question": ["什么是{s}", "如何做{s}", "{s}怎么用", "为什么要做{s}", "{s}有效吗", "{s}适合谁", "{s}有哪些步骤", "{s}如何落地", "{s}有哪些误区", "{s}怎么评估"],
-            "technical": ["{s} API", "{s}部署方案", "{s}集成", "{s}技术架构", "{s}数据结构", "{s}工作流", "{s}自动化", "{s}系统设计", "{s}对接", "{s}实施方案"],
+            "semantic": [
+                "{s}",
+                "{s}方法论",
+                "{s}策略",
+                "{s}实践指南",
+                "企业{s}",
+                "{s}能力建设",
+                "{s}内容工程",
+                "{s}可见性优化",
+                "{s}答案引擎优化",
+                "{s}知识库建设",
+            ],
+            "scenario": [
+                "品牌官网 {s}",
+                "内容团队做{s}",
+                "市场部 {s}落地",
+                "B2B 获客 {s}",
+                "AI 搜索可见性 {s}",
+                "行业专题页 {s}",
+                "FAQ 建设 {s}",
+                "案例页 {s}",
+                "传媒机构 {s}",
+                "咨询项目 {s}",
+            ],
+            "commercial": [
+                "{s}服务报价",
+                "{s}多少钱",
+                "{s}采购指南",
+                "{s}选型标准",
+                "{s}试用评估",
+                "{s}哪个服务商好",
+                "{s}实施费用",
+                "{s}预算怎么定",
+                "{s}合作方案",
+                "{s}ROI 怎么算",
+            ],
+            "ranking": [
+                "{s}服务商推荐",
+                "{s}工具对比榜",
+                "国产{s}推荐",
+                "{s}哪家更适合中小企业",
+                "{s}头部厂商对比",
+                "{s}选型清单",
+                "{s}排行怎么看",
+                "适合传媒的{s}方案",
+                "{s}优选名单",
+                "{s}TOP 对比",
+            ],
+            "review": [
+                "{s}实测复盘",
+                "{s}优缺点",
+                "{s}案例拆解",
+                "{s}选型避坑",
+                "{s}值不值得做",
+                "{s}效果怎么验证",
+                "{s}和 SEO 区别评测",
+                "{s}落地难点",
+                "{s}口碑怎么样",
+                "{s}失败案例",
+            ],
+            "brand": [
+                "{s}服务商",
+                "{s}解决方案厂商",
+                "{s}竞品对比",
+                "{s}替代方案",
+                "{s}官网能力",
+                "{s}产品矩阵",
+                "{s}合作伙伴生态",
+                "{s}咨询公司",
+                "{s}开源方案",
+                "{s}自建还是采购",
+            ],
+            "question": [
+                "什么是{s}",
+                "如何开始做{s}",
+                "{s}怎么落地",
+                "为什么企业需要{s}",
+                "{s}有效吗怎么验证",
+                "{s}适合哪些行业",
+                "{s}有哪些关键步骤",
+                "{s}常见误区有哪些",
+                "如何评估{s}效果",
+                "{s}和 SEO 怎么配合",
+            ],
+            "technical": [
+                "{s}实施路线图",
+                "{s}内容工作流",
+                "{s}知识库结构",
+                "{s}Schema 清单",
+                "{s}监测指标",
+                "{s}与 CMS 对接",
+                "{s}事实卡模板",
+                "{s}发布与分发流程",
+                "{s}答案抽样方法",
+                "{s}自动化流水线",
+            ],
         },
     },
     "consumer_education": {
@@ -101,20 +229,108 @@ PROFILE_LIBRARY = {
     },
     "content_media": {
         "name": "内容媒体",
-        "company_hint": "围绕“{seed}”做内容创作、分发或知识付费的媒体或个人 IP",
-        "business_model": "偏内容生产 / 广告或知识付费 / 社群增长",
-        "target_users": ["内容创作者", "媒体团队", "知识付费用户"],
-        "keyword_strategy": "优先覆盖选题、分发、涨粉、变现和内容策略。",
+        "company_hint": "围绕“{seed}”做内容创作、栏目运营、分发或知识付费的媒体机构或创作者",
+        "business_model": "偏内容生产 / 栏目运营 / 广告或知识付费 / 社群增长",
+        "target_users": ["内容创作者", "媒体编辑", "栏目运营", "知识付费用户"],
+        "keyword_strategy": "优先覆盖选题、栏目实体、场景词、问题式长尾与可移交内容生产的词；避免空泛涨粉话术堆砌。",
         "blocked_terms": ["b2b", "saas"],
         "templates": {
-            "semantic": ["{s}", "{s}内容", "{s}选题", "{s}创作", "{s}栏目", "{s}账号", "{s}方法论", "{s}教程", "{s}案例", "{s}增长"],
-            "scenario": ["公众号 {s}", "短视频 {s}", "小红书 {s}", "知识付费 {s}", "个人IP {s}", "涨粉场景 {s}", "社群场景 {s}", "品牌内容 {s}", "内容运营 {s}", "分发场景 {s}"],
-            "commercial": ["{s}报价", "{s}合作", "{s}投放", "{s}怎么变现", "{s}接单", "{s}课程价格", "{s}社群收费", "{s}赞助", "{s}账号报价", "{s}服务价格"],
-            "ranking": ["{s}推荐", "{s}榜单", "最佳{s}", "{s}优选", "{s}排行榜", "{s}热门账号", "{s}创作者推荐", "{s}课程推荐", "{s}案例推荐", "{s}资源推荐"],
-            "review": ["{s}测评", "{s}拆解", "{s}对比", "{s}复盘", "{s}口碑", "{s}值不值", "{s}案例分析", "{s}优缺点", "{s}体验", "{s}使用感受"],
-            "brand": ["{s}账号", "{s}品牌", "{s}作者", "{s}课程", "{s}栏目", "{s}社群", "{s}替代方案", "{s}官网", "{s}工作室", "{s}IP"],
-            "question": ["如何做{s}", "{s}怎么起号", "{s}怎么变现", "{s}怎么选题", "{s}适合谁", "{s}怎么运营", "{s}如何涨粉", "{s}有哪些坑", "{s}怎么持续输出", "{s}值得做吗"],
-            "technical": ["{s}选题流程", "{s}内容结构", "{s}分发策略", "{s}工作流", "{s}排期", "{s}脚本模板", "{s}素材库", "{s}社群转化", "{s}账号定位", "{s}增长模型"],
+            "semantic": [
+                "{s}",
+                "{s}栏目",
+                "{s}专题",
+                "{s}解读",
+                "{s}知识库",
+                "{s}事实卡",
+                "{s}权威问答",
+                "{s}内容工程",
+                "{s}选题库",
+                "{s}术语表",
+            ],
+            "scenario": [
+                "广电媒体 {s}",
+                "新闻栏目 {s}",
+                "公众号深度稿 {s}",
+                "短视频科普 {s}",
+                "小红书种草 {s}",
+                "行业白皮书 {s}",
+                "突发事件解读 {s}",
+                "品牌专访 {s}",
+                "社群答疑 {s}",
+                "知识付费课 {s}",
+            ],
+            "commercial": [
+                "{s}栏目合作报价",
+                "{s}商业赞助怎么谈",
+                "{s}投放合作",
+                "{s}如何变现",
+                "{s}课程定价",
+                "{s}社群收费模式",
+                "{s}品牌定制内容报价",
+                "{s}账号商业价值",
+                "{s}内容服务价格",
+                "{s}接单标准",
+            ],
+            "ranking": [
+                "{s}优质栏目推荐",
+                "{s}创作者榜单",
+                "{s}课程推荐",
+                "{s}案例精选",
+                "值得关注的{s}",
+                "{s}资源清单",
+                "{s}哪家媒体强",
+                "{s}选题方向榜",
+                "{s}工具推荐给媒体",
+                "{s}优选账号",
+            ],
+            "review": [
+                "{s}栏目复盘",
+                "{s}内容拆解",
+                "{s}值不值得做",
+                "{s}优缺点",
+                "{s}爆款为何失效",
+                "{s}口碑怎么样",
+                "{s}案例对比",
+                "{s}踩坑记录",
+                "{s}传播效果评估",
+                "{s}可信度检查",
+            ],
+            "brand": [
+                "{s}官方账号",
+                "{s}栏目品牌",
+                "{s}主创团队",
+                "{s}媒体矩阵",
+                "{s}竞品栏目",
+                "{s}替代内容源",
+                "{s}官网专栏",
+                "{s}工作室定位",
+                "{s}IP 人设",
+                "{s}权威信源",
+            ],
+            "question": [
+                "如何做好{s}",
+                "{s}怎么选题才专业",
+                "{s}怎么保证事实准确",
+                "{s}适合哪些受众",
+                "{s}如何持续产出",
+                "{s}有哪些常见坑",
+                "媒体做{s}从哪开始",
+                "{s}如何写答案型文章",
+                "{s}值得投入吗",
+                "怎样用{s}支撑 GEO",
+            ],
+            "technical": [
+                "{s}选题流程",
+                "{s}事实核对清单",
+                "{s}答案块结构",
+                "{s}分发工作流",
+                "{s}排期模板",
+                "{s}素材与信源库",
+                "{s}FAQ 生产规范",
+                "{s}栏目定位方法",
+                "{s}效果抽样指标",
+                "{s}多平台改编流程",
+            ],
         },
     },
 }
@@ -123,9 +339,53 @@ PROFILE_RULES = [
     ("consumer_education", ["教育", "培训", "课程", "辅导", "数学", "英语", "家教", "提分", "考研", "高考", "留学", "题库", "老师", "小初高"]),
     ("local_service", ["家政", "搬家", "装修", "维修", "保洁", "摄影", "婚礼", "月嫂", "开锁", "搬运", "鲜花", "宠物", "律师", "牙科"]),
     ("ecommerce_brand", ["电商", "护肤", "美妆", "服饰", "鞋", "箱包", "食品", "咖啡", "母婴", "礼盒", "面膜", "香水", "零食", "品牌"]),
-    ("content_media", ["公众号", "短视频", "小红书", "内容创作", "知识付费", "个人ip", "自媒体", "课程博主", "社群", "涨粉", "选题"]),
+    (
+        "content_media",
+        [
+            "公众号",
+            "短视频",
+            "小红书",
+            "内容创作",
+            "知识付费",
+            "个人ip",
+            "自媒体",
+            "课程博主",
+            "社群",
+            "涨粉",
+            "选题",
+            "传媒",
+            "广电",
+            "栏目",
+            "媒体",
+            "报道",
+            "新闻",
+            "记者",
+            "编辑",
+            "电视台",
+            "广播",
+        ],
+    ),
     ("enterprise_service", ["saas", "crm", "api", "ai", "geo", "seo", "服务商", "平台", "系统", "解决方案", "营销", "增长", "运营", "企业", "咨询", "官网优化"]),
 ]
+
+# 低质堆砌词根：单独出现或仅「种子+该词」时优先过滤
+_LOW_QUALITY_SUFFIXES = {
+    "平台",
+    "工具",
+    "系统",
+    "引擎",
+    "方案",
+    "服务",
+    "优化",
+    "推荐",
+    "榜单",
+    "排行榜",
+    "top10",
+    "优选",
+    "好物",
+    "增长",
+    "内容",
+}
 
 
 def normalize_seeds(seeds: list[str]) -> list[str]:
@@ -185,6 +445,30 @@ def _is_keyword_allowed(profile: dict, keyword: str) -> bool:
     return True
 
 
+def _is_low_quality_keyword(keyword: str, seed: str, dimension_key: str) -> bool:
+    """过滤空泛堆砌、过短、纯符号及跨维度无区分的糙词。"""
+    text = re.sub(r"\s+", " ", (keyword or "").strip())
+    if len(text) < 2:
+        return True
+    if re.fullmatch(r"[\W_]+", text, flags=re.UNICODE):
+        return True
+    # 连续重复片段：如「最佳最佳」「GEOGEO」
+    if re.search(r"(.{2,})\1{2,}", text):
+        return True
+    compact = re.sub(r"\s+", "", text).lower()
+    seed_compact = re.sub(r"\s+", "", seed or "").lower()
+    if not seed_compact:
+        return False
+    # 除 semantic 外，禁止输出与种子完全相同的词
+    if dimension_key != "semantic" and compact == seed_compact:
+        return True
+    # 「种子+空泛后缀」且总长过短：如「GEO平台」
+    for suffix in _LOW_QUALITY_SUFFIXES:
+        if compact == f"{seed_compact}{suffix}" and len(compact) <= len(seed_compact) + 3:
+            return True
+    return False
+
+
 def _fallback_item(seed: str, dimension_key: str, keyword: str) -> dict:
     recommendation_base = {
         "semantic": 62,
@@ -219,7 +503,12 @@ def _fallback_dimension_items(seed: str, profile: dict, dimension_key: str, limi
     seen = set()
     for template in _templates_for(profile["key"], dimension_key):
         keyword = template.replace("{s}", seed).strip()
-        if not keyword or keyword in seen or not _is_keyword_allowed(profile, keyword):
+        if (
+            not keyword
+            or keyword in seen
+            or not _is_keyword_allowed(profile, keyword)
+            or _is_low_quality_keyword(keyword, seed, dimension_key)
+        ):
             continue
         seen.add(keyword)
         items.append(_fallback_item(seed, dimension_key, keyword))
@@ -257,7 +546,12 @@ def _sanitize_dimension_items(seed: str, dimension_key: str, raw_items: list[dic
     seen = set()
     for raw in raw_items or []:
         keyword = re.sub(r"\s+", " ", str(raw.get("keyword") or raw.get("kw") or "").strip())
-        if not keyword or keyword in seen or not _is_keyword_allowed(profile, keyword):
+        if (
+            not keyword
+            or keyword in seen
+            or not _is_keyword_allowed(profile, keyword)
+            or _is_low_quality_keyword(keyword, seed, dimension_key)
+        ):
             continue
         seen.add(keyword)
         try:
@@ -270,12 +564,13 @@ def _sanitize_dimension_items(seed: str, dimension_key: str, raw_items: list[dic
             business = 0
         recommendation = max(35, min(99, recommendation or _stable_score(seed, dimension_key, keyword, 60, 28)))
         business = max(35, min(99, business or _stable_score(seed, f"{dimension_key}-biz", keyword, 58, 26)))
+        reason = str(raw.get("reason") or "").strip()[:120] or None
         items.append(
             {
                 "keyword": keyword[:80],
                 "recommendation_score": recommendation,
                 "business_score": business,
-                "reason": str(raw.get("reason") or "").strip()[:120] or None,
+                "reason": reason,
             }
         )
         if len(items) >= 10:
@@ -284,30 +579,48 @@ def _sanitize_dimension_items(seed: str, dimension_key: str, raw_items: list[dic
 
 
 async def _ai_expand(seeds: list[str], profile: dict, provider_override=None) -> list[dict]:
-    system = """你是 GEO 关键词策略专家。你会先理解种子词背后的业务画像，再按画像输出 8 个维度的关键词词包。严格返回 JSON：
+    system = """你是面向中文传媒与 GEO（生成式引擎优化）场景的关键词策略专家。
+先理解种子词背后的业务画像与实体，再按 8 个意图维度输出可落地、可移交 GEOFlow 内容生产的词包。
+
+严格只返回 JSON（不要 markdown，不要解释）：
 {
   "dimensions": [
     {
       "key": "semantic|scenario|commercial|ranking|review|brand|question|technical",
       "items": [
         {
-          "keyword": "关键词",
+          "keyword": "可检索、可写作的中文关键词或问题式查询",
           "recommendation_score": 0-100整数,
           "business_score": 0-100整数,
-          "reason": "简短原因"
+          "reason": "一句可审计理由：覆盖哪类意图/场景/实体"
         }
       ]
     }
   ]
 }
-规则：
-1. 每个维度输出 8-10 个词。
-2. 先遵守给定业务画像，再生成词包。
-3. 如果画像明显偏 C 端教育/本地服务/内容创作，就不要输出 B2B、SaaS、市场部等不匹配表达。
-4. recommendation_score 表示该词适合用于 GEO 推荐与被 AI 引用的潜力。
-5. business_score 表示商业转化和采购/转化意图强度。
-6. 关键词必须自然、真实、中文为主，不要堆砌符号。
-7. 不要输出解释文字，只返回 JSON。"""
+
+质量硬约束：
+1. 每个维度输出 8-10 个词；八维意图必须可区分，禁止把同一说法换皮塞进多个维度。
+2. 实体一致：词必须锚定种子实体/业务（品牌、栏目、产品、主题），禁止漂移到无关行业。
+3. 少空泛：禁止「XX平台/工具/系统/引擎/优化/推荐/榜单」式无信息堆砌；优先具体场景、角色、任务与长尾。
+4. 维度细则：
+   - semantic：同义近义、行业术语、实体别名、可检索变体（可含 1 个种子原词）
+   - scenario：场景/角色/任务语境（如栏目、官网、FAQ、专题、获客、科普）
+   - commercial：采购、报价、选型、合作、预算等转化意图
+   - ranking：推荐/对比/哪家好/清单类（需带比较对象或适用边界）
+   - review：评测、优缺点、避坑、值不值、复盘
+   - brand：品牌/栏目/竞品/替代方案关联
+   - question：必须是问题式自然语言（如何/怎么/为什么/是否/有哪些/适合谁）
+   - technical：落地方法、流程、指标、结构、工作流、实施清单
+5. 长尾优先：至少一半词应像真实用户会搜/会问的完整短语（可含 6-20 字），避免单字或过短标签。
+6. 画像约束：严格遵守给定 profile；教育/本地/内容媒体画像下禁止 B2B、SaaS、市场部等错配表达。
+7. 评分口径（代理信号，非实测）：
+   - recommendation_score = 作为 GEO 选题/答案引擎问题覆盖与内容生产优先级的潜力
+   - business_score = 商业转化/采购/合作意图强度
+   - 禁止把分数解释成「AI 答案引用率」；页面就绪信号 ≠ 答案引用结果
+8. 可移交 GEOFlow：每个 keyword 应能直接作为一篇内容任务的种子（标题线索或事实卡主题），reason 写清用途。
+9. 去重：同一词包内禁止重复、近义重复（如「XX推荐」与「推荐XX」同时出现超过必要）。
+10. 中文为主，自然可读；不要符号堆砌、英文乱码或营销夸张词。"""
 
     user = json.dumps(
         {
@@ -324,6 +637,11 @@ async def _ai_expand(seeds: list[str], profile: dict, provider_override=None) ->
                 {"key": item["key"], "name": item["name"], "description": item["description"]}
                 for item in DIMENSIONS
             ],
+            "handoff_hint": {
+                "consumer": "GEOFlow",
+                "expected_use": "每个关键词可独立生成知识约束正文/FAQ/榜单任务",
+                "avoid": "空泛词、跨维度重复、把页面 citation 就绪度说成答案引用率",
+            },
         },
         ensure_ascii=False,
     )

@@ -10,3 +10,4 @@ export * from './content';
 export * from './diagnostics';
 export * from './keywords';
 export * from './solutions';
+export * from './integrations';

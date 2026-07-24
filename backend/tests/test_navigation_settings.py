@@ -6,6 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.services.navigation_settings import (  # noqa: E402
     NavigationMenuValidationError,
+    ensure_suite_in_navigation_menu,
     get_default_navigation_menu,
     normalize_navigation_menu_payload,
 )
@@ -15,9 +16,17 @@ class NavigationSettingsTests(unittest.TestCase):
     def test_default_menu_uses_new_tab(self):
         menu = get_default_navigation_menu()
 
-        self.assertGreaterEqual(len(menu["items"]), 8)
-        self.assertTrue(all(item["target"] == "_blank" for item in menu["items"]))
-        self.assertEqual(menu["items"][0]["url"], "/companies")
+        self.assertGreaterEqual(len(menu["items"]), 7)
+        self.assertEqual(menu["items"][0]["id"], "suite")
+        self.assertEqual(menu["items"][0]["url"], "/suite")
+        self.assertEqual(menu["items"][0]["target"], "_self")
+        self.assertTrue(
+            all(item["target"] == "_blank" for item in menu["items"] if item["id"] != "suite")
+        )
+        self.assertEqual(menu["items"][1]["url"], "/companies")
+        self.assertFalse(
+            {"experts", "tutorial", "github"} & {item["id"] for item in menu["items"]}
+        )
 
     def test_normalizer_preserves_order_and_supported_targets(self):
         menu = normalize_navigation_menu_payload(
@@ -46,6 +55,47 @@ class NavigationSettingsTests(unittest.TestCase):
             normalize_navigation_menu_payload(
                 {"items": [{"label": "危险链接", "url": "javascript:alert(1)"}]}
             )
+
+    def test_ensure_suite_prepends_missing_item(self):
+        menu = ensure_suite_in_navigation_menu(
+            {
+                "items": [
+                    {"id": "companies", "label": "公司", "url": "/companies", "target": "_blank"},
+                    {"id": "diagnostic", "label": "诊断", "url": "/diagnostic", "target": "_blank"},
+                ]
+            }
+        )
+
+        self.assertEqual(menu["items"][0]["id"], "suite")
+        self.assertEqual(menu["items"][0]["url"], "/suite")
+        self.assertEqual(menu["items"][1]["id"], "companies")
+
+    def test_ensure_suite_keeps_existing_suite(self):
+        menu = ensure_suite_in_navigation_menu(
+            {
+                "items": [
+                    {"id": "suite", "label": "GEO Suite", "url": "/suite", "target": "_self"},
+                    {"id": "companies", "label": "公司", "url": "/companies", "target": "_blank"},
+                ]
+            }
+        )
+
+        self.assertEqual([item["id"] for item in menu["items"]], ["suite", "companies"])
+
+    def test_ensure_suite_strips_removed_product_entries(self):
+        menu = ensure_suite_in_navigation_menu(
+            {
+                "items": [
+                    {"id": "suite", "label": "GEO Suite", "url": "/suite", "target": "_self"},
+                    {"id": "experts", "label": "专家", "url": "/experts", "target": "_blank"},
+                    {"id": "tutorial", "label": "教程", "url": "/tutorial", "target": "_blank"},
+                    {"id": "github", "label": "GitHub", "url": "https://github.com/yaojingang/georank", "target": "_blank"},
+                    {"id": "companies", "label": "公司", "url": "/companies", "target": "_blank"},
+                ]
+            }
+        )
+
+        self.assertEqual([item["id"] for item in menu["items"]], ["suite", "companies"])
 
 
 if __name__ == "__main__":

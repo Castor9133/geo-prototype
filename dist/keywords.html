@@ -43,8 +43,9 @@
                     <h2 class="text-xl md:text-2xl font-extrabold font-headline tracking-tight">拓词结果</h2>
                     <p class="text-sm text-on-surface-variant mt-1">为 "<span id="seed-kw-display" class="font-medium text-on-surface"></span>" 生成了 <span id="total-kw-count" class="font-bold text-on-surface">0</span> 个拓展关键词</p>
                 </div>
-                <div class="flex gap-3">
+                <div class="flex flex-wrap gap-3">
                     <button id="refine-btn" class="btn btn-outline px-4 py-2 rounded-lg text-xs font-bold inline-flex items-center gap-1.5"><span class="material-symbols-outlined text-sm">refresh</span>重新生成</button>
+                    <button id="send-geoflow-btn" class="btn btn-outline px-4 py-2 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 border-emerald-200 text-emerald-800 hover:bg-emerald-50"><span class="material-symbols-outlined text-sm">sync_alt</span>发送到 GEOFlow</button>
                     <button id="download-csv-btn" class="btn btn-primary px-4 py-2 rounded-lg text-xs font-bold inline-flex items-center gap-1.5"><span class="material-symbols-outlined text-sm">download</span>批量导出</button>
                 </div>
             </div>
@@ -111,7 +112,9 @@
     </main>
 
     <div id="footer-container"></div>
-    <script src="/js/common.js?v=20260716-first-paint-lifecycle"></script>
-    <script src="/js/keywords.js?v=20260716-first-paint-lifecycle"></script>
+    <script src="/js/common.js?v=20260724-demo-no-auth"></script>
+    <script src="/js/suite-workflow.js?v=20260722-suite-wf"></script>
+    <script src="/js/geoflow-handoff.js?v=20260722-suite-wf"></script>
+    <script src="/js/keywords.js?v=20260722-suite-wf"></script>
 </body>
 </html>

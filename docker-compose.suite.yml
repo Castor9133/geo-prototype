@@ -1,0 +1,31 @@
+# GEO Suite：在已有 GEORank / GEOFlow 之上叠加联调提示。
+# 用法见 docs/geo-suite.md 与 scripts/start-geo-suite.ps1
+#
+# 注意：两边各自保留独立 Postgres/Redis，避免数据碰撞。
+# GEORank API 容器访问本机 GEOFlow 时使用 host.docker.internal:18080。
+
+services:
+  api:
+    environment:
+      GEORANK_ALLOW_ANONYMOUS_AI: ${GEORANK_ALLOW_ANONYMOUS_AI:-true}
+      GEOFLOW_ENABLED: ${GEOFLOW_ENABLED:-true}
+      GEOFLOW_BASE_URL: ${GEOFLOW_BASE_URL:-http://host.docker.internal:18080}
+      GEOFLOW_PUBLIC_BASE_URL: ${GEOFLOW_PUBLIC_BASE_URL:-http://localhost:18080}
+      GEOFLOW_API_TOKEN: ${GEOFLOW_API_TOKEN:-}
+      GEOSUITE_SSO_SECRET: ${GEOSUITE_SSO_SECRET:-}
+      GEOSUITE_CALLBACK_SECRET: ${GEOSUITE_CALLBACK_SECRET:-${GEOSUITE_SSO_SECRET:-}}
+      GEOSUITE_PUBLIC_URL: ${GEOSUITE_PUBLIC_URL:-http://localhost:3009}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  worker:
+    environment:
+      GEORANK_ALLOW_ANONYMOUS_AI: ${GEORANK_ALLOW_ANONYMOUS_AI:-true}
+      GEOFLOW_ENABLED: ${GEOFLOW_ENABLED:-true}
+      GEOFLOW_BASE_URL: ${GEOFLOW_BASE_URL:-http://host.docker.internal:18080}
+      GEOFLOW_PUBLIC_BASE_URL: ${GEOFLOW_PUBLIC_BASE_URL:-http://localhost:18080}
+      GEOFLOW_API_TOKEN: ${GEOFLOW_API_TOKEN:-}
+      GEOSUITE_SSO_SECRET: ${GEOSUITE_SSO_SECRET:-}
+      GEOSUITE_CALLBACK_SECRET: ${GEOSUITE_CALLBACK_SECRET:-${GEOSUITE_SSO_SECRET:-}}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

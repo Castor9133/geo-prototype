@@ -72,19 +72,6 @@
         return url.toString();
     }
 
-    function buildTutorialLink(pathKey, slug = '') {
-        if (Routes?.buildTutorialDetail) {
-            return Routes.buildTutorialDetail(pathKey || slug);
-        }
-        const url = new URL('/tutorial', window.location.origin);
-        if (slug) url.searchParams.set('slug', slug);
-        return url.toString();
-    }
-
-    function tutorialCategory(item) {
-        return Array.isArray(item?.tags) && item.tags.length ? item.tags[0] : '教程';
-    }
-
     function renderCompanyLogo(company) {
         if (company.logo_url) {
             return `<img alt="${escapeHtml(company.name)} Logo" class="w-full h-full object-cover" src="${escapeHtml(company.logo_url)}">`;
@@ -166,30 +153,8 @@
     }
 
     function renderHotGuides() {
-        if (!elements.hotGuidesList) return;
-        const guides = [...state.tutorials]
-            .sort((a, b) => {
-                const byViews = Number(b.view_count || 0) - Number(a.view_count || 0);
-                if (byViews) return byViews;
-                return new Date(b.updated_at || 0).getTime() - new Date(a.updated_at || 0).getTime();
-            })
-            .slice(0, 3);
-
-        if (!guides.length) {
-            elements.hotGuidesList.innerHTML = '<span class="px-3 py-4 text-sm text-slate-400 border border-dashed border-slate-200 rounded-xl block">暂无热门指南</span>';
-            return;
-        }
-
-        elements.hotGuidesList.innerHTML = guides.map((item) => `
-            <a href="${buildTutorialLink(item.path_key, item.slug)}" class="block rounded-2xl border border-slate-100 bg-white px-4 py-4 transition-all hover:border-primary/20 hover:bg-slate-50">
-                <div class="flex items-center justify-between gap-3">
-                    <span class="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">${escapeHtml(tutorialCategory(item))}</span>
-                    <span class="text-[11px] font-semibold text-slate-400">${Number(item.reading_time_minutes || 3)} 分钟</span>
-                </div>
-                <p class="mt-3 text-sm font-bold leading-6 text-slate-800">${escapeHtml(item.title)}</p>
-                <p class="mt-2 text-xs leading-6 text-slate-500">适合快速补齐 ${escapeHtml(tutorialCategory(item))} 里的核心知识点与执行思路。</p>
-            </a>
-        `).join('');
+        // 教程频道已下线：保留静态常用入口（HTML 已写死），不再用教程 API 覆盖
+        return;
     }
 
     function renderHotCompanies() {
@@ -228,46 +193,25 @@
     }
 
     function renderTutorialSidebar() {
-        const orderedTutorials = [...state.tutorials].sort((a, b) => {
-            const byViews = Number(b.view_count || 0) - Number(a.view_count || 0);
-            if (byViews) return byViews;
-            return new Date(b.updated_at || 0).getTime() - new Date(a.updated_at || 0).getTime();
-        });
-        const [featured, ...rest] = orderedTutorials;
-        if (featured && elements.featuredTipTitle && elements.featuredTipLink) {
-            elements.featuredTipTitle.textContent = featured.title;
-            elements.featuredTipLink.href = buildTutorialLink(featured.path_key, featured.slug);
-            if (elements.featuredTipCopy) {
-                elements.featuredTipCopy.textContent = `来自教程频道「${tutorialCategory(featured)}」章节，预计 ${Number(featured.reading_time_minutes || 3)} 分钟读完，适合作为今天的 GEO 学习起点。`;
-            }
-        }
-        renderHotGuides();
         renderHotCompanies();
-
         if (!elements.resourceLinks) return;
-        if (!state.tutorials.length) {
-            elements.resourceLinks.innerHTML = '<span class="px-3 py-4 text-sm text-slate-400 border border-dashed border-slate-200 rounded-xl">暂无教程资源</span>';
-            return;
-        }
-
-        const resourceItems = (rest.length ? rest : state.tutorials).slice(0, 3);
-        elements.resourceLinks.innerHTML = resourceItems.map((item, index) => `
-            <a href="${buildTutorialLink(item.path_key, item.slug)}" class="flex items-center gap-3 p-3 rounded-xl border border-slate-50 hover:bg-slate-50 hover:shadow-sm transition-all group">
+        elements.resourceLinks.innerHTML = [
+            { href: '/suite', title: 'GEO Suite 工作流', icon: 'hub' },
+            { href: '/diagnostic', title: 'GEO 诊断', icon: 'analytics' },
+            { href: '/keywords', title: '拓词工具', icon: 'travel_explore' },
+        ].map((item) => `
+            <a href="${item.href}" class="flex items-center gap-3 p-3 rounded-xl border border-slate-50 hover:bg-slate-50 hover:shadow-sm transition-all group">
                 <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-primary">
-                    <span class="material-symbols-outlined text-sm">${index === 0 ? 'library_books' : index === 1 ? 'menu_book' : 'auto_stories'}</span>
+                    <span class="material-symbols-outlined text-sm">${item.icon}</span>
                 </div>
-                <span class="text-sm font-semibold text-slate-700 group-hover:text-primary">${escapeHtml(item.title)}</span>
+                <span class="text-sm font-semibold text-slate-700 group-hover:text-primary">${item.title}</span>
             </a>
         `).join('');
     }
 
     async function loadTutorialResources() {
-        try {
-            state.tutorials = await request('/api/content/?content_type=tutorial&size=8');
-            renderTutorialSidebar();
-        } catch (_) {
-            renderTutorialSidebar();
-        }
+        // 教程频道已下线：不再请求教程内容接口，仅渲染静态 Suite / 诊断入口
+        renderTutorialSidebar();
     }
 
     async function loadPopularCompanies() {

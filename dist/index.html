@@ -67,8 +67,8 @@
             <a href="/diagnostic" class="flex items-center gap-2 shrink-0 px-4 py-2.5 rounded-xl border border-slate-100 bg-white text-xs font-semibold text-slate-600 hover:border-primary hover:text-primary transition-colors">
                 <span class="material-symbols-outlined text-sm text-primary">analytics</span>GEO 诊断
             </a>
-            <a href="/tutorial" class="flex items-center gap-2 shrink-0 px-4 py-2.5 rounded-xl border border-slate-100 bg-white text-xs font-semibold text-slate-600 hover:border-primary hover:text-primary transition-colors">
-                <span class="material-symbols-outlined text-sm text-primary">menu_book</span>教程中心
+            <a href="/suite" class="flex items-center gap-2 shrink-0 px-4 py-2.5 rounded-xl border border-slate-100 bg-white text-xs font-semibold text-slate-600 hover:border-primary hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-sm text-primary">hub</span>GEO Suite
             </a>
         </div>
 
@@ -102,10 +102,10 @@
             <div class="p-6 rounded-2xl bg-white border border-slate-200 relative overflow-hidden">
                 <div class="relative z-10">
                     <span class="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400 mb-4 block">今日 GEO 贴士</span>
-                    <h4 id="featured-tip-title" class="text-xl font-bold font-headline mb-4 leading-tight text-on-surface">正在加载今日教程...</h4>
-                    <p id="featured-tip-copy" class="text-sm leading-7 text-slate-500 mb-4">将从教程频道中推荐一篇适合优先阅读的公开指南。</p>
-                    <a id="featured-tip-link" href="/tutorial" class="text-primary text-sm font-semibold flex items-center gap-1 group">
-                        阅读完整指南
+                    <h4 id="featured-tip-title" class="text-xl font-bold font-headline mb-4 leading-tight text-on-surface">从 GEO Suite 走通全流程</h4>
+                    <p id="featured-tip-copy" class="text-sm leading-7 text-slate-500 mb-4">诊断 → 拓词 → 知识约束生产 → 可信观测，一条故事线看清内容工程闭环。</p>
+                    <a id="featured-tip-link" href="/suite" class="text-primary text-sm font-semibold flex items-center gap-1 group">
+                        打开 GEO Suite
                         <span class="material-symbols-outlined text-sm transition-transform group-hover:translate-x-1">arrow_forward</span>
                     </a>
                 </div>
@@ -117,11 +117,13 @@
             <!-- Hot Guides -->
             <section>
                 <div class="flex justify-between items-center mb-4 px-2">
-                    <h5 class="text-xs font-bold tracking-widest uppercase text-slate-400">热门指南</h5>
-                    <a href="/tutorial" class="text-[10px] font-bold text-primary uppercase">全部</a>
+                    <h5 class="text-xs font-bold tracking-widest uppercase text-slate-400">常用入口</h5>
+                    <a href="/suite" class="text-[10px] font-bold text-primary uppercase">Suite</a>
                 </div>
                 <div id="hot-guides-list" class="space-y-3">
-                    <span class="px-3 py-4 text-sm text-slate-400 border border-dashed border-slate-200 rounded-xl block">正在加载热门指南...</span>
+                    <a href="/diagnostic" class="px-3 py-4 text-sm text-slate-700 border border-slate-200 rounded-xl block hover:border-primary hover:text-primary">GEO 诊断</a>
+                    <a href="/keywords" class="px-3 py-4 text-sm text-slate-700 border border-slate-200 rounded-xl block hover:border-primary hover:text-primary">拓词工具</a>
+                    <a href="/suite" class="px-3 py-4 text-sm text-slate-700 border border-slate-200 rounded-xl block hover:border-primary hover:text-primary">GEO Suite</a>
                 </div>
             </section>
 
@@ -140,7 +142,7 @@
             <section>
                 <h5 class="text-xs font-bold tracking-widest uppercase text-slate-400 mb-4 px-2">GEO 资源库</h5>
                 <div id="resource-links" class="grid grid-cols-1 gap-2">
-                    <span class="px-3 py-4 text-sm text-slate-400 border border-dashed border-slate-200 rounded-xl">正在加载教程与资源...</span>
+                    <span class="px-3 py-4 text-sm text-slate-400 border border-dashed border-slate-200 rounded-xl">正在加载常用入口...</span>
                 </div>
             </section>
         </aside>
@@ -276,7 +278,7 @@
     <div id="footer-container"></div>
 
     <!-- Scripts -->
-    <script src="/js/common.js?v=20260716-first-paint-lifecycle"></script>
+    <script src="/js/common.js?v=20260724-demo-no-auth"></script>
     <script src="/js/index.js?v=20260716-first-paint-lifecycle"></script>
     <script src="/js/submit-company.js?v=20260716-first-paint-lifecycle"></script>
 </body>

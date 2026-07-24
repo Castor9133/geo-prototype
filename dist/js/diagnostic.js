@@ -21,6 +21,7 @@
     const initialCompanyId = initialRouteState.companyId || '';
     const initialReportId = initialRouteState.reportId || '';
     const Auth = window.GEOrank?.Auth;
+    const Workflow = window.GEOrank?.SuiteWorkflow;
 
     const urlInput = document.getElementById('url-input');
     const diagnoseBtn = document.getElementById('diagnose-btn');
@@ -124,19 +125,19 @@
         },
         recommendations: {
             summary: {
-                headline: '这是一份较成熟的企业官网示例报告，已经具备不错的 GEO 基础，但仍有进一步提升引用率的空间。',
+                headline: '这是一份较成熟的企业官网示例报告，已经具备不错的 GEO 基础，但仍有进一步提升可发现/可理解的背书信号的空间。',
                 overview: '示例报告以一家 AI 搜索优化服务官网为蓝本，展示从结构化实体、摘要预览到权威背书的完整 GEO 诊断视角。真实诊断完成后，会沿用同一套富报告结构替换这份样例。',
                 priority_action: '优先把 FAQPage 与服务页的答案式摘要继续做深，让高价值页面能更稳定地进入生成式答案。'
             },
             strengths: [
                 '结构化实体较完整，品牌、服务与文章关系已经能被机器清晰识别。',
-                '正文层级、FAQ 和案例表达成熟，适合被 AI 拆成多段引用。',
-                '预览信号和外部背书基础不错，具备进一步冲高引用率的条件。',
+                '正文层级、FAQ 和案例表达成熟，适合被 AI 拆成多段理解与引用候选。',
+                '预览信号和外部背书基础不错，具备进一步增强背书就绪信号的条件。',
             ],
             gaps: [
                 'FAQ 结构化还不够完整，问答内容和页面可读块之间没有完全一一映射。',
                 '多语言与地区语境标记还不充分，跨区域生成式检索场景下会损失可见度。',
-                '高价值案例页的权威引用仍有增长空间，品牌可信度还能继续抬高。',
+                '高价值案例页的权威外链仍有增长空间，品牌背书就绪信号还能继续抬高。',
             ],
             urgent: [
                 { item: '补齐 FAQPage 结构化问答', action: '将页面中已有 FAQ 问答和服务说明映射成完整 FAQPage，确保 question / acceptedAnswer 成对输出。' },
@@ -156,7 +157,7 @@
             phase_plan: [
                 { phase: 'P0', title: '问答结构化补齐', goal: '把现有 FAQ 和服务说明升级成机器可读的 FAQPage + Service 实体组合。', success_metric: 'Schema 覆盖率和答案模块得分同时提升到 85+。' },
                 { phase: 'P1', title: '高价值页面重写', goal: '围绕首页、服务页和案例页重写首屏答案表达，让 AI 能直接摘取关键段落。', success_metric: '内容表达、预览和 CTA 模块达到优秀。'},
-                { phase: 'P2', title: '权威背书扩容', goal: '增加外部研究、客户案例、社交与品牌背书，构建更稳的可引用信任层。', success_metric: '引用与可信维度稳定在 80 分以上。' },
+                { phase: 'P2', title: '权威背书扩容', goal: '增加外部研究、客户案例、社交与品牌背书，构建更稳的可引用信任层。', success_metric: '外链与背书就绪维度稳定在 80 分以上。' },
             ],
         },
     };
@@ -286,8 +287,8 @@
                 eyebrow: '真实诊断生成中',
                 title: '正在用真实报告替换示例',
                 copy: context.url
-                    ? `当前正在分析 ${context.url} 的页面结构、Schema 标签与引用信号，完成后会自动替换下方示例报告。`
-                    : '系统正在分析你的页面结构、Schema 标签与引用信号，完成后会自动替换下方示例报告。',
+                    ? `当前正在分析 ${context.url} 的页面结构、Schema 标签与背书就绪信号，完成后会自动替换下方示例报告。`
+                    : '系统正在分析你的页面结构、Schema 标签与背书就绪信号，完成后会自动替换下方示例报告。',
                 chip: '分析中',
                 icon: 'progress_activity',
             },
@@ -458,7 +459,7 @@
                         note: '核心推荐 Schema 类型覆盖情况。',
                     },
                     boolMetric('Organization 实体', !!schema.has_org, '组织实体已具备。', '缺少 Organization / WebSite 实体。'),
-                    boolMetric('FAQ 问答', !!schema.has_faq, 'FAQPage 已具备，可提升可引用问答。', '建议加入 FAQPage 结构化问答。'),
+                    boolMetric('FAQ 问答', !!schema.has_faq, 'FAQPage 已具备，可提升可理解问答结构。', '建议加入 FAQPage 结构化问答。'),
                     boolMetric('面包屑导航', !!schema.has_breadcrumb, 'BreadcrumbList 已声明。', '建议补充 BreadcrumbList，增强主题链路。'),
                 ],
             },
@@ -480,7 +481,7 @@
                         title: '阅读时长',
                         score: metricScore(Number(content.reading_time_minutes || 0), [{ min: 4, score: 88 }, { min: 2, score: 68 }, { min: 1, score: 48 }, { min: 0, score: 24 }]),
                         metric: `${content.reading_time_minutes || 0} 分钟`,
-                        note: '中等深度内容更适合生成式搜索引用。',
+                        note: '中等深度内容更适合被生成式搜索理解与调用。',
                     },
                 ],
             },
@@ -513,18 +514,18 @@
             },
             {
                 key: 'trust',
-                title: '引用可信',
+                title: '外链与权威背书（就绪信号)',
                 icon: 'query_stats',
-                summary: '衡量页面通过外链、权威来源与站内支撑建立可信度的能力。',
+                summary: '衡量页面通过外链、权威来源与站内支撑建立可信度的就绪能力。注意：本维≠ AI 答案引用率。',
                 items: [
                     {
                         title: '外部链接广度',
                         score: metricScore(Number(citation.external_link_count || 0), [{ min: 8, score: 96 }, { min: 4, score: 78 }, { min: 1, score: 52 }, { min: 0, score: 24 }]),
                         metric: `${citation.external_link_count || 0} 个外链`,
-                        note: '外部信号越丰富，AI 越容易建立引用网络。',
+                        note: '外部信号越丰富，越利于建立可发现的背书网络（此为就绪信号，≠ AI 答案引用率）。',
                     },
                     {
-                        title: '权威引用',
+                        title: '权威外链',
                         score: metricScore(Number(citation.authority_link_count || 0), [{ min: 3, score: 100 }, { min: 2, score: 86 }, { min: 1, score: 66 }, { min: 0, score: 26 }]),
                         metric: `${citation.authority_link_count || 0} 个权威源`,
                         note: '学术、官方或行业权威来源是生成式引擎偏好的信号。',
@@ -558,7 +559,7 @@
             { label: '实体理解', score: sectionMap.schema?.score || 0 },
             { label: '答案表达', score: average([sectionMap.content?.score, sectionMap.answer?.score]) },
             { label: '信任构建', score: sectionMap.trust?.score || 0 },
-            { label: 'AI 引用准备', score: average([overallScore, sectionMap.schema?.score, sectionMap.answer?.score, sectionMap.trust?.score]) },
+            { label: '答案就绪准备', score: average([overallScore, sectionMap.schema?.score, sectionMap.answer?.score, sectionMap.trust?.score]) },
         ];
     }
 
@@ -567,7 +568,7 @@
             { label: 'Schema', value: Number(report.schema_analysis?.score || 0), color: '#2563eb' },
             { label: '内容', value: Number(report.content_analysis?.score || 0), color: '#0f766e' },
             { label: 'Meta', value: Number(report.meta_analysis?.score || 0), color: '#7c3aed' },
-            { label: '引用', value: Number(report.citation_analysis?.score || 0), color: '#ea580c' },
+            { label: '背书信号', value: Number(report.citation_analysis?.score || 0), color: '#ea580c' },
         ];
     }
 
@@ -598,7 +599,7 @@
                 phase: 'P2',
                 title: '补充证据与案例',
                 goal: '扩充外部权威来源、客户案例和站内内容支撑链路。',
-                success_metric: '引用与可信维度进入良好以上。',
+                success_metric: '外链与背书就绪维度进入良好以上。',
             },
         ];
     }
@@ -631,7 +632,7 @@
                 note: `${content.paragraph_count || 0} 段 · ${content.list_count || 0} 列表 · ${content.image_count || 0} 图片`,
             },
             {
-                title: '引用信号',
+                title: '背书就绪信号',
                 value: `${citation.authority_link_count || 0} 权威源`,
                 note: `${citation.external_link_count || 0} 外链 · ${citation.internal_link_count || 0} 内链 · ${citation.social_link_count || 0} 社交链接`,
             },
@@ -655,7 +656,7 @@
                 ? '页面已经具备较强的 GEO 基础，可继续针对高价值结构化数据和引用策略做增强。'
                 : safeScore >= 60
                     ? '页面已有一定 GEO 可见性，但仍有明显结构化和引用优化空间。'
-                    : '页面在结构化标签、内容组织或权威引用方面仍较薄弱，建议尽快按报告清单补齐。';
+                    : '页面在结构化标签、内容组织或权威外链方面仍较薄弱，建议尽快按报告清单补齐。';
         }
         if (scoreRing) {
             scoreRing.style.strokeDasharray = `${circumference}`;
@@ -754,7 +755,7 @@
         if (!entries.length) {
             list.innerHTML = `
                 <div class="col-span-1 md:col-span-3 p-6 rounded-xl bg-white border border-slate-100 text-sm text-slate-400">
-                    当前没有额外优化建议，建议继续补充 FAQ、案例和权威引用以稳步提升 GEO 表现。
+                    当前没有额外优化建议，建议继续补充 FAQ、案例和权威外链以稳步提升 GEO 就绪表现。
                 </div>
             `;
             return;
@@ -878,10 +879,10 @@
                 <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div class="max-w-2xl">
                         <div class="flex items-center gap-3">
-                            <span class="w-11 h-11 rounded-2xl bg-primary/[0.08] text-primary flex items-center justify-center">
-                                <span class="material-symbols-outlined">${escapeHtml(section.icon)}</span>
+                            <span class="w-11 h-11 shrink-0 rounded-2xl bg-primary/[0.08] text-primary flex items-center justify-center overflow-hidden" aria-hidden="true">
+                                <span class="material-symbols-outlined text-[22px] leading-none">${escapeHtml(section.icon)}</span>
                             </span>
-                            <div>
+                            <div class="min-w-0">
                                 <p class="text-[11px] font-extrabold uppercase tracking-[0.14em] text-slate-400">诊断章节</p>
                                 <h4 class="mt-1 text-lg font-bold text-slate-900">${escapeHtml(section.title)}</h4>
                             </div>
@@ -977,7 +978,7 @@
             gaps.push(`缺少 ${schema.missing_recommended.slice(0, 3).join('、')} 等关键 Schema 类型。`);
         }
         if ((citation.authority_link_count || 0) < 1) {
-            gaps.push('页面缺少权威引用来源，难以提升生成式引擎在回答中调用你的内容。');
+            gaps.push('页面缺少权威外链来源，难以提升生成式引擎在回答中调用你的内容。');
         }
         if (!content.first_para_quality) {
             gaps.push('首段缺少直达答案式表达，AI 不容易快速截取可引用摘要。');
@@ -986,9 +987,9 @@
         const headline = overall >= 80
             ? '当前页面 GEO 基础较强，适合继续强化高价值引用与结构化细节。'
             : overall >= 60
-                ? '当前页面已有一定 GEO 基础，但结构化与引用信号仍有明显优化空间。'
+                ? '当前页面已有一定 GEO 基础，但结构化与背书就绪信号仍有明显优化空间。'
                 : '当前页面 GEO 基础偏弱，建议优先补齐结构化和答案型内容。';
-        const overview = `综合 GEO 评分为 ${overall} 分。建议优先把结构化标记、首段摘要表达和权威引用补齐，再继续优化开放图谱和内容层级。`;
+        const overview = `综合 GEO 评分为 ${overall} 分。建议优先把结构化标记、首段摘要表达和权威外链补齐，再继续优化开放图谱和内容层级。`;
         const priority = gaps[0] || '继续补充 FAQ、案例与结构化标签，让页面更适合被 AI 检索与引用。';
 
         return { headline, overview, priority, strengths, gaps };
@@ -1010,7 +1011,7 @@
         renderBulletList(
             gapList,
             report?.recommendations?.gaps || fallback.gaps,
-            '当前未检测到额外明显缺口，可继续通过案例、FAQ 与权威引用做增强。',
+            '当前未检测到额外明显缺口，可继续通过案例、FAQ 与权威外链做增强。',
             'warning',
             'text-orange-400'
         );
@@ -1056,7 +1057,7 @@
         renderMetric(
             'citation',
             citation.score,
-            `外部链接 ${citation.external_link_count ?? 0} 个，权威引用 ${citation.authority_link_count ?? 0} 个。`
+            `外部链接 ${citation.external_link_count ?? 0} 个，权威外链 ${citation.authority_link_count ?? 0} 个。`
         );
         renderSchema(schema);
         renderRecommendations(report.recommendations || {});
@@ -1079,6 +1080,43 @@
         showResults();
         setReportMode('live', { url: report.url || '' });
         animateLiveSwap();
+        maybeGuideSuiteNext(report);
+    }
+
+    function maybeGuideSuiteNext(report) {
+        if (!Workflow || !report || report.report_id === 'demo-report') return;
+        if (report.status && report.status !== 'completed') return;
+        Workflow.markComplete('diagnostic', {
+            report_id: report.report_id,
+            url: report.url || '',
+        });
+        Workflow.mountBar({
+            stepId: 'diagnostic',
+            force: true,
+            hint: '诊断已完成，可进入问答/方案继续全套工作流。',
+            nextHref: Workflow.buildHref('solutions', {
+                diagnostic_report_id: report.report_id || '',
+                url: report.url || '',
+            }),
+            nextLabel: '下一步：问答/方案',
+        });
+        const host = reportShell || resultsGrid || document.querySelector('main');
+        const solutionsHref = Workflow.buildHref('solutions', {
+            diagnostic_report_id: report.report_id || '',
+            url: report.url || '',
+        });
+        const plansHref = `/plans?from=suite&workflow=1&diagnostic_report_id=${encodeURIComponent(report.report_id || '')}&url=${encodeURIComponent(report.url || '')}`;
+        Workflow.mountNextCard(host, {
+            id: 'suite-wf-next-diagnostic',
+            prepend: true,
+            stepId: 'diagnostic',
+            title: '诊断完成 · 进入问答/方案',
+            copy: '已记入 GEO Suite。下一步可解释诊断结果，或生成可执行行动方案。',
+            primaryHref: solutionsHref,
+            primaryLabel: '进入 GEO 问答',
+            secondaryHref: plansHref,
+            secondaryLabel: '生成行动方案',
+        });
     }
 
     async function pollReport(reportId, attempt = 0) {
@@ -1176,6 +1214,13 @@
             setStatus(error.message, 'error');
         }
     }
+
+    Workflow?.mountBar({
+        stepId: 'diagnostic',
+        nextHref: Workflow.buildHref('solutions'),
+        nextLabel: '下一步：问答/方案',
+        hint: '全套工作流第 1 步：完成诊断后进入问答/方案。',
+    });
 
     if (initialReportId) {
         showResults();

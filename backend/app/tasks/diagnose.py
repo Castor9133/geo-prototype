@@ -498,9 +498,12 @@ Meta 评分: {meta['score']}/100，缺失: {meta['missing']}，预览得分: {me
 1. summary.overview 控制在 120 字内，适合直接展示在诊断报告顶部。
 2. strengths 和 gaps 各最多 3 条，强调可见的优劣势。
 3. urgent / recommended / optional 各最多 3 条。
-4. action 必须给具体操作步骤，避免空泛表达。
-5. phase_plan 最多 3 条，分别对应 P0/P1/P2 的执行节奏。
-6. 严格返回 JSON。"""
+4. action 必须给具体可执行步骤（改什么、放哪里、验收看什么），避免空泛表达。
+5. phase_plan 最多 3 条，分别对应 P0/P1/P2 的执行节奏；success_metric 必须可核查。
+6. 口径约束：输入中的「引用评分/citation」指页面外链与权威链就绪度，禁止写成「AI 答案引用率」；
+   页面分、外链密度只是代理信号，不是答案面板中的提及/引用结果。
+7. 证据不足时用审慎表述，不要编造未出现在诊断数据中的结论。
+8. 严格返回 JSON。"""
 
     provider_succeeded = False
     try:

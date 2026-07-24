@@ -120,6 +120,15 @@ GEOrank/
   docs/           # 项目文档
 ```
 
+## GEO Suite（与 GEOFlow 联调）
+
+GEORank 可与旁路的 [GEOFlow](https://github.com/yaojingang/GEOFlow) 组成 **GEO Suite**：诊断 / 问答 / 拓词完成后一键移交内容任务。详见 [docs/geo-suite.md](docs/geo-suite.md)。
+
+```powershell
+.\scripts\start-geo-suite.ps1
+# 打开 http://localhost:3009/suite
+```
+
 ## 本地运行
 
 > 首次运行前，请先复制环境变量模板，并填入自己的密钥。

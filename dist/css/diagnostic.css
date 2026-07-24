@@ -64,6 +64,16 @@
     pointer-events: none;
 }
 
+/* 章节图标容器：防止图标字体未就绪时字面量撑破布局 */
+#diagnostic-module-sections .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined', sans-serif;
+    font-size: 22px;
+    line-height: 1;
+    width: 22px;
+    height: 22px;
+    overflow: hidden;
+}
+
 .diagnostic-report-shell {
     transition: opacity 0.32s ease, transform 0.32s ease;
 }

@@ -351,104 +351,6 @@ ul, ol { list-style: none; }
 }
 .section-head .section-desc { margin-inline: auto; }
 
-/* ---- 新书推荐 ---- */
-.book-feature {
-  padding-top: 40px;
-  padding-bottom: 58px;
-  background: #FFFFFF;
-}
-.book-feature + .platform-tools {
-  border-top: 0;
-}
-.book-feature-card {
-  display: grid;
-  grid-template-columns: minmax(280px, 0.42fr) minmax(0, 0.58fr);
-  gap: 42px;
-  align-items: center;
-  padding: 36px;
-  border: 1px solid #DCE6F3;
-  border-radius: 24px;
-  background: #FFFFFF;
-  box-shadow: 0 18px 52px rgba(15, 23, 42, 0.06);
-}
-.book-feature-cover {
-  min-height: 430px;
-  display: grid;
-  place-items: center;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  overflow: visible;
-}
-.book-feature-cover img {
-  width: min(100%, 360px);
-  max-height: 470px;
-  object-fit: contain;
-  filter: drop-shadow(0 22px 28px rgba(15, 23, 42, 0.14));
-}
-.book-feature-content {
-  min-width: 0;
-}
-.book-feature-title {
-  margin: 0;
-  color: var(--text);
-  font-family: var(--font-head);
-  font-size: clamp(28px, 3.2vw, 42px);
-  font-weight: 800;
-  line-height: 1.16;
-  letter-spacing: 0;
-}
-.book-feature-lead {
-  max-width: 680px;
-  margin-top: 18px;
-  color: var(--text-sub);
-  font-size: 17px;
-  line-height: 1.72;
-}
-.book-feature-points {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 28px;
-}
-.book-feature-points div {
-  min-height: 132px;
-  padding: 17px 16px;
-  border: 1px solid var(--border-card);
-  border-radius: 16px;
-  background: #FFFFFF;
-}
-.book-feature-points strong {
-  display: block;
-  margin-bottom: 8px;
-  color: var(--text);
-  font-size: 15px;
-  font-weight: 800;
-  line-height: 1.35;
-}
-.book-feature-points span {
-  display: block;
-  color: var(--text-sec);
-  font-size: 13px;
-  line-height: 1.58;
-}
-.book-feature-quote {
-  margin: 26px 0 0;
-  padding: 14px 18px;
-  border-left: 3px solid var(--primary);
-  border-radius: 0 14px 14px 0;
-  background: #F8FBFF;
-  color: var(--text-sec);
-  font-size: 15px;
-  line-height: 1.7;
-}
-.book-feature-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 28px;
-}
-
 /* ---- 平台能力入口 ---- */
 .platform-tools {
   padding-top: 56px;
@@ -844,66 +746,6 @@ ul, ol { list-style: none; }
 .book-cta-muted { color: var(--text-muted); }
 .book-cta-muted .material-symbols-outlined { font-size: 16px; }
 
-/* ---- GEO 大会 ---- */
-.conference { background: #FFFFFF; }
-.conf-card {
-  display: grid;
-  grid-template-columns: 1.3fr 1fr;
-  gap: 56px;
-  align-items: center;
-  padding: 52px 56px;
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--primary-border);
-  background: #FFFFFF;
-  box-shadow: var(--shadow-card);
-}
-
-.conf-points {
-  margin: 24px 0 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.conf-points li {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  color: var(--text-sub);
-  font-size: 15px;
-}
-.conf-points li .material-symbols-outlined {
-  font-size: 18px;
-  color: var(--primary);
-  flex-shrink: 0;
-  margin-top: 2px;
-  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-}
-
-.conf-visual { display: grid; place-items: center; }
-.conf-badge {
-  width: min(260px, 100%);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  border: 1.5px dashed rgba(37,99,235,0.35);
-  display: grid;
-  place-content: center;
-  text-align: center;
-  gap: 8px;
-  background: #FFFFFF;
-}
-.conf-num {
-  font-family: var(--font-head);
-  font-size: 64px;
-  font-weight: 800;
-  color: var(--primary);
-  line-height: 1;
-}
-.conf-label {
-  font-size: 13px;
-  color: var(--text-sub);
-  letter-spacing: 0.06em;
-}
-
 /* ---- 文章 ---- */
 .articles { background: #FFFFFF; }
 .article-grid {
@@ -1146,13 +988,6 @@ ul, ol { list-style: none; }
 
 /* ===== 响应式 ===== */
 @media (max-width: 1100px) {
-  .book-feature-card {
-    grid-template-columns: 1fr;
-    gap: 28px;
-  }
-  .book-feature-cover {
-    min-height: 360px;
-  }
   .book-feature-cover img {
     width: min(100%, 320px);
   }
@@ -1166,10 +1001,6 @@ ul, ol { list-style: none; }
   .resource-grid { grid-template-columns: repeat(2, 1fr); }
   .resource-card-featured { grid-template-columns: 56px 1fr auto; column-gap: 24px; }
   .book-grid { grid-template-columns: repeat(2, 1fr); }
-  .conf-card { grid-template-columns: 1fr; padding: 40px 36px; gap: 36px; }
-  .conf-visual { order: -1; }
-  .conf-badge { width: 200px; }
-  .conf-num { font-size: 52px; }
 }
 
 @media (max-width: 768px) {
@@ -1180,40 +1011,12 @@ ul, ol { list-style: none; }
   .hero-stats { grid-template-columns: repeat(2, 1fr); margin-top: 48px; }
   .hero-actions { flex-direction: column; align-items: center; }
   .hero-actions .btn { width: 100%; max-width: 300px; justify-content: center; }
-  .book-feature {
-    padding-top: 24px;
-    padding-bottom: 48px;
-  }
-  .book-feature-card {
-    padding: 24px;
-    border-radius: var(--radius-lg);
-  }
-  .book-feature-cover {
-    min-height: 320px;
-    border-radius: 16px;
-  }
   .book-feature-cover img {
     width: min(100%, 275px);
     max-height: 360px;
   }
-  .book-feature-title {
-    font-size: 28px;
-  }
-  .book-feature-lead {
-    font-size: 15px;
-  }
-  .book-feature-points {
-    grid-template-columns: 1fr;
-  }
   .book-feature-points div {
     min-height: auto;
-  }
-  .book-feature-actions {
-    flex-direction: column;
-  }
-  .book-feature-actions .btn {
-    width: 100%;
-    justify-content: center;
   }
   .article-grid { grid-template-columns: 1fr; }
   .founder-grid { grid-template-columns: 1fr; }

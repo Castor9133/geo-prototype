@@ -112,6 +112,16 @@ from app.services.ai_usage import (
 from app.services.ai_client import ai_client
 from app.services.content_render import render_markdown
 from app.models.ai_usage import AIPrincipalUser, AIUsageEvent, UserDailyUsage
+from app.services.geoflow_integration import (
+    GEOFLOW_API_TOKEN_SETTING_KEY,
+    GEOFLOW_INTEGRATION_SETTING_KEY,
+    admin_geoflow_payload,
+    get_default_geoflow_integration_config,
+    get_geoflow_api_token,
+    get_geoflow_integration_config,
+    normalize_geoflow_integration_payload,
+    store_geoflow_integration_setting,
+)
 
 router = APIRouter()
 DIAGNOSTIC_RULES_SETTING_KEY = "diagnostic_rule_weights"
@@ -3771,6 +3781,73 @@ async def reset_frontend_modules_admin(db: DbSession, _: AdminUser):
     return _serialize_frontend_module_payload(refreshed, None, None)
 
 
+# ===== GEO Suite / GEOFlow 集成 =====
+
+
+class AdminGeoflowIntegrationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool | None = None
+    base_url: str | None = Field(default=None, max_length=240)
+    public_base_url: str | None = Field(default=None, max_length=240)
+    timeout_seconds: int | None = Field(default=None, ge=5, le=120)
+    public_cta_label: str | None = Field(default=None, max_length=80)
+    prompt_id: int | None = Field(default=None, ge=1)
+    ai_model_id: int | None = Field(default=None, ge=1)
+    auto_start: bool | None = None
+    draft_limit: int | None = Field(default=None, ge=1, le=50)
+    article_limit: int | None = Field(default=None, ge=1, le=50)
+    need_review: bool | None = None
+    publish_scope: str | None = Field(default=None, max_length=40)
+    default_company_id: str | None = Field(default=None, max_length=64)
+    api_token: str | None = Field(default=None, max_length=3000)
+
+
+@router.get("/integrations/geoflow")
+async def get_geoflow_integration_admin(_: AdminUser):
+    """读取 GEOFlow 集成配置（Token 脱敏）。"""
+    config = await get_geoflow_integration_config()
+    token = await get_geoflow_api_token()
+    return admin_geoflow_payload(config, has_token=bool(token))
+
+
+@router.put("/integrations/geoflow")
+async def update_geoflow_integration_admin(
+    request: AdminGeoflowIntegrationRequest,
+    db: DbSession,
+    admin: AdminUser,
+):
+    """更新 GEOFlow 集成配置。"""
+    current = await get_geoflow_integration_config()
+    payload = request.model_dump(exclude_unset=True)
+    api_token = payload.pop("api_token", None)
+    next_config = normalize_geoflow_integration_payload(payload, current)
+    await store_geoflow_integration_setting(db, admin, next_config, api_token=api_token)
+    await db.commit()
+    await invalidate_runtime_settings_cache()
+    config = await get_geoflow_integration_config(force_refresh=True)
+    token = await get_geoflow_api_token(force_refresh=True)
+    return {
+        "status": "saved",
+        **admin_geoflow_payload(config, has_token=bool(token)),
+    }
+
+
+@router.post("/integrations/geoflow/reset")
+async def reset_geoflow_integration_admin(db: DbSession, admin: AdminUser):
+    """恢复 GEOFlow 集成默认配置（保留 Token）。"""
+    default_config = get_default_geoflow_integration_config()
+    await store_geoflow_integration_setting(db, admin, default_config, api_token=None)
+    await db.commit()
+    await invalidate_runtime_settings_cache()
+    config = await get_geoflow_integration_config(force_refresh=True)
+    token = await get_geoflow_api_token(force_refresh=True)
+    return {
+        "status": "reset",
+        **admin_geoflow_payload(config, has_token=bool(token)),
+    }
+
+
 # ===== 自定义首页 =====
 
 
@@ -4309,6 +4386,8 @@ async def update_settings(request: dict, db: DbSession, admin: AdminUser):
             LLM_PROVIDER_KEYS_SETTING_KEY,
             FRONTEND_MODULES_SETTING_KEY,
             HOMEPAGE_RUNTIME_SETTING_KEY,
+            GEOFLOW_INTEGRATION_SETTING_KEY,
+            GEOFLOW_API_TOKEN_SETTING_KEY,
         }:
             raise HTTPException(
                 status_code=400,

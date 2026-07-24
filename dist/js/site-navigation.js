@@ -5,6 +5,16 @@
 (function() {
     'use strict';
 
+    const DEFAULT_MENU_ITEMS = [
+        { id: 'suite', label: 'GEO Suite', url: '/suite', target: '_self', enabled: true },
+        { id: 'companies', label: '公司', url: '/companies', target: '_blank', enabled: true },
+        { id: 'diagnostic', label: '诊断', url: '/diagnostic', target: '_blank', enabled: true },
+        { id: 'solutions', label: '问答', url: '/solutions', target: '_blank', enabled: true },
+        { id: 'plans', label: '方案', url: '/plans', target: '_blank', enabled: true },
+        { id: 'keywords', label: '拓词', url: '/keywords', target: '_blank', enabled: true },
+        { id: 'tools', label: '工具', url: '/tools', target: '_blank', enabled: true },
+    ];
+
     function apiBase() {
         return '';
     }
@@ -22,15 +32,37 @@
         }
     }
 
+    function ensureSuiteItem(items) {
+        if (items.some(item => item.id === 'suite' || item.url === '/suite')) {
+            return items.slice(0, 12);
+        }
+        return [
+            { id: 'suite', label: 'GEO Suite', url: '/suite', target: '_self', enabled: true },
+            ...items,
+        ].slice(0, 12);
+    }
+
     function normalizeMenu(value) {
-        if (!Array.isArray(value?.items)) return [];
-        return value.items.slice(0, 12).map((item, index) => ({
+        const source = Array.isArray(value?.items) && value.items.length
+            ? value.items
+            : DEFAULT_MENU_ITEMS;
+        const items = source.slice(0, 12).map((item, index) => ({
             id: String(item?.id || `menu-${index + 1}`),
             label: String(item?.label || '').trim().slice(0, 40),
             url: normalizeUrl(item?.url),
             target: item?.target === '_self' ? '_self' : '_blank',
             enabled: item?.enabled !== false,
-        })).filter(item => item.enabled && item.label && item.url);
+        })).filter(item => item.enabled && item.label && item.url)
+            .filter(item => {
+                const id = String(item.id || '').toLowerCase();
+                const url = String(item.url || '').toLowerCase();
+                if (id === 'experts' || id === 'tutorial' || id === 'github') return false;
+                if (url === '/experts' || url.startsWith('/experts/')) return false;
+                if (url === '/tutorial' || url.startsWith('/tutorial/')) return false;
+                if (url.includes('github.com/yaojingang/georank')) return false;
+                return true;
+            });
+        return ensureSuiteItem(items.length ? items : DEFAULT_MENU_ITEMS.map(item => ({...item})));
     }
 
     function createLink(item) {
@@ -66,8 +98,12 @@
         });
     }
 
+    function applyFallback() {
+        renderMenu(normalizeMenu(null));
+    }
+
     fetch(`${apiBase()}/api/settings/public`, {cache: 'no-store'})
         .then(response => response.ok ? response.json() : null)
         .then(settings => renderMenu(normalizeMenu(settings?.navigation_menu)))
-        .catch(() => {});
+        .catch(applyFallback);
 })();
