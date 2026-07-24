@@ -148,11 +148,6 @@ export function AdminDashboard({token, userLabel}: AdminDashboardProps) {
             <span className="admin-pill admin-pill--brand">{t('liveData')}</span>
           </div>
           <div className="admin-queue-grid">
-            <Link className="admin-queue-card" href={localizeHref(locale, '/companies')}>
-              <span className="admin-queue-card__title">{t('companiesTitle')}</span>
-              <strong>{dashboard.pipeline_stats.pending_review || 0}</strong>
-              <p>{t('companiesCopy')}</p>
-            </Link>
             <Link className="admin-queue-card" href={localizeHref(locale, '/diagnostics')}>
               <span className="admin-queue-card__title">{t('diagnosticsTitle')}</span>
               <strong>{dashboard.failure_stats.failed_diagnostics || 0}</strong>

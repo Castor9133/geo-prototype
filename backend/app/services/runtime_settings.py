@@ -173,16 +173,8 @@ DEFAULT_LLM_PROVIDER_CONFIG = {
     "providers": [],
 }
 DEFAULT_FRONTEND_MODULES = {
-    "default_module": "companies",
+    "default_module": "diagnostic",
     "modules": [
-        {
-            "key": "companies",
-            "name": "公司",
-            "path": "/companies",
-            "description": "公司列表、详情和提交公司入口",
-            "enabled": True,
-            "protected_paths": ["/company", "/companies", "/c", "/submit-company"],
-        },
         {
             "key": "diagnostic",
             "name": "诊断",
@@ -229,7 +221,7 @@ DEFAULT_HOMEPAGE_RUNTIME = {
     "mode": "custom",
     "active_release_id": "9fe4a087-42bc-423a-bc59-fc020018a6f9",
     "fallback_enabled": True,
-    "company_list_path": "/companies",
+    "company_list_path": "/suite",
     "updated_at": None,
     "updated_by": None,
 }
@@ -631,8 +623,10 @@ def _build_homepage_runtime_config(values: dict[str, Any]) -> dict[str, Any]:
     company_list_path = _pick_string(raw.get("company_list_path"), DEFAULT_HOMEPAGE_RUNTIME["company_list_path"])
     if not company_list_path.startswith("/"):
         company_list_path = f"/{company_list_path}"
-    if company_list_path == "/":
-        company_list_path = "/companies"
+    if company_list_path == "/" or company_list_path in {"/companies", "/company", "/submit-company", "/company-submit"}:
+        company_list_path = "/suite"
+    if company_list_path.startswith("/companies/") or company_list_path.startswith("/c/"):
+        company_list_path = "/suite"
 
     updated_at = raw.get("updated_at")
     if updated_at is not None:

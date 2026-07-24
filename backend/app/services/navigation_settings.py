@@ -16,11 +16,10 @@ SUITE_NAVIGATION_ITEM: dict[str, Any] = {
     "target": "_self",
     "enabled": True,
 }
-REMOVED_NAVIGATION_IDS = frozenset({"experts", "tutorial", "github"})
+REMOVED_NAVIGATION_IDS = frozenset({"companies", "experts", "tutorial", "github"})
 DEFAULT_NAVIGATION_MENU = {
     "items": [
         deepcopy(SUITE_NAVIGATION_ITEM),
-        {"id": "companies", "label": "公司", "url": "/companies", "target": "_blank", "enabled": True},
         {"id": "diagnostic", "label": "诊断", "url": "/diagnostic", "target": "_blank", "enabled": True},
         {"id": "solutions", "label": "问答", "url": "/solutions", "target": "_blank", "enabled": True},
         {"id": "plans", "label": "方案", "url": "/plans", "target": "_blank", "enabled": True},
@@ -50,7 +49,7 @@ def _has_suite_navigation_item(items: list[Any]) -> bool:
 
 
 def ensure_suite_in_navigation_menu(payload: Any) -> dict[str, list[dict[str, Any]]]:
-    """Ensure GEO Suite appears; strip deleted public entries (experts/tutorial/github)."""
+    """Ensure GEO Suite appears; strip deleted public entries (companies/experts/tutorial/github)."""
     if not isinstance(payload, dict) or not isinstance(payload.get("items"), list) or not payload["items"]:
         return get_default_navigation_menu()
 
@@ -76,7 +75,11 @@ def _is_removed_navigation_url(value: Any) -> bool:
     url = str(value or "").strip().rstrip("/").lower()
     if not url:
         return False
-    if url in {"/experts", "/tutorial"} or url.startswith("/experts/") or url.startswith("/tutorial/"):
+    if url in {"/companies", "/company", "/submit-company", "/company-submit", "/experts", "/tutorial"}:
+        return True
+    if url.startswith("/companies/") or url.startswith("/company/") or url.startswith("/c/"):
+        return True
+    if url.startswith("/experts/") or url.startswith("/tutorial/"):
         return True
     return "github.com/yaojingang/georank" in url
 

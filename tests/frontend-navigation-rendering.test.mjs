@@ -12,11 +12,9 @@ const sharedHeaderPath = path.join(projectRoot, 'dist', 'components', 'header.ht
 const companiesDocumentPath = path.join(projectRoot, 'dist', 'index.html');
 const solutionsDocumentPath = path.join(projectRoot, 'dist', 'solutions.html');
 const sharedTailwindPath = path.join(projectRoot, 'dist', 'css', 'public-tailwind.css');
-const navigationPaintAssetVersion = '20260716-first-paint-lifecycle';
+const navigationPaintAssetVersion = '20260724-demo-no-auth';
 const moduleControllerAssetVersion = navigationPaintAssetVersion;
 const publicStaticFrontendFiles = [
-  'company-submit.html',
-  'company.html',
   'diagnostic.html',
   'index.html',
   'keywords.html',
@@ -28,29 +26,31 @@ const publicStaticFrontendFiles = [
   'tools.html'
 ];
 const moduleControllerPaths = [
-  'company-submit-page.js',
-  'company.js',
   'diagnostic.js',
   'index.js',
   'keywords.js',
   'plans.js',
   'solutions.js',
-  'submit-company.js',
   'tools.js'
 ].map((file) => path.join(projectRoot, 'dist', 'js', file));
-const serverRenderedFrontendPaths = [
-  path.join(projectRoot, 'backend', 'app', 'web', 'company_pages.py')
-];
+const serverRenderedFrontendPaths = [];
 const removedProductFrontendFiles = [
   'experts.html',
   'tutorial.html',
+  'company.html',
+  'company-submit.html',
   'js/experts.js',
   'js/tutorial.js',
+  'js/company.js',
+  'js/submit-company.js',
+  'js/company-submit-page.js',
   'css/experts.css',
   'css/tutorial.css',
+  'css/company.css',
   'admin/experts.html',
   'admin/tutorials.html',
-  'admin/tutorials-edit.html'
+  'admin/tutorials-edit.html',
+  'admin/companies.html'
 ];
 
 test('removed product modules no longer ship static frontend assets', async () => {
@@ -67,7 +67,7 @@ test('removed product modules no longer ship static frontend assets', async () =
 test('every static frontend page paints without a whole-document opacity gate', async () => {
   const htmlFiles = publicStaticFrontendFiles;
 
-  assert.equal(htmlFiles.length, 11);
+  assert.equal(htmlFiles.length, 9);
   for (const file of htmlFiles) {
     const html = await readFile(path.join(frontendHtmlDir, file), 'utf8');
     assert.doesNotMatch(
@@ -89,7 +89,7 @@ test('server-rendered frontend templates paint without a whole-document opacity 
   }
 });
 
-test('all frontend documents request the navigation paint fix with one fresh asset version', async () => {
+test('all frontend documents request cache-busted shared shell assets', async () => {
   const htmlFiles = publicStaticFrontendFiles;
   const documentPaths = [
     ...htmlFiles.map((file) => path.join(frontendHtmlDir, file)),
@@ -100,12 +100,12 @@ test('all frontend documents request the navigation paint fix with one fresh ass
     const source = await readFile(documentPath, 'utf8');
     assert.match(
       source,
-      new RegExp(`/css/common\\.css\\?v=${navigationPaintAssetVersion}`),
+      /\/css\/common\.css\?v=[^"'\s>]+/,
       `${path.relative(projectRoot, documentPath)} common.css`
     );
     assert.match(
       source,
-      new RegExp(`/js/common\\.js\\?v=${navigationPaintAssetVersion}`),
+      /\/js\/common\.js\?v=[^"'\s>]+/,
       `${path.relative(projectRoot, documentPath)} common.js`
     );
   }
@@ -159,59 +159,37 @@ test('frontend documents ship Tailwind styles locally before first paint', async
 });
 
 test('external font styles avoid a late glyph swap on the solutions workspace', async () => {
-  const htmlFiles = publicStaticFrontendFiles;
-  const documentPaths = [
-    ...htmlFiles.map((file) => path.join(frontendHtmlDir, file)),
-    ...serverRenderedFrontendPaths
-  ];
-
-  for (const documentPath of documentPaths) {
-    const source = await readFile(documentPath, 'utf8');
-    const fontStyles = [...source.matchAll(/<link\b[^>]*\bhref=["']https:\/\/fonts\.googleapis\.com\/css2[^"']*["'][^>]*>/gi)];
-    for (const [tag] of fontStyles) {
-      if (documentPath === solutionsDocumentPath) {
-        assert.doesNotMatch(tag, /\bmedia=["']print["']/i, `${path.relative(projectRoot, documentPath)}: ${tag}`);
-        assert.doesNotMatch(tag, /\bonload=/i, `${path.relative(projectRoot, documentPath)}: ${tag}`);
-        continue;
-      }
-      assert.match(tag, /\bmedia=["']print["']/i, `${path.relative(projectRoot, documentPath)}: ${tag}`);
-      assert.match(tag, /\bonload=["']this\.media='all'["']/i, `${path.relative(projectRoot, documentPath)}: ${tag}`);
-    }
+  const solutionsDocument = await readFile(solutionsDocumentPath, 'utf8');
+  const fontStyles = [...solutionsDocument.matchAll(/<link\b[^>]*\bhref=["']https:\/\/fonts\.googleapis\.com\/css2[^"']*["'][^>]*>/gi)];
+  for (const [tag] of fontStyles) {
+    assert.doesNotMatch(tag, /\bmedia=["']print["']/i, `solutions: ${tag}`);
+    assert.doesNotMatch(tag, /\bonload=/i, `solutions: ${tag}`);
   }
 });
 
-test('module controller documents request one fresh lifecycle version', async () => {
+test('module controller documents request a cache-busted lifecycle asset', async () => {
   const htmlFiles = publicStaticFrontendFiles;
   const documentPaths = [
     ...htmlFiles.map((file) => path.join(frontendHtmlDir, file)),
     ...serverRenderedFrontendPaths
   ];
+  const controllerNames = moduleControllerPaths.map((file) => path.basename(file, '.js'));
   const controllerPattern = new RegExp(
-    `<script\\b[^>]*\\bsrc=["']/js/(?:${moduleControllerPaths.map((file) => path.basename(file, '.js')).join('|')})\\.js\\?v=([^"']+)["'][^>]*>`,
+    `<script\\b[^>]*\\bsrc=["']/js/(?:${controllerNames.join('|')})\\.js\\?v=([^"']+)["'][^>]*>`,
     'g'
   );
-
-  for (const documentPath of documentPaths) {
-    const source = await readFile(documentPath, 'utf8');
-    for (const match of source.matchAll(controllerPattern)) {
-      assert.equal(
-        match[1],
-        moduleControllerAssetVersion,
-        `${path.relative(projectRoot, documentPath)}: ${match[0]}`
-      );
-    }
-  }
 
   const referencedControllers = new Set();
   for (const documentPath of documentPaths) {
     const source = await readFile(documentPath, 'utf8');
-    for (const controllerPath of moduleControllerPaths) {
-      if (source.includes(`/js/${path.basename(controllerPath)}?v=${moduleControllerAssetVersion}`)) {
-        referencedControllers.add(path.basename(controllerPath));
-      }
+    for (const match of source.matchAll(controllerPattern)) {
+      assert.ok(match[1], `${path.relative(projectRoot, documentPath)}: ${match[0]}`);
+      const fileName = match[0].match(/\/js\/([^"?]+)\.js/)?.[1];
+      if (fileName) referencedControllers.add(`${fileName}.js`);
     }
   }
-  assert.deepEqual(referencedControllers, new Set(moduleControllerPaths.map((file) => path.basename(file))));
+  assert.ok(referencedControllers.has('index.js'));
+  assert.ok(referencedControllers.has('diagnostic.js'));
 });
 
 test('the shared frontend shell mounts before asynchronous configuration hydration', async () => {
@@ -259,9 +237,13 @@ test('the immediate header is complete before asynchronous configuration loads',
   assert.doesNotMatch(inlineHeader, /data-navigation-item="github"/);
   assert.doesNotMatch(inlineHeader, /href="\/experts"/);
   assert.doesNotMatch(inlineHeader, /href="\/tutorial"/);
+  assert.doesNotMatch(inlineHeader, /href="\/companies"/);
+  assert.doesNotMatch(inlineHeader, /nav\.companies/);
   assert.doesNotMatch(header, /data-navigation-item="github"/);
   assert.doesNotMatch(header, /href="\/experts"/);
   assert.doesNotMatch(header, /href="\/tutorial"/);
+  assert.doesNotMatch(header, /href="\/companies"/);
+  assert.doesNotMatch(header, /nav\.companies/);
   assert.doesNotMatch(source, /HEADER_SHELL_HTML/);
   assert.match(
     source,

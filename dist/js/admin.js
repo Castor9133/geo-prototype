@@ -14,8 +14,7 @@
     const ADMIN_ALIAS_PATTERN = /^admin-[A-Za-z0-9][A-Za-z0-9_-]{1,42}$/;
     const DEFAULT_NAVIGATION_MENU_ITEMS = [
         { id: 'suite', label: 'GEO Suite', url: '/suite', target: '_self', enabled: true },
-        { id: 'companies', label: '公司', url: '/companies', target: '_blank', enabled: true },
-        { id: 'diagnostic', label: '诊断', url: '/diagnostic', target: '_blank', enabled: true },
+                { id: 'diagnostic', label: '诊断', url: '/diagnostic', target: '_blank', enabled: true },
         { id: 'solutions', label: '问答', url: '/solutions', target: '_blank', enabled: true },
         { id: 'plans', label: '方案', url: '/plans', target: '_blank', enabled: true },
         { id: 'keywords', label: '拓词', url: '/keywords', target: '_blank', enabled: true },
@@ -160,7 +159,6 @@
         if (cleanPath.includes('keywords')) return '/admin/keywords';
         if (cleanPath.includes('diagnostics')) return '/admin/diagnostics';
         if (cleanPath.includes('solutions')) return '/admin/solutions';
-        if (cleanPath.includes('companies')) return '/admin/companies';
         if (cleanPath.includes('users')) return '/admin/users';
         if (cleanPath.includes('settings')) return '/admin/settings';
         return '/admin';
@@ -535,9 +533,6 @@
             <span class="material-symbols-outlined text-lg">dashboard</span><span>仪表盘</span>
         </a>
         <p class="px-3 mt-6 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">业务模块</p>
-        <a href="${withAppOrigin('/admin/companies')}" data-admin-link class="sidebar-link">
-            <span class="material-symbols-outlined text-lg">apartment</span><span>公司管理</span>
-        </a>
         <a href="${withAppOrigin('/admin/diagnostics')}" data-admin-link class="sidebar-link">
             <span class="material-symbols-outlined text-lg">analytics</span><span>诊断管理</span>
         </a>
@@ -6088,7 +6083,6 @@ ${pages.map(p => p === '…'
         if (path.includes('diagnostics')) return 'diagnostics';
         if (path.includes('solutions')) return 'solutions';
         if (path.includes('keywords')) return 'keywords';
-        if (path.includes('companies')) return 'companies';
         if (path.includes('experts') || path.includes('tutorials') || path.includes('content-edit') || path.includes('content')) {
             return 'removed';
         }
@@ -6117,7 +6111,6 @@ ${pages.map(p => p === '…'
                 return;
             }
             if (page === 'dashboard') await initDashboard();
-            else if (page === 'companies') await initCompanies();
             else if (page === 'diagnostics') await initDiagnostics();
             else if (page === 'solutions') await initSolutions();
             else if (page === 'keywords') await initKeywords();

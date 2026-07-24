@@ -69,7 +69,6 @@
             navigation_menu: {
                 items: [
                     { id: 'suite', label: 'GEO Suite', url: '/suite', target: '_self', enabled: true },
-                    { id: 'companies', label: '公司', url: '/companies', target: '_blank', enabled: true },
                     { id: 'diagnostic', label: '诊断', url: '/diagnostic', target: '_blank', enabled: true },
                     { id: 'solutions', label: '问答', url: '/solutions', target: '_blank', enabled: true },
                     { id: 'plans', label: '方案', url: '/plans', target: '_blank', enabled: true },
@@ -160,7 +159,9 @@
                 .filter(item => {
                     const id = String(item.id || '').toLowerCase();
                     const url = String(item.url || '').toLowerCase();
-                    if (id === 'experts' || id === 'tutorial' || id === 'github') return false;
+                    if (id === 'companies' || id === 'experts' || id === 'tutorial' || id === 'github') return false;
+                    if (url === '/companies' || url.startsWith('/companies/') || url === '/company' || url.startsWith('/company/')) return false;
+                    if (url === '/submit-company' || url === '/company-submit' || url.startsWith('/c/')) return false;
                     if (url === '/experts' || url.startsWith('/experts/')) return false;
                     if (url === '/tutorial' || url.startsWith('/tutorial/')) return false;
                     if (url.includes('github.com/yaojingang/georank')) return false;
@@ -342,15 +343,12 @@
         },
         dictionaries: {
             'zh-CN': {
-                'nav.companies': '公司',
                 'nav.diagnostic': '诊断',
                 'nav.solutions': '问答',
                 'nav.plans': '方案',
                 'nav.keywords': '拓词',
                 'nav.tools': '工具',
-                'header.submitCompany': '提交公司',
                 'header.mobileMenu': '打开菜单',
-                'home.submitCompany': '提交公司',
                 'language.label': '语言切换',
                 'language.zh': '中文',
                 'language.en': 'English',
@@ -492,15 +490,12 @@
                 'profile.quickPlans': '生成方案',
             },
             'en-US': {
-                'nav.companies': 'Companies',
                 'nav.diagnostic': 'Diagnostic',
                 'nav.solutions': 'Q&A',
                 'nav.plans': 'Plans',
                 'nav.keywords': 'Keywords',
                 'nav.tools': 'Tools',
-                'header.submitCompany': 'Submit company',
                 'header.mobileMenu': 'Open menu',
-                'home.submitCompany': 'Submit company',
                 'language.label': 'Language switcher',
                 'language.zh': '中文',
                 'language.en': 'English',
@@ -709,8 +704,7 @@
             </a>
             <div class="hidden md:flex items-center gap-5" data-site-navigation data-navigation-variant="desktop">
                 <a href="/suite" data-nav-link data-navigation-item="suite" class="font-manrope font-medium tracking-tight text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">GEO Suite</a>
-                <a href="/companies" data-nav-link data-i18n="nav.companies" class="font-manrope font-medium tracking-tight text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">公司</a>
-                <a href="/diagnostic" data-nav-link data-i18n="nav.diagnostic" class="font-manrope font-medium tracking-tight text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">诊断</a>
+<a href="/diagnostic" data-nav-link data-i18n="nav.diagnostic" class="font-manrope font-medium tracking-tight text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">诊断</a>
                 <a href="/solutions" data-nav-link data-i18n="nav.solutions" class="font-manrope font-medium tracking-tight text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">问答</a>
                 <a href="/plans" data-nav-link data-i18n="nav.plans" class="font-manrope font-medium tracking-tight text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">方案</a>
                 <a href="/keywords" data-nav-link data-i18n="nav.keywords" class="font-manrope font-medium tracking-tight text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">拓词</a>
@@ -737,8 +731,7 @@
     <div id="mobile-menu" class="hidden md:hidden bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
         <div class="flex flex-col px-6 py-4 space-y-3" data-site-navigation data-navigation-variant="mobile">
             <a href="/suite" data-nav-link data-navigation-item="suite" class="font-manrope font-medium py-2 text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors">GEO Suite</a>
-            <a href="/companies" data-nav-link data-i18n="nav.companies" class="font-manrope font-medium py-2 text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors">公司</a>
-            <a href="/diagnostic" data-nav-link data-i18n="nav.diagnostic" class="font-manrope font-medium py-2 text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors">诊断</a>
+<a href="/diagnostic" data-nav-link data-i18n="nav.diagnostic" class="font-manrope font-medium py-2 text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors">诊断</a>
             <a href="/solutions" data-nav-link data-i18n="nav.solutions" class="font-manrope font-medium py-2 text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors">问答</a>
             <a href="/plans" data-nav-link data-i18n="nav.plans" class="font-manrope font-medium py-2 text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors">方案</a>
             <a href="/keywords" data-nav-link data-i18n="nav.keywords" class="font-manrope font-medium py-2 text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors">拓词</a>
@@ -863,8 +856,8 @@ const FOOTER_HTML = `
         getModulePath(pathname = window.location.pathname) {
             const normalized = this.normalizePath(pathname);
             if (normalized === '/' || normalized === '/index') return '/';
-            if (normalized === '/company' || normalized === '/companies' || normalized.startsWith('/companies/') || normalized === '/c' || normalized.startsWith('/c/')) return '/companies';
-            if (normalized === '/submit-company' || normalized === '/company-submit') return '/companies';
+            if (normalized === '/company' || normalized === '/companies' || normalized.startsWith('/companies/') || normalized === '/c' || normalized.startsWith('/c/')) return '/suite';
+            if (normalized === '/submit-company' || normalized === '/company-submit') return '/suite';
             if (normalized === '/diagnostic' || normalized.startsWith('/diagnostic/')) return '/diagnostic';
             if (normalized === '/solutions' || normalized.startsWith('/solutions/')) return '/solutions';
             if (normalized === '/plans' || normalized.startsWith('/plans/')) return '/plans';
@@ -875,12 +868,12 @@ const FOOTER_HTML = `
         },
 
         buildCompanyDetail(companyIdentifier, query = {}) {
-            if (!companyIdentifier) return this.buildUrl('/companies', query);
-            return this.buildUrl(`/c/${encodeURIComponent(companyIdentifier)}`, query);
+            if (!companyIdentifier) return this.buildUrl('/suite', query);
+            return this.buildUrl('/suite', query);
         },
 
         buildCompanySubmission({ url = '', companyId = '' } = {}) {
-            return this.buildUrl('/submit-company', {
+            return this.buildUrl('/suite', {
                 url,
                 company: companyId,
             });
@@ -1001,19 +994,19 @@ const FOOTER_HTML = `
             const params = current.searchParams;
 
             if (rawPath === '/index.html' || normalizedPath === '/index') {
-                return Routes.buildUrl('/companies');
+                return Routes.buildUrl('/suite');
             }
 
             if (rawPath === '/company.html') {
                 return params.get('id')
                     ? Routes.buildCompanyDetail(params.get('id'))
-                    : Routes.buildUrl('/companies');
+                    : Routes.buildUrl('/suite');
             }
 
             if (normalizedPath === '/company') {
                 return params.get('id')
                     ? Routes.buildCompanyDetail(params.get('id'))
-                    : Routes.buildUrl('/companies');
+                    : Routes.buildUrl('/suite');
             }
 
             if (
@@ -1117,9 +1110,8 @@ const FOOTER_HTML = `
     // ===== 前台模块开关 =====
     const ModuleGate = {
         defaults: {
-            default_module: 'companies',
+            default_module: 'diagnostic',
             modules: [
-                { key: 'companies', name: '公司', path: '/companies', enabled: true, protected_paths: ['/company', '/companies', '/c', '/submit-company'] },
                 { key: 'diagnostic', name: '诊断', path: '/diagnostic', enabled: true, protected_paths: ['/diagnostic'] },
                 { key: 'solutions', name: '问答', path: '/solutions', enabled: true, protected_paths: [] },
                 { key: 'plans', name: '方案', path: '/plans', enabled: true, protected_paths: ['/plans'] },
@@ -1133,8 +1125,7 @@ const FOOTER_HTML = `
             promise: null,
         },
         modulePathToKey: {
-            '/companies': 'companies',
-            '/diagnostic': 'diagnostic',
+                        '/diagnostic': 'diagnostic',
             '/solutions': 'solutions',
             '/plans': 'plans',
             '/keywords': 'keywords',
@@ -1174,12 +1165,12 @@ const FOOTER_HTML = `
         },
 
         normalizeHomepage(payload) {
-            const companyListPath = Routes.normalizePath(payload?.company_list_path || '/companies');
+            const companyListPath = Routes.normalizePath(payload?.company_list_path || '/suite');
             return {
                 mode: payload?.mode === 'custom' ? 'custom' : 'default',
                 active: Boolean(payload?.active && payload?.mode === 'custom'),
                 active_release_id: payload?.active_release_id || null,
-                company_list_path: companyListPath === '/' ? '/companies' : companyListPath,
+                company_list_path: (companyListPath === '/' || companyListPath === '/companies' || companyListPath.startsWith('/companies/') || companyListPath.startsWith('/c/')) ? '/suite' : companyListPath,
                 fallback_enabled: payload?.fallback_enabled !== false,
             };
         },
@@ -1189,7 +1180,7 @@ const FOOTER_HTML = `
         },
 
         companyListPath() {
-            return this.state.homepage?.company_list_path || '/companies';
+            return this.state.homepage?.company_list_path || '/suite';
         },
 
         normalizeConfig(payload) {
@@ -1202,10 +1193,8 @@ const FOOTER_HTML = `
                 return {
                     ...item,
                     name: raw.name || item.name,
-                    path: item.key === 'companies' ? this.companyListPath() : (raw.path || item.path),
-                    protected_paths: item.key === 'companies'
-                        ? item.protected_paths
-                        : (Array.isArray(raw.protected_paths) ? raw.protected_paths : item.protected_paths),
+                    path: raw.path || item.path,
+                    protected_paths: Array.isArray(raw.protected_paths) ? raw.protected_paths : item.protected_paths,
                     enabled,
                 };
             });
@@ -1264,9 +1253,6 @@ const FOOTER_HTML = `
         applyHeader() {
             document.querySelectorAll('[data-logo-link]').forEach(link => {
                 link.setAttribute('href', '/');
-            });
-            document.querySelectorAll('[data-nav-link][data-i18n="nav.companies"]').forEach(link => {
-                link.setAttribute('href', this.companyListPath());
             });
             document.querySelectorAll('[data-nav-link]').forEach(link => {
                 const key = this.moduleKeyForHref(link.getAttribute('href') || '');
@@ -1951,9 +1937,7 @@ const FOOTER_HTML = `
             const moduleKey = ModuleGate.moduleKeyForPath(path);
             if (moduleKey && !ModuleGate.isEnabled(moduleKey)) return;
             if (
-                path === '/company'
-                || path === '/companies'
-                || path.startsWith('/companies/')
+                path === '/suite'
                 || path === '/c'
                 || path.startsWith('/c/')
             ) return;

@@ -1005,7 +1005,7 @@ class ApiIntegrationTests(unittest.TestCase):
             self.assertEqual(get_response.status_code, 200, get_response.text)
             modules = get_response.json()["modules"]
             payload_modules = [
-                {"key": item["key"], "enabled": item["key"] != "companies"}
+                {"key": item["key"], "enabled": item["key"] != "diagnostic"}
                 for item in modules
             ]
 
@@ -1020,17 +1020,17 @@ class ApiIntegrationTests(unittest.TestCase):
             updated = update_response.json()
             self.assertEqual(updated["default_module"], "tools")
             updated_modules = {item["key"]: item for item in updated["modules"]}
-            self.assertFalse(updated_modules["companies"]["enabled"])
+            self.assertFalse(updated_modules["diagnostic"]["enabled"])
             self.assertTrue(updated_modules["tools"]["is_default"])
+            self.assertNotIn("companies", updated_modules)
 
             public_response = self.run_async(self.client.get("/api/settings/frontend-modules"))
             self.assertEqual(public_response.status_code, 200, public_response.text)
             public_payload = public_response.json()
             public_modules = {item["key"]: item for item in public_payload["modules"]}
             self.assertEqual(public_payload["default_module"], "tools")
-            self.assertFalse(public_modules["companies"]["enabled"])
-            self.assertNotIn("/", public_modules["companies"]["protected_paths"])
-            self.assertEqual(public_modules["companies"]["path"], "/companies")
+            self.assertNotIn("companies", public_modules)
+            self.assertEqual(public_modules["tools"]["path"], "/tools")
         finally:
             self.run_async(_restore_frontend_modules_setting(snapshot))
 
@@ -1235,7 +1235,7 @@ class ApiIntegrationTests(unittest.TestCase):
                 public_payload = public_response.json()
                 self.assertTrue(public_payload["active"])
                 self.assertEqual(public_payload["mode"], "custom")
-                self.assertEqual(public_payload["company_list_path"], "/companies")
+                self.assertEqual(public_payload["company_list_path"], "/suite")
 
                 default_response = self.run_async(
                     self.client.post(
@@ -2736,46 +2736,21 @@ class ApiIntegrationTests(unittest.TestCase):
 
         legacy_response = self.run_async(self.client.get(f"/companies/{holder['company_id']}", follow_redirects=False))
         self.assertEqual(legacy_response.status_code, 301, legacy_response.text)
-        expected_origin = "http://testserver" if settings.DEBUG else settings.PUBLIC_BASE_URL.rstrip("/")
-        self.assertEqual(legacy_response.headers["location"], f"{expected_origin}/c/{holder['path_key']}")
+        self.assertEqual(legacy_response.headers.get("location"), "/suite")
         self.assertEqual(self.run_async(_view_count()), 0)
 
-        detail_response = self.run_async(self.client.get(f"/c/{holder['path_key']}"))
-        self.assertEqual(detail_response.status_code, 200, detail_response.text)
-        self.assertEqual(self.run_async(_view_count()), 1)
-        self.assertIn("SSR Company", detail_response.text)
-        self.assertIn("服务端直出的 GEO 公司档案。", detail_response.text)
-        self.assertIn('id="company-profile"', detail_response.text)
-        self.assertIn("公司介绍", detail_response.text)
-        self.assertIn("业务与能力", detail_response.text)
-        self.assertIn("公开资料与可信信号", detail_response.text)
-        self.assertIn("GEO 分析", detail_response.text)
-        self.assertNotIn("GEO 行动计划", detail_response.text)
-        self.assertNotIn("页面可读性摘要", detail_response.text)
-        self.assertIn("Ada", detail_response.text)
-        self.assertIn("application/ld+json", detail_response.text)
-        self.assertIn('"@type": "Organization"', detail_response.text)
-        self.assertIn(f'rel="canonical" href="{expected_origin}/c/{holder["path_key"]}"', detail_response.text)
+        detail_response = self.run_async(self.client.get(f"/c/{holder['path_key']}", follow_redirects=False))
+        self.assertEqual(detail_response.status_code, 301, detail_response.text)
+        self.assertEqual(detail_response.headers.get("location"), "/suite")
+        self.assertEqual(self.run_async(_view_count()), 0)
 
-        second_detail_response = self.run_async(self.client.get(f"/c/{holder['path_key']}"))
-        self.assertEqual(second_detail_response.status_code, 200, second_detail_response.text)
-        self.assertEqual(self.run_async(_view_count()), 2)
+        company_alias = self.run_async(self.client.get("/company", follow_redirects=False))
+        self.assertEqual(company_alias.status_code, 301, company_alias.text)
+        self.assertEqual(company_alias.headers.get("location"), "/suite")
 
-        with patch(
-            "app.web.company_pages.rank_similar_companies",
-            side_effect=RuntimeError("forced render failure"),
-        ):
-            with self.assertRaises(RuntimeError):
-                self.run_async(self.client.get(f"/c/{holder['path_key']}"))
-        self.assertEqual(self.run_async(_view_count()), 2)
-
-        with patch(
-            "app.web.company_pages.update",
-            side_effect=SQLAlchemyError("forced PV storage failure"),
-        ):
-            resilient_response = self.run_async(self.client.get(f"/c/{holder['path_key']}"))
-        self.assertEqual(resilient_response.status_code, 200, resilient_response.text)
-        self.assertEqual(self.run_async(_view_count()), 2)
+        submit_alias = self.run_async(self.client.get("/submit-company", follow_redirects=False))
+        self.assertEqual(submit_alias.status_code, 301, submit_alias.text)
+        self.assertEqual(submit_alias.headers.get("location"), "/suite")
 
     def test_company_list_can_sort_by_real_page_views(self):
         suffix = uuid.uuid4().hex[:10]

@@ -7,7 +7,6 @@
 
     const DEFAULT_MENU_ITEMS = [
         { id: 'suite', label: 'GEO Suite', url: '/suite', target: '_self', enabled: true },
-        { id: 'companies', label: '公司', url: '/companies', target: '_blank', enabled: true },
         { id: 'diagnostic', label: '诊断', url: '/diagnostic', target: '_blank', enabled: true },
         { id: 'solutions', label: '问答', url: '/solutions', target: '_blank', enabled: true },
         { id: 'plans', label: '方案', url: '/plans', target: '_blank', enabled: true },
@@ -56,7 +55,9 @@
             .filter(item => {
                 const id = String(item.id || '').toLowerCase();
                 const url = String(item.url || '').toLowerCase();
-                if (id === 'experts' || id === 'tutorial' || id === 'github') return false;
+                if (id === 'companies' || id === 'experts' || id === 'tutorial' || id === 'github') return false;
+                if (url === '/companies' || url.startsWith('/companies/') || url === '/company' || url.startsWith('/company/')) return false;
+                if (url === '/submit-company' || url === '/company-submit' || url.startsWith('/c/')) return false;
                 if (url === '/experts' || url.startsWith('/experts/')) return false;
                 if (url === '/tutorial' || url.startsWith('/tutorial/')) return false;
                 if (url.includes('github.com/yaojingang/georank')) return false;

@@ -4,8 +4,6 @@ import type {Metadata} from 'next';
 
 export type LegacyPageId =
   | 'index'
-  | 'company'
-  | 'company-submit'
   | 'diagnostic'
   | 'solutions'
   | 'plans'
@@ -13,7 +11,8 @@ export type LegacyPageId =
   | 'tools'
   | 'profile'
   | 'login'
-  | 'register';
+  | 'register'
+  | 'suite';
 
 type ParsedLegacyHtml = {
   bodyClass: string;

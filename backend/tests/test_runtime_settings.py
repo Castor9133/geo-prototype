@@ -144,32 +144,32 @@ class RuntimeSettingsTests(unittest.TestCase):
     def test_build_frontend_module_config_defaults_to_all_enabled(self):
         config = _build_frontend_module_config({})
 
-        self.assertEqual(config["default_module"], "companies")
-        self.assertEqual(len(config["modules"]), 6)
+        self.assertEqual(config["default_module"], "diagnostic")
+        self.assertEqual(len(config["modules"]), 5)
         self.assertTrue(all(module["enabled"] for module in config["modules"]))
         modules = {module["key"]: module for module in config["modules"]}
         self.assertEqual(
             set(modules),
-            {"companies", "diagnostic", "solutions", "plans", "keywords", "tools"},
+            {"diagnostic", "solutions", "plans", "keywords", "tools"},
         )
+        self.assertNotIn("companies", modules)
         self.assertNotIn("experts", modules)
         self.assertNotIn("tutorial", modules)
-        self.assertEqual(modules["companies"]["path"], "/companies")
-        self.assertNotIn("/", modules["companies"]["protected_paths"])
+        self.assertEqual(modules["diagnostic"]["path"], "/diagnostic")
         self.assertEqual(modules["solutions"]["protected_paths"], [])
 
     def test_build_frontend_module_config_moves_default_to_enabled_module(self):
         config = _build_frontend_module_config(
             {
                 "frontend_modules": {
-                    "default_module": "companies",
+                    "default_module": "diagnostic",
                     "modules": [
-                        {"key": "companies", "enabled": False},
                         {"key": "diagnostic", "enabled": False},
                         {"key": "solutions", "enabled": False},
                         {"key": "plans", "enabled": False},
                         {"key": "keywords", "enabled": False},
                         {"key": "tools", "enabled": True},
+                        {"key": "companies", "enabled": True},
                         {"key": "unknown", "enabled": True},
                     ],
                 }
@@ -178,9 +178,9 @@ class RuntimeSettingsTests(unittest.TestCase):
 
         self.assertEqual(config["default_module"], "tools")
         modules = {module["key"]: module for module in config["modules"]}
-        self.assertFalse(modules["companies"]["enabled"])
         self.assertFalse(modules["diagnostic"]["enabled"])
         self.assertTrue(modules["tools"]["enabled"])
+        self.assertNotIn("companies", modules)
         self.assertNotIn("unknown", modules)
         self.assertNotIn("experts", modules)
         self.assertNotIn("tutorial", modules)
@@ -190,9 +190,9 @@ class RuntimeSettingsTests(unittest.TestCase):
 
         self.assertEqual(config["mode"], "custom")
         self.assertEqual(config["active_release_id"], DEFAULT_HOMEPAGE_RELEASE_ID)
-        self.assertEqual(config["company_list_path"], "/companies")
+        self.assertEqual(config["company_list_path"], "/suite")
 
-    def test_build_homepage_runtime_config_can_restore_company_homepage(self):
+    def test_build_homepage_runtime_config_rewrites_retired_company_path(self):
         config = _build_homepage_runtime_config(
             {
                 "homepage_runtime": {
@@ -205,7 +205,7 @@ class RuntimeSettingsTests(unittest.TestCase):
 
         self.assertEqual(config["mode"], "default")
         self.assertIsNone(config["active_release_id"])
-
+        self.assertEqual(config["company_list_path"], "/suite")
 
 if __name__ == "__main__":
     unittest.main()

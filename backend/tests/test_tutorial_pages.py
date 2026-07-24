@@ -23,6 +23,10 @@ class TutorialPagesTests(unittest.TestCase):
             "dist/admin/tutorials.html",
             "dist/admin/tutorials-edit.html",
             "dist/admin/experts.html",
+            "dist/company.html",
+            "dist/company-submit.html",
+            "dist/js/company.js",
+            "dist/admin/companies.html",
         ):
             self.assertFalse(
                 (repo_root / relative).exists(),

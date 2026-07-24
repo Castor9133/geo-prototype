@@ -16,16 +16,16 @@ class NavigationSettingsTests(unittest.TestCase):
     def test_default_menu_uses_new_tab(self):
         menu = get_default_navigation_menu()
 
-        self.assertGreaterEqual(len(menu["items"]), 7)
+        self.assertGreaterEqual(len(menu["items"]), 6)
         self.assertEqual(menu["items"][0]["id"], "suite")
         self.assertEqual(menu["items"][0]["url"], "/suite")
         self.assertEqual(menu["items"][0]["target"], "_self")
         self.assertTrue(
             all(item["target"] == "_blank" for item in menu["items"] if item["id"] != "suite")
         )
-        self.assertEqual(menu["items"][1]["url"], "/companies")
+        self.assertEqual(menu["items"][1]["url"], "/diagnostic")
         self.assertFalse(
-            {"experts", "tutorial", "github"} & {item["id"] for item in menu["items"]}
+            {"companies", "experts", "tutorial", "github"} & {item["id"] for item in menu["items"]}
         )
 
     def test_normalizer_preserves_order_and_supported_targets(self):
@@ -60,42 +60,43 @@ class NavigationSettingsTests(unittest.TestCase):
         menu = ensure_suite_in_navigation_menu(
             {
                 "items": [
-                    {"id": "companies", "label": "公司", "url": "/companies", "target": "_blank"},
                     {"id": "diagnostic", "label": "诊断", "url": "/diagnostic", "target": "_blank"},
+                    {"id": "solutions", "label": "问答", "url": "/solutions", "target": "_blank"},
                 ]
             }
         )
 
         self.assertEqual(menu["items"][0]["id"], "suite")
         self.assertEqual(menu["items"][0]["url"], "/suite")
-        self.assertEqual(menu["items"][1]["id"], "companies")
+        self.assertEqual(menu["items"][1]["id"], "diagnostic")
 
     def test_ensure_suite_keeps_existing_suite(self):
         menu = ensure_suite_in_navigation_menu(
             {
                 "items": [
                     {"id": "suite", "label": "GEO Suite", "url": "/suite", "target": "_self"},
-                    {"id": "companies", "label": "公司", "url": "/companies", "target": "_blank"},
+                    {"id": "diagnostic", "label": "诊断", "url": "/diagnostic", "target": "_blank"},
                 ]
             }
         )
 
-        self.assertEqual([item["id"] for item in menu["items"]], ["suite", "companies"])
+        self.assertEqual([item["id"] for item in menu["items"]], ["suite", "diagnostic"])
 
     def test_ensure_suite_strips_removed_product_entries(self):
         menu = ensure_suite_in_navigation_menu(
             {
                 "items": [
                     {"id": "suite", "label": "GEO Suite", "url": "/suite", "target": "_self"},
+                    {"id": "companies", "label": "公司", "url": "/companies", "target": "_blank"},
                     {"id": "experts", "label": "专家", "url": "/experts", "target": "_blank"},
                     {"id": "tutorial", "label": "教程", "url": "/tutorial", "target": "_blank"},
                     {"id": "github", "label": "GitHub", "url": "https://github.com/yaojingang/georank", "target": "_blank"},
-                    {"id": "companies", "label": "公司", "url": "/companies", "target": "_blank"},
+                    {"id": "diagnostic", "label": "诊断", "url": "/diagnostic", "target": "_blank"},
                 ]
             }
         )
 
-        self.assertEqual([item["id"] for item in menu["items"]], ["suite", "companies"])
+        self.assertEqual([item["id"] for item in menu["items"]], ["suite", "diagnostic"])
 
 
 if __name__ == "__main__":

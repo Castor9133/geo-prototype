@@ -1,6 +1,5 @@
 export default {
   nav: {
-    companies: '公司',
     diagnostic: '诊断',
     solutions: '方案',
     plans: '方案',
