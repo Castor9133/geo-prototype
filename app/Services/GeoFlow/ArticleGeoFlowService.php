@@ -352,7 +352,17 @@ class ArticleGeoFlowService
             throw $this->riskBlockedException(Article::query()->findOrFail($articleId), $exception);
         }
 
-        return $this->getArticle($articleId);
+        $published = $this->getArticle($articleId);
+        try {
+            $fresh = Article::query()->find($articleId);
+            if ($fresh) {
+                app(GeoSuiteCallbackService::class)->notifyArticlePublished($fresh);
+            }
+        } catch (\Throwable) {
+            // 回调失败不影响发布主路径
+        }
+
+        return $published;
     }
 
     public function trashArticle(int $articleId): array

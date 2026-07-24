@@ -120,7 +120,6 @@
                         <p id="admin-welcome-links-label" class="admin-welcome-meta-text text-[#5e5d59]"></p>
                         <div class="mt-3 flex flex-wrap gap-2">
                             <a id="admin-welcome-link-x" class="admin-welcome-meta-text inline-flex items-center rounded-full bg-[#EEF2F7] px-3 py-1.5 font-medium text-[#1B365D] ring-1 ring-[#d1cfc5] hover:bg-[#E4ECF5]" target="_blank" rel="noopener noreferrer"></a>
-                            <a id="admin-welcome-link-github" class="admin-welcome-meta-text inline-flex items-center rounded-full bg-[#EEF2F7] px-3 py-1.5 font-medium text-[#1B365D] ring-1 ring-[#d1cfc5] hover:bg-[#E4ECF5]" target="_blank" rel="noopener noreferrer"></a>
                             <a id="admin-welcome-link-changelog" class="admin-welcome-meta-text inline-flex items-center rounded-full bg-[#EEF2F7] px-3 py-1.5 font-medium text-[#1B365D] ring-1 ring-[#d1cfc5] hover:bg-[#E4ECF5]" target="_blank" rel="noopener noreferrer"></a>
                         </div>
                     </div>
@@ -152,7 +151,6 @@
             const contentNode = document.getElementById('admin-welcome-content');
             const linksLabelNode = document.getElementById('admin-welcome-links-label');
             const linkXNode = document.getElementById('admin-welcome-link-x');
-            const linkGithubNode = document.getElementById('admin-welcome-link-github');
             const linkChangelogNode = document.getElementById('admin-welcome-link-changelog');
             const switchButton = modal.querySelector('[data-welcome-switch]');
             const closeButtons = modal.querySelectorAll('[data-welcome-close]');
@@ -188,8 +186,6 @@
                 linksLabelNode.textContent = meta.links_label || '';
                 linkXNode.textContent = meta.author_link || '';
                 linkXNode.href = state.links?.x || '#';
-                linkGithubNode.textContent = meta.github_link || '';
-                linkGithubNode.href = state.links?.github || '#';
                 linkChangelogNode.textContent = meta.changelog_link || '';
                 linkChangelogNode.href = state.links?.changelog?.[locale] || state.links?.changelog?.['zh-CN'] || '#';
                 switchButton.textContent = meta.switch_label || (locale === 'zh-CN' ? 'English' : '中文');

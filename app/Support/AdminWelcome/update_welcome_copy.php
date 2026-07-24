@@ -39,7 +39,6 @@ return static function (array $welcomeState): array {
                 'close' => '关闭',
                 'links_label' => '建议先查看更新日志，再决定是否现在升级。',
                 'author_link' => '作者 X 主页',
-                'github_link' => '项目 GitHub',
                 'changelog_link' => '更新日志',
             ],
             'letter' => [
@@ -77,7 +76,6 @@ return static function (array $welcomeState): array {
                 'close' => 'Close',
                 'links_label' => 'Review the changelog first, then decide when to upgrade.',
                 'author_link' => 'Author X Profile',
-                'github_link' => 'Project GitHub',
                 'changelog_link' => 'Changelog',
             ],
             'letter' => [

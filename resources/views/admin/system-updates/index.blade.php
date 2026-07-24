@@ -92,7 +92,6 @@
             'deployment' => 'border-blue-200 bg-blue-50 text-blue-700',
             'recommended' => 'border-emerald-200 bg-emerald-50 text-emerald-700',
         ];
-        $githubUrl = (string) ($links['github'] ?? 'https://github.com/yaojingang/GEOFlow');
         $changelogLinks = is_array($links['changelog'] ?? null) ? $links['changelog'] : [];
         $changelogUrl = (string) ($changelogLinks[$localeForChangelog] ?? $changelogLinks['zh-CN'] ?? 'https://github.com/yaojingang/GEOFlow/blob/main/docs/CHANGELOG.md');
         $flagLabels = [
@@ -119,10 +118,6 @@
                         {{ __('admin.system_updates.button.check') }}
                     </button>
                 </form>
-                <a href="{{ $githubUrl }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">
-                    <i data-lucide="github" class="mr-2 h-4 w-4"></i>
-                    {{ __('admin.system_updates.button.open_github') }}
-                </a>
             </div>
         </div>
 

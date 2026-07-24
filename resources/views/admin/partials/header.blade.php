@@ -15,7 +15,6 @@
         : ($updatePayload['summary_zh'] ?? ''));
     $changelogLinks = is_array($updateLinks['changelog'] ?? null) ? $updateLinks['changelog'] : [];
     $notificationChangelogUrl = (string) ($changelogLinks[$localeForChangelog] ?? $changelogLinks['zh-CN'] ?? 'https://github.com/yaojingang/GEOFlow/blob/main/docs/CHANGELOG.md');
-    $notificationGithubUrl = (string) ($updateLinks['github'] ?? 'https://github.com/yaojingang/GEOFlow');
     $notificationUpdateCenterUrl = $isUpdateCenterEnabled && $isSuperAdmin ? \App\Support\AdminWeb::routePath('admin.system-updates.index') : '';
     $notificationStatus = (string) ($updateState['status'] ?? 'disabled');
     $menu = [
@@ -117,6 +116,12 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex h-16 items-center gap-3 lg:gap-4 min-w-0">
             <a href="{{ route('admin.dashboard') }}" class="shrink-0 text-lg sm:text-xl font-semibold text-gray-900">{{ $adminBrandName }}</a>
+            @php
+                $suitePublicUrl = rtrim((string) env('GEOSUITE_PUBLIC_URL', 'http://localhost:3009'), '/');
+            @endphp
+            <a href="{{ $suitePublicUrl }}/suite" target="_blank" rel="noreferrer" class="hidden sm:inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium text-emerald-800 bg-emerald-50 border border-emerald-100 hover:bg-emerald-100">
+                回 GEO Suite
+            </a>
             <nav class="hidden md:flex flex-1 min-w-0 items-center">
                 <div class="flex w-full min-w-0 items-center gap-3 lg:gap-5 overflow-x-auto overscroll-x-contain py-2 -my-2 [scrollbar-width:thin]">
                     @foreach ($menu as $key => $item)
@@ -184,9 +189,6 @@
                                 @endif
                                 <a href="{{ $notificationChangelogUrl }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white hover:bg-blue-700">
                                     {{ __('admin.header.notifications.view_changelog') }}
-                                </a>
-                                <a href="{{ $notificationGithubUrl }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50">
-                                    {{ __('admin.header.notifications.open_github') }}
                                 </a>
                             </div>
                         </div>

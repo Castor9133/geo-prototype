@@ -45,7 +45,6 @@ return array_replace_recursive($base, [
             'daily_check' => 'O GitHub é verificado no máximo uma vez por dia.',
             'checked_at' => 'Última verificação: :time',
             'view_changelog' => 'Ver changelog',
-            'open_github' => 'Abrir GitHub',
             'open_update_center' => 'Centro de atualização',
         ],
     ],
@@ -89,7 +88,6 @@ return array_replace_recursive($base, [
         ],
         'button' => [
             'check' => 'Verificar agora',
-            'open_github' => 'Abrir GitHub',
             'view_changelog' => 'Ver changelog',
             'generate_plan' => 'Gerar plano',
             'create_backup' => 'Criar backup',
@@ -577,7 +575,6 @@ return array_replace_recursive($base, [
         'version' => 'Versão :version',
         'author' => 'Autor: Yao Jingang',
         'author_x_profile' => 'Perfil X do autor',
-        'project_github_link' => 'GitHub do projeto',
         'changelog_link' => 'Registro de alterações',
         'help_docs_link' => 'Documentação',
         'project_intro_link' => 'Introdução do projeto',

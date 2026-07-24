@@ -6,6 +6,7 @@
 
 use App\Http\Controllers\Admin\AdminActivityLogController;
 use App\Http\Controllers\Admin\AdminAuthController;
+use App\Http\Controllers\Admin\GeoSuiteSsoController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminWelcomeController;
 use App\Http\Controllers\Admin\AiModelController;
@@ -72,6 +73,7 @@ Route::prefix($adminPrefix)->name('admin.')->middleware(['admin.locale'])->group
     Route::middleware('guest:admin')->group(function () {
         Route::get('login', [AdminAuthController::class, 'showLoginForm'])->name('login');
         Route::post('login', [AdminAuthController::class, 'login'])->name('login.attempt');
+        Route::get('sso/consume', [GeoSuiteSsoController::class, 'consume'])->name('sso.consume');
     });
 
     // 后台受保护路由

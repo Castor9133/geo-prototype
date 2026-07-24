@@ -71,6 +71,10 @@ services:
         COMPOSER_PACKAGIST_MIRROR: ${COMPOSER_PACKAGIST_MIRROR:-}
     container_name: geoflow-app
     working_dir: /var/www/html
+    env_file:
+      - ./.env
+    environment:
+      COMPOSER_ON_START: ${COMPOSER_ON_START:-false}
     command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]
     ports:
       - "${APP_PORT:-18080}:8080"

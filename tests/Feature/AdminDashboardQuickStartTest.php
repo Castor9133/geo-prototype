@@ -280,6 +280,11 @@ class AdminDashboardQuickStartTest extends TestCase
         $this->assertStringContainsString(__('admin.footer.help_docs_link'), $zhHtml);
         $this->assertStringContainsString('https://github.com/yaojingang/GEOFlow/wiki', $zhHtml);
         $this->assertStringNotContainsString('https://github.com/yaojingang/GEOFlow/wiki/Home-English', $zhHtml);
+        $this->assertStringNotContainsString('项目GitHub地址', $zhHtml);
+        $this->assertStringNotContainsString('项目 GitHub', $zhHtml);
+        $this->assertStringNotContainsString('打开 GitHub', $zhHtml);
+        $this->assertStringNotContainsString('admin-welcome-link-github', $zhHtml);
+        $this->assertStringNotContainsString('https://github.com/yaojingang/GEOFlow"', $zhHtml);
 
         session(['locale' => 'en']);
 

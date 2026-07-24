@@ -8,9 +8,8 @@ return [
             'badge' => '项目说明',
             'switch_label' => 'English',
             'close' => '关闭',
-            'links_label' => '需要更多细节时，可以查看项目仓库、更新日志和作者主页。',
+            'links_label' => '需要更多细节时，可以查看更新日志和作者主页。',
             'author_link' => '作者 X 主页',
-            'github_link' => '项目 GitHub',
             'changelog_link' => '更新日志',
         ],
         'letter' => [
@@ -89,9 +88,8 @@ return [
             'badge' => 'Project Intro',
             'switch_label' => '中文',
             'close' => 'Close',
-            'links_label' => 'Use these links when you need repository details, release notes, or the author profile.',
+            'links_label' => 'Use these links when you need release notes or the author profile.',
             'author_link' => 'Author X Profile',
-            'github_link' => 'Project GitHub',
             'changelog_link' => 'Changelog',
         ],
         'letter' => [

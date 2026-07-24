@@ -43,7 +43,6 @@ return [
             'daily_check' => 'GitHub is checked at most once per day.',
             'checked_at' => 'Last checked: :time',
             'view_changelog' => 'View changelog',
-            'open_github' => 'Open GitHub',
             'open_update_center' => 'Update center',
         ],
     ],
@@ -87,7 +86,6 @@ return [
         ],
         'button' => [
             'check' => 'Check now',
-            'open_github' => 'Open GitHub',
             'view_changelog' => 'View changelog',
             'generate_plan' => 'Generate plan',
             'create_backup' => 'Create backup',
@@ -572,7 +570,6 @@ return [
         'version' => 'Version :version',
         'author' => 'Author: Yao Jingang',
         'author_x_profile' => 'Author X Profile',
-        'project_github_link' => 'Project GitHub',
         'changelog_link' => 'Changelog',
         'help_docs_link' => 'Help docs',
         'project_intro_link' => 'Project intro',

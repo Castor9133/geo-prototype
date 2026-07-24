@@ -43,7 +43,6 @@ return [
             'daily_check' => '每天最多自动检查一次 GitHub。',
             'checked_at' => '上次检查：:time',
             'view_changelog' => '查看更新日志',
-            'open_github' => '打开 GitHub',
             'open_update_center' => '更新中心',
         ],
     ],
@@ -87,7 +86,6 @@ return [
         ],
         'button' => [
             'check' => '立即检查',
-            'open_github' => '打开 GitHub',
             'view_changelog' => '查看更新日志',
             'generate_plan' => '生成更新计划',
             'create_backup' => '创建备份',
@@ -572,7 +570,6 @@ return [
         'version' => '版本 :version',
         'author' => '作者：姚金刚',
         'author_x_profile' => '作者X主页',
-        'project_github_link' => '项目GitHub地址',
         'changelog_link' => '更新日志',
         'help_docs_link' => '帮助文档',
         'project_intro_link' => '项目说明',

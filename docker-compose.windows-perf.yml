@@ -1,0 +1,46 @@
+# Windows Docker Desktop 性能覆盖：vendor 用 Linux 卷，避免整仓 NTFS bind mount 拖慢 PHP。
+# 用法：docker compose -f docker-compose.yml -f docker-compose.windows-perf.yml up -d
+# 首次需先填充 vendor 卷（见下方注释或 start 脚本）。
+
+services:
+  app:
+    environment:
+      SESSION_DRIVER: redis
+      CACHE_STORE: redis
+      GEOFLOW_UPDATE_CHECK_ENABLED: "false"
+      LOG_LEVEL: warning
+      COMPOSER_ON_START: "false"
+    volumes:
+      - ./:/var/www/html
+      - geoflow-vendor-linux:/var/www/html/vendor
+      - geoflow-bootstrap-cache:/var/www/html/bootstrap/cache
+
+  queue:
+    environment:
+      SESSION_DRIVER: redis
+      CACHE_STORE: redis
+      COMPOSER_ON_START: "false"
+    volumes:
+      - ./:/var/www/html
+      - geoflow-vendor-linux:/var/www/html/vendor
+      - geoflow-bootstrap-cache:/var/www/html/bootstrap/cache
+
+  scheduler:
+    environment:
+      COMPOSER_ON_START: "false"
+    volumes:
+      - ./:/var/www/html
+      - geoflow-vendor-linux:/var/www/html/vendor
+      - geoflow-bootstrap-cache:/var/www/html/bootstrap/cache
+
+  reverb:
+    environment:
+      COMPOSER_ON_START: "false"
+    volumes:
+      - ./:/var/www/html
+      - geoflow-vendor-linux:/var/www/html/vendor
+      - geoflow-bootstrap-cache:/var/www/html/bootstrap/cache
+
+volumes:
+  geoflow-vendor-linux:
+  geoflow-bootstrap-cache:

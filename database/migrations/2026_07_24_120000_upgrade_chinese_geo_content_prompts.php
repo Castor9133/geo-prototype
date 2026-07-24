@@ -7,7 +7,8 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Upgrade default Chinese GEO content prompts for evidence-aware wording.
+     * Updates existing seeded rows by name; does not touch user-renamed prompts.
      */
     public function up(): void
     {
@@ -17,7 +18,44 @@ return new class extends Migration
 
         $now = now();
 
-        $prompts = [
+        foreach ($this->promptDefinitions() as $prompt) {
+            $existing = DB::table('prompts')->where('name', $prompt['name'])->first();
+            if ($existing) {
+                DB::table('prompts')
+                    ->where('id', $existing->id)
+                    ->update([
+                        'type' => $prompt['type'],
+                        'content' => $prompt['content'],
+                        'updated_at' => $now,
+                    ]);
+                continue;
+            }
+
+            DB::table('prompts')->insert([
+                'name' => $prompt['name'],
+                'type' => $prompt['type'],
+                'content' => $prompt['content'],
+                'variables' => '',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        // Content upgrade is forward-only; keep rows to avoid deleting operator edits.
+    }
+
+    /**
+     * @return array<int, array{name: string, type: string, content: string}>
+     */
+    private function promptDefinitions(): array
+    {
+        return [
             [
                 'name' => 'GEO营销学·信任型正文生成',
                 'type' => 'content',
@@ -87,9 +125,6 @@ return new class extends Migration
 
 请直接输出最终文章正文。
 PROMPT,
-                'variables' => '',
-                'created_at' => $now,
-                'updated_at' => $now,
             ],
             [
                 'name' => 'GEO榜单型正文生成',
@@ -173,33 +208,7 @@ PROMPT,
 
 请直接输出最终榜单文章。
 PROMPT,
-                'variables' => '',
-                'created_at' => $now,
-                'updated_at' => $now,
             ],
         ];
-
-        foreach ($prompts as $prompt) {
-            if (! DB::table('prompts')->where('name', $prompt['name'])->exists()) {
-                DB::table('prompts')->insert($prompt);
-            }
-        }
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        if (! Schema::hasTable('prompts')) {
-            return;
-        }
-
-        DB::table('prompts')
-            ->whereIn('name', [
-                'GEO营销学·信任型正文生成',
-                'GEO榜单型正文生成',
-            ])
-            ->delete();
     }
 };
