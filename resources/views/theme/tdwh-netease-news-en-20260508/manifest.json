@@ -1,8 +1,8 @@
 {
   "id": "tdwh-netease-news-en-20260508",
-  "name": "TDWH NetEase English",
+  "name": "出海品牌·英文资讯前台",
   "version": "1.0.0",
-  "description": "TDWH site-specific English frontend theme forked from NetEase News Inspired. It preserves GEOFlow data contracts while forcing English UI chrome for www.tdwh.com.",
+  "description": "面向中国企业出海场景的英文 UI 资讯前台：在保持 GEOFlow 数据契约的同时，用英文导航与版式承接海外读者与英文 AI 源。文章标题与正文仍由内容数据驱动。",
   "templates": [
     "layout",
     "home",
@@ -10,10 +10,9 @@
     "article"
   ],
   "notes": [
-    "Inspired by NetEase portal, NetEase Health channel, and NetEase article-page layout patterns. Does not copy NetEase assets, content, or proprietary code.",
-    "Keeps GEOFlow Blade variables, SEO meta fields, markdown HTML rendering, category navigation, footer, article routes, and optional article ad data intact.",
-    "Reference-only NetEase modules intentionally omitted: login, mailbox/register, app download widgets, comment/share widgets, large external ad slots, and unrelated image-heavy blocks.",
-    "Site-specific English UI fork for www.tdwh.com. Article titles, category names, and article body content remain data-driven."
+    "面向中国生成式引擎生态（DeepSeek / 腾讯元宝 / 豆包等）的站点主题。",
+    "保留 GEOFlow Blade 变量、SEO Meta、JSON-LD、分类导航、文章路由与正文渲染契约。",
+    "视觉与栏目文案可按策略标签继续本地化，不改变发布/主题加载契约。"
   ],
   "base_theme_id": "netease-news-20260507",
   "target_theme_id": "tdwh-netease-news-en-20260508",
@@ -25,5 +24,13 @@
     "/category/{slug}",
     "/article/{slug}",
     "/archive"
+  ],
+  "locale": "zh_CN",
+  "ecosystem_focus": "china_geo",
+  "ecosystem": "overseas",
+  "strategy_tags": [
+    "出海",
+    "英文",
+    "资讯"
   ]
 }

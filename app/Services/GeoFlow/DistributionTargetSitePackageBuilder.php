@@ -2184,7 +2184,7 @@ function apparelPageHeader(array $config, array $settings, string $title, array 
     echo '<link rel="stylesheet" href="'.h(frontVersionedAssetPath($config, '/assets/css/site.css')).'">';
     echo '<script defer src="'.h(frontVersionedAssetPath($config, '/assets/js/site.js')).'"></script>';
     echo '</head><body class="target-theme-apparel"><header><div class="asi-topline"><div class="asi-shell asi-topline-row"><span>Global apparel sourcing, trade policy and supplier intelligence</span><span>'.h(date('l, F j, Y')).'</span></div></div>';
-    echo '<div class="asi-masthead"><div class="asi-shell asi-masthead-row"><a class="asi-brand" href="'.h($homeUrl).'"><span class="asi-brand-kicker">Independent Market Briefing</span><span class="asi-brand-name">'.h($siteName).'</span></a>';
+    echo '<div class="asi-masthead"><div class="asi-shell asi-masthead-row"><a class="asi-brand" href="'.h($homeUrl).'"><span class="asi-brand-kicker">品牌知识中心</span><span class="asi-brand-name">'.h($siteName).'</span></a>';
     echo '<form class="asi-search" action="'.h($homeUrl).'" method="get"><input type="search" name="search" placeholder="Search intelligence"><button type="submit">Search</button></form></div>';
     echo '<nav class="asi-nav asi-shell" aria-label="Primary"><a class="is-active" href="'.h($homeUrl).'">Latest</a>';
     echo '</nav></div></header><main class="wrap">';

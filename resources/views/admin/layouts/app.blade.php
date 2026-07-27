@@ -8,8 +8,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@isset($pageTitle){{ $pageTitle }} — @endisset{{ $adminBrandName }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet">
     <script src="{{ asset('js/tailwindcss.play-cdn.js') }}"></script>
     <script src="{{ asset('js/lucide.min.js') }}"></script>
+    <link rel="stylesheet" href="{{ asset('assets/css/admin-neubrutal.css') }}?v=20260727-neubrutal">
     @stack('styles')
 </head>
 <body class="bg-gray-50">

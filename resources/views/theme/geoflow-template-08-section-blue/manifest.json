@@ -1,31 +1,39 @@
 {
-    "id": "geoflow-template-08-section-blue",
-    "name": "GEOFlow 08 Section Blue",
-    "version": "1.0.0",
-    "description": "A section-led editorial variant with deep blue identity, stacked blocks, and clear content groups. Preserves GEOFlow frontend data contracts and derives from the NetEase News Inspired base theme.",
-    "templates": [
-        "layout",
-        "home",
-        "category",
-        "article"
-    ],
-    "variant_number": 8,
-    "reference_site": "The Guardian",
-    "reference_url": "https://www.theguardian.com/",
-    "notes": [
-        "Generated as a high-level visual variant inspired by The Guardian. It does not copy logos, assets, content, or proprietary source code.",
-        "Keeps GEOFlow Blade variables, SEO meta fields, JSON-LD schema output, category navigation, article routes, and markdown HTML rendering intact.",
-        "Visual differences are concentrated in theme.css and documented in tokens.json for future maintenance."
-    ],
-    "base_theme_id": "netease-news-20260507",
-    "target_theme_id": "geoflow-template-08-section-blue",
-    "mode": "theme_variant",
-    "session_state": "published",
-    "created_at": "2026-06-17T03:57:50+00:00",
-    "preview_routes": [
-        "/",
-        "/category/{slug}",
-        "/article/{slug}",
-        "/archive"
-    ]
+  "id": "geoflow-template-08-section-blue",
+  "name": "08 白帽 GEO·避坑指南",
+  "version": "1.0.0",
+  "description": "白帽 GEO 与避坑文档主题：识别伪 GEO 套路（本地调参演示、极端长尾提示词、截图造假），坚持 EEAT 与长期主义，拒绝堆砌关键词与 AI 投毒；并给出企业阶段化投入决策参考。保留 GEOFlow 前台数据契约。",
+  "templates": [
+    "layout",
+    "home",
+    "category",
+    "article"
+  ],
+  "variant_number": 8,
+  "reference_site": "08 白帽 GEO·避坑指南",
+  "notes": [
+    "面向中国生成式引擎生态（DeepSeek / 腾讯元宝 / 豆包等）的站点主题。",
+    "保留 GEOFlow Blade 变量、SEO Meta、JSON-LD、分类导航、文章路由与正文渲染契约。",
+    "视觉与栏目文案可按策略标签继续本地化，不改变发布/主题加载契约。"
+  ],
+  "base_theme_id": "netease-news-20260507",
+  "target_theme_id": "geoflow-template-08-section-blue",
+  "mode": "theme_variant",
+  "session_state": "published",
+  "created_at": "2026-06-17T03:57:50+00:00",
+  "preview_routes": [
+    "/",
+    "/category/{slug}",
+    "/article/{slug}",
+    "/archive"
+  ],
+  "locale": "zh_CN",
+  "ecosystem_focus": "china_geo",
+  "ecosystem": "whitehat",
+  "strategy_tags": [
+    "避坑",
+    "白帽",
+    "EEAT",
+    "决策参考"
+  ]
 }

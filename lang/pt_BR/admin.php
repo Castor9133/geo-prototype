@@ -1543,7 +1543,7 @@ return array_replace_recursive($base, [
             'current_label' => 'Modelo Ativo no Momento',
             'current_help' => 'Mudar de modelo não altera artigos, categorias, SEO ou contratos de conteúdo. Apenas substitui a camada de apresentação do frontend.',
             'default_name' => 'Modelo Padrão do Frontend',
-            'default_desc' => 'Continue usando o frontend padrão do sistema sem ativar um pacote de tema.',
+            'default_desc' => 'Continue usando o frontend padrão do sistema sem ativar um pacote de tema; depois pode alternar para temas GEO da China (DeepSeek / Yuanbao / Doubao).',
             'preview_home' => 'Visualizar Página Inicial',
             'preview_category' => 'Visualizar Categoria',
             'preview_article' => 'Visualizar Artigo',

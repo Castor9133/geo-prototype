@@ -49,7 +49,57 @@ class DashboardController extends Controller
             'canManageProtectedWorkflows' => $canManageProtectedWorkflows,
             'distributionHealth' => $canManageProtectedWorkflows ? $this->buildDistributionHealth() : [],
             'urlImportHealth' => $canManageProtectedWorkflows ? $this->buildUrlImportHealth() : [],
+            'recommendedDemoKnowledgeBase' => $this->resolveRecommendedDemoKnowledgeBase(),
         ]);
+    }
+
+    /**
+     * @return array{id: int, name: string, exists: bool, detail_url: string, list_url: string, import_docs_url: string}
+     */
+    private function resolveRecommendedDemoKnowledgeBase(): array
+    {
+        $preferredId = max(1, (int) config('geoflow.recommended_demo_knowledge_base_id', 9));
+        $preferredName = trim((string) config('geoflow.recommended_demo_knowledge_base_name', '中文产品演示包·DJI Mini 5 Pro'));
+        if ($preferredName === '') {
+            $preferredName = '中文产品演示包·DJI Mini 5 Pro';
+        }
+
+        $suitePublicUrl = rtrim((string) env('GEOSUITE_PUBLIC_URL', 'http://localhost:3009'), '/');
+        $importDocsPath = ltrim((string) config('geoflow.recommended_demo_import_docs_path', 'pilot-demo/cn-product-demo-v2/import-to-geoflow.md'), '/');
+        $importDocsUrl = $suitePublicUrl.'/'.$importDocsPath;
+
+        $id = $preferredId;
+        $name = $preferredName;
+        $exists = false;
+
+        try {
+            $knowledgeBase = KnowledgeBase::query()->find($preferredId);
+            if ($knowledgeBase === null) {
+                $knowledgeBase = KnowledgeBase::query()
+                    ->where('name', $preferredName)
+                    ->orderBy('id')
+                    ->first();
+            }
+
+            if ($knowledgeBase !== null) {
+                $id = (int) $knowledgeBase->id;
+                $name = trim((string) $knowledgeBase->name) !== ''
+                    ? (string) $knowledgeBase->name
+                    : $preferredName;
+                $exists = true;
+            }
+        } catch (\Throwable) {
+            // Keep configured demo pack links even if the table is unavailable.
+        }
+
+        return [
+            'id' => $id,
+            'name' => $name,
+            'exists' => $exists,
+            'detail_url' => route('admin.knowledge-bases.detail', ['knowledgeBaseId' => $id]),
+            'list_url' => route('admin.knowledge-bases.index'),
+            'import_docs_url' => $importDocsUrl,
+        ];
     }
 
     /**

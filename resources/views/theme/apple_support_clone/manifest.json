@@ -1,17 +1,12 @@
 {
   "id": "apple_support_clone",
-  "name": "Apple Support Inspired",
+  "name": "官网帮助中心·知识库",
   "version": "1.0.0",
   "mode": "clone",
   "framework": "laravel",
   "geoflow_contract": "site-theme-view-resolver",
   "created_at": "2026-05-30",
-  "description": "Apple.com and Apple Support inspired GEOFlow frontend theme. It keeps GEOFlow routes and article/category data contracts intact.",
-  "source_reference_url": [
-    "https://www.apple.com/",
-    "https://support.apple.com/en-us/102655",
-    "https://support.apple.com/mac"
-  ],
+  "description": "中国企业官网帮助中心风格：清晰分类导航、问题导向文章与相关主题推荐，适合沉淀品牌知识库与可被 AI 检索的支持文档。保留 GEOFlow 路由与文章/分类数据契约。",
   "compatible_pages": [
     "home",
     "article",
@@ -51,5 +46,12 @@
     "partials/article-card.blade.php"
   ],
   "fallback_templates": [],
-  "notes": "Preview requires selecting this theme in admin site settings or using static rendered review, because this Laravel app has no isolated theme preview route."
+  "notes": "面向中国 GEO 生态；保留 GEOFlow 前台数据契约。后台启用后即可预览。",
+  "locale": "zh_CN",
+  "ecosystem_focus": "china_geo",
+  "ecosystem": "knowledge",
+  "strategy_tags": [
+    "帮助中心",
+    "知识库"
+  ]
 }

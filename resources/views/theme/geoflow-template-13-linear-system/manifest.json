@@ -1,31 +1,38 @@
 {
-    "id": "geoflow-template-13-linear-system",
-    "name": "GEOFlow 13 Linear System",
-    "version": "1.0.0",
-    "description": "A quiet product-system variant with slate surfaces, precise borders, and operational clarity. Preserves GEOFlow frontend data contracts and derives from the NetEase News Inspired base theme.",
-    "templates": [
-        "layout",
-        "home",
-        "category",
-        "article"
-    ],
-    "variant_number": 13,
-    "reference_site": "Linear",
-    "reference_url": "https://linear.app/",
-    "notes": [
-        "Generated as a high-level visual variant inspired by Linear. It does not copy logos, assets, content, or proprietary source code.",
-        "Keeps GEOFlow Blade variables, SEO meta fields, JSON-LD schema output, category navigation, article routes, and markdown HTML rendering intact.",
-        "Visual differences are concentrated in theme.css and documented in tokens.json for future maintenance."
-    ],
-    "base_theme_id": "netease-news-20260507",
-    "target_theme_id": "geoflow-template-13-linear-system",
-    "mode": "theme_variant",
-    "session_state": "published",
-    "created_at": "2026-06-17T03:57:50+00:00",
-    "preview_routes": [
-        "/",
-        "/category/{slug}",
-        "/article/{slug}",
-        "/archive"
-    ]
+  "id": "geoflow-template-13-linear-system",
+  "name": "13 FAQ 机器可读问答站",
+  "version": "1.0.0",
+  "description": "以 FAQPage Schema 为核心的问答站皮肤：结构化常见问题、意图命中与长尾流量承接，提升豆包等引擎直接引用率。保留 GEOFlow 前台数据契约。",
+  "templates": [
+    "layout",
+    "home",
+    "category",
+    "article"
+  ],
+  "variant_number": 13,
+  "reference_site": "13 FAQ 机器可读问答站",
+  "notes": [
+    "面向中国生成式引擎生态（DeepSeek / 腾讯元宝 / 豆包等）的站点主题。",
+    "保留 GEOFlow Blade 变量、SEO Meta、JSON-LD、分类导航、文章路由与正文渲染契约。",
+    "视觉与栏目文案可按策略标签继续本地化，不改变发布/主题加载契约。"
+  ],
+  "base_theme_id": "netease-news-20260507",
+  "target_theme_id": "geoflow-template-13-linear-system",
+  "mode": "theme_variant",
+  "session_state": "published",
+  "created_at": "2026-06-17T03:57:50+00:00",
+  "preview_routes": [
+    "/",
+    "/category/{slug}",
+    "/article/{slug}",
+    "/archive"
+  ],
+  "locale": "zh_CN",
+  "ecosystem_focus": "china_geo",
+  "ecosystem": "doubao",
+  "strategy_tags": [
+    "FAQPage",
+    "问答",
+    "机器可读"
+  ]
 }

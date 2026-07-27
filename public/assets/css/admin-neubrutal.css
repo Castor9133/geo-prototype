@@ -1,0 +1,262 @@
+/* GEOFlow Admin — Soft Neubrutalism shell (aligned with GEORank hub) */
+:root {
+  --gf-bg: #F9F7F2;
+  --gf-paper: #FFFFFF;
+  --gf-ink: #1A1A1A;
+  --gf-muted: #5C5A55;
+  --gf-blue: #8FB8E8;
+  --gf-orange: #E8A07A;
+  --gf-green: #A8C5A0;
+  --gf-lavender: #C4B0E0;
+  --gf-border: #1A1A1A;
+  --gf-bw: 2px;
+  --gf-radius: 12px;
+  --gf-shadow: 4px 4px 0 var(--gf-border);
+  --gf-font-display: "Noto Serif SC", "Songti SC", "SimSun", Georgia, serif;
+  --gf-font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+
+html body.bg-gray-50,
+html body {
+  background: var(--gf-bg) !important;
+  color: var(--gf-ink);
+  font-family: var(--gf-font-body);
+}
+
+/* Top bar */
+nav.bg-white.shadow-sm.border-b,
+body > nav.bg-white {
+  background: var(--gf-bg) !important;
+  border-bottom: var(--gf-bw) solid var(--gf-border) !important;
+  box-shadow: none !important;
+}
+
+nav.bg-white .text-lg,
+nav.bg-white .text-xl,
+nav.bg-white a.shrink-0.text-lg,
+nav.bg-white a.shrink-0.text-xl {
+  font-family: var(--gf-font-display);
+  color: var(--gf-ink) !important;
+  font-weight: 700 !important;
+}
+
+nav.bg-white a.text-blue-600 {
+  color: var(--gf-ink) !important;
+  font-weight: 700 !important;
+  background: color-mix(in srgb, var(--gf-blue) 35%, white);
+  padding: 0.25rem 0.55rem;
+  border-radius: 6px;
+  border: 1.5px solid var(--gf-border);
+}
+
+nav.bg-white a.text-gray-500 {
+  color: var(--gf-muted) !important;
+}
+
+nav.bg-white a.text-gray-500:hover {
+  color: var(--gf-ink) !important;
+  background: color-mix(in srgb, var(--gf-blue) 18%, white);
+  border-radius: 6px;
+}
+
+/* Suite return chip */
+nav.bg-white a.text-emerald-800 {
+  background: var(--gf-green) !important;
+  border: var(--gf-bw) solid var(--gf-border) !important;
+  color: var(--gf-ink) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+/* Page title hierarchy */
+main h1.text-2xl,
+main h1.text-3xl,
+main .text-2xl.font-bold {
+  font-family: var(--gf-font-display);
+  color: var(--gf-ink) !important;
+  font-weight: 700 !important;
+}
+
+main h3.text-lg,
+main .text-lg.font-medium {
+  font-family: var(--gf-font-display);
+  color: var(--gf-ink) !important;
+}
+
+main .text-gray-600,
+main .text-gray-500,
+main .text-gray-700 {
+  color: var(--gf-muted) !important;
+}
+
+main .text-gray-900 {
+  color: var(--gf-ink) !important;
+}
+
+/* Cards / panels */
+main .bg-white.shadow,
+main .bg-white.shadow-sm,
+main .bg-white.rounded-lg.shadow,
+main .bg-white.rounded-lg,
+main .shadow.rounded-lg {
+  background: var(--gf-paper) !important;
+  border: var(--gf-bw) solid var(--gf-border) !important;
+  border-radius: var(--gf-radius) !important;
+  box-shadow: var(--gf-shadow) !important;
+}
+
+main .border-b.border-gray-200,
+main .border-gray-200 {
+  border-color: var(--gf-border) !important;
+}
+
+main .divide-y > :not([hidden]) ~ :not([hidden]),
+main .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: color-mix(in srgb, var(--gf-border) 25%, white) !important;
+}
+
+/* Primary / secondary buttons */
+main .bg-blue-600,
+main button.bg-blue-600,
+main a.bg-blue-600,
+nav .bg-blue-600 {
+  background: var(--gf-blue) !important;
+  color: var(--gf-ink) !important;
+  border: var(--gf-bw) solid var(--gf-border) !important;
+  border-radius: 8px !important;
+  box-shadow: var(--gf-shadow);
+  font-weight: 700 !important;
+}
+
+main .bg-blue-600:hover,
+main button.bg-blue-600:hover,
+main a.bg-blue-600:hover,
+nav .bg-blue-600:hover {
+  background: color-mix(in srgb, var(--gf-blue) 82%, white) !important;
+}
+
+main .bg-slate-800,
+main .bg-slate-900,
+main button.bg-slate-800,
+main button.bg-slate-900 {
+  background: var(--gf-orange) !important;
+  color: var(--gf-ink) !important;
+  border: var(--gf-bw) solid var(--gf-border) !important;
+  border-radius: 8px !important;
+  box-shadow: var(--gf-shadow);
+  font-weight: 700 !important;
+}
+
+main .bg-slate-800:hover,
+main .bg-slate-900:hover {
+  background: color-mix(in srgb, var(--gf-orange) 85%, white) !important;
+}
+
+/* Inputs / selects */
+main select,
+main input[type="text"],
+main input[type="url"],
+main input[type="password"],
+main input[type="number"],
+main textarea {
+  border: var(--gf-bw) solid var(--gf-border) !important;
+  border-radius: 8px !important;
+  background: var(--gf-paper) !important;
+  box-shadow: none !important;
+  color: var(--gf-ink) !important;
+}
+
+main select:focus,
+main input:focus,
+main textarea:focus {
+  outline: none !important;
+  box-shadow: 3px 3px 0 var(--gf-border) !important;
+  border-color: var(--gf-border) !important;
+  --tw-ring-color: transparent !important;
+}
+
+/* Status pills */
+main .rounded-full.bg-green-100,
+main .bg-green-100 {
+  background: var(--gf-green) !important;
+  color: var(--gf-ink) !important;
+  border: 1.5px solid var(--gf-border);
+}
+
+main .rounded-full.bg-yellow-100,
+main .bg-yellow-100 {
+  background: var(--gf-orange) !important;
+  color: var(--gf-ink) !important;
+  border: 1.5px solid var(--gf-border);
+}
+
+main .bg-blue-100,
+nav .bg-blue-100 {
+  background: var(--gf-blue) !important;
+  color: var(--gf-ink) !important;
+  border: 1.5px solid var(--gf-border);
+}
+
+main .text-blue-600,
+nav .text-blue-600.font-medium:not(a) {
+  color: var(--gf-ink) !important;
+}
+
+nav .w-8.h-8.bg-blue-100,
+nav .bg-blue-100.rounded-full {
+  border-radius: 8px !important;
+  border: var(--gf-bw) solid var(--gf-border);
+}
+
+nav .text-blue-600 i,
+nav .text-blue-600 svg {
+  color: var(--gf-ink) !important;
+}
+
+/* Tables */
+main table thead,
+main thead.bg-gray-50 {
+  background: var(--gf-bg) !important;
+}
+
+main table th,
+main table td {
+  border-color: color-mix(in srgb, var(--gf-border) 22%, white) !important;
+}
+
+/* Flash alerts */
+.admin-flash-alert {
+  border-width: var(--gf-bw) !important;
+  border-style: solid !important;
+  border-radius: 8px !important;
+  box-shadow: var(--gf-shadow);
+}
+
+.admin-flash-alert.bg-green-100 {
+  background: color-mix(in srgb, var(--gf-green) 45%, white) !important;
+  border-color: var(--gf-border) !important;
+  color: var(--gf-ink) !important;
+}
+
+.admin-flash-alert.bg-red-100 {
+  background: color-mix(in srgb, #E07070 30%, white) !important;
+  border-color: var(--gf-border) !important;
+  color: var(--gf-ink) !important;
+}
+
+/* Locale / account chips in header */
+nav .border-gray-200.bg-white {
+  border: var(--gf-bw) solid var(--gf-border) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  background: var(--gf-paper) !important;
+}
+
+/* Dropdown panels */
+#admin-notification-menu,
+#user-menu {
+  border: var(--gf-bw) solid var(--gf-border) !important;
+  border-radius: var(--gf-radius) !important;
+  box-shadow: var(--gf-shadow) !important;
+  background: var(--gf-paper) !important;
+}

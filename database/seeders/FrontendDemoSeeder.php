@@ -59,12 +59,12 @@ class FrontendDemoSeeder extends Seeder
     private function seedSiteSettings(): void
     {
         $settings = [
-            'site_name' => 'GEOFlow Support',
-            'site_title' => 'GEOFlow Support',
-            'site_subtitle' => '像 Apple Support 一样组织你的内容知识库',
+            'site_name' => 'GEOFlow 知识中心',
+            'site_title' => 'GEOFlow 知识中心',
+            'site_subtitle' => '面向 DeepSeek / 元宝 / 豆包的中国 GEO 内容知识库示例',
             'site_description' => '用于预览 GEOFlow 前台模板的示例内容站，覆盖首页、分类列表页和文章详情页。',
-            'site_keywords' => 'GEOFlow,Apple Support,帮助中心,内容知识库,GEO优化',
-            'copyright_info' => '© '.date('Y').' GEOFlow Support Demo. All rights reserved.',
+            'site_keywords' => 'GEOFlow,DeepSeek,腾讯元宝,豆包,帮助中心,内容知识库,GEO优化',
+            'copyright_info' => '© '.date('Y').' GEOFlow 知识中心演示站. All rights reserved.',
             'site_logo' => '',
             'site_favicon' => '',
             'analytics_code' => '',
@@ -290,7 +290,7 @@ Time Machine 可以自动保存文件、应用和系统设置副本。首次备�
 
 完成备份后，可以从菜单栏或系统设置中查看最近一次备份时间。建议在重要系统更新前手动确认一次备份。
 
-> 示例数据中的引用块用于检查文章页是否保留 Apple Support 风格的浅灰提示区。
+> 示例数据中的引用块用于检查文章页是否保留帮助中心风格的浅灰提示区。
 MD,
             ],
             [

@@ -1,8 +1,8 @@
 {
   "id": "toutiao-news-20260426",
-  "name": "Toutiao News Inspired",
+  "name": "资讯频道·热点信息流",
   "version": "1.0.0",
-  "description": "A Toutiao-inspired GEOFlow frontend theme with a channel rail, news feed, compact cards, and right-side hot list.",
+  "description": "热点资讯频道前台：频道轨道、紧凑卡片流与右侧热榜，适合快速分发行业新闻与趋势解读。保留 GEOFlow 前台数据契约。",
   "templates": [
     "layout",
     "home",
@@ -11,7 +11,16 @@
   ],
   "preview": "/previews/toutiao-news-20260426/index.html",
   "notes": [
-    "Inspired by modern news portal layout patterns. Does not copy Toutiao assets, content, or proprietary code.",
-    "Keeps GEOFlow Blade variables, SEO meta fields, markdown HTML rendering, category navigation, footer, and article routes intact."
+    "面向中国生成式引擎生态（DeepSeek / 腾讯元宝 / 豆包等）的站点主题。",
+    "保留 GEOFlow Blade 变量、SEO Meta、JSON-LD、分类导航、文章路由与正文渲染契约。",
+    "视觉与栏目文案可按策略标签继续本地化，不改变发布/主题加载契约。"
+  ],
+  "locale": "zh_CN",
+  "ecosystem_focus": "china_geo",
+  "ecosystem": "distribution",
+  "strategy_tags": [
+    "热点",
+    "频道",
+    "信息流"
   ]
 }

@@ -78,7 +78,7 @@ class AdminSiteSettingsPageTest extends TestCase
         $this->actingAs($admin, 'admin')
             ->get(route('admin.site-settings.index'))
             ->assertOk()
-            ->assertSee('Apple Support Inspired')
+            ->assertSee('官网帮助中心·知识库')
             ->assertSee('value="apple_support_clone"', false)
             ->assertDontSee('value="apple_support_clone" class="mt-1 text-blue-600 focus:ring-blue-500" checked', false);
     }
@@ -95,26 +95,26 @@ class AdminSiteSettingsPageTest extends TestCase
         ]);
 
         $expectedThemes = [
-            'geoflow-template-01-ink-editorial' => 'GEOFlow 01 Ink Editorial',
-            'geoflow-template-02-market-briefing' => 'GEOFlow 02 Market Briefing',
-            'geoflow-template-03-salmon-insight' => 'GEOFlow 03 Salmon Insight',
-            'geoflow-template-04-red-opinion' => 'GEOFlow 04 Red Opinion',
-            'geoflow-template-05-wire-clean' => 'GEOFlow 05 Wire Clean',
-            'geoflow-template-06-public-broadcast' => 'GEOFlow 06 Public Broadcast',
-            'geoflow-template-07-breaking-red' => 'GEOFlow 07 Breaking Red',
-            'geoflow-template-08-section-blue' => 'GEOFlow 08 Section Blue',
-            'geoflow-template-09-tech-spectrum' => 'GEOFlow 09 Tech Spectrum',
-            'geoflow-template-10-wired-feature' => 'GEOFlow 10 Wired Feature',
-            'geoflow-template-11-product-newsroom' => 'GEOFlow 11 Product Newsroom',
-            'geoflow-template-12-saas-gradient' => 'GEOFlow 12 SaaS Gradient',
-            'geoflow-template-13-linear-system' => 'GEOFlow 13 Linear System',
-            'geoflow-template-14-knowledge-paper' => 'GEOFlow 14 Knowledge Paper',
-            'geoflow-template-15-reading-medium' => 'GEOFlow 15 Reading Medium',
-            'geoflow-template-16-newsletter-letter' => 'GEOFlow 16 Newsletter Letter',
-            'geoflow-template-17-executive-review' => 'GEOFlow 17 Executive Review',
-            'geoflow-template-18-consulting-insight' => 'GEOFlow 18 Consulting Insight',
-            'geoflow-template-19-tech-review' => 'GEOFlow 19 Tech Review',
-            'geoflow-template-20-research-journal' => 'GEOFlow 20 Research Journal',
+            'geoflow-template-01-ink-editorial' => '01 DeepSeek 七段式高引用',
+            'geoflow-template-02-market-briefing' => '02 知乎·搜狐权威阵地',
+            'geoflow-template-03-salmon-insight' => '03 腾讯元宝·微信生态',
+            'geoflow-template-04-red-opinion' => '04 豆包 Schema·FAQ·EEAT',
+            'geoflow-template-05-wire-clean' => '05 统一数字身份',
+            'geoflow-template-06-public-broadcast' => '06 品牌知识中心',
+            'geoflow-template-07-breaking-red' => '07 主动分发与验证',
+            'geoflow-template-08-section-blue' => '08 白帽 GEO·避坑指南',
+            'geoflow-template-09-tech-spectrum' => '09 媒体主导型资讯门户',
+            'geoflow-template-10-wired-feature' => '10 七段式专题长文',
+            'geoflow-template-11-product-newsroom' => '11 公众号结构化专栏',
+            'geoflow-template-12-saas-gradient' => '12 视频号·小程序联动页',
+            'geoflow-template-13-linear-system' => '13 FAQ 机器可读问答站',
+            'geoflow-template-14-knowledge-paper' => '14 EEAT 证据型知识页',
+            'geoflow-template-15-reading-medium' => '15 百科·企信一致品牌页',
+            'geoflow-template-16-newsletter-letter' => '16 行业白皮书发布台',
+            'geoflow-template-17-executive-review' => '17 Prompt 标准化产出台',
+            'geoflow-template-18-consulting-insight' => '18 高信任平台分发台',
+            'geoflow-template-19-tech-review' => '19 引用效果验证观测台',
+            'geoflow-template-20-research-journal' => '20 企业 GEO 决策参考台',
         ];
 
         $catalogIds = collect(app(SiteThemeCatalog::class)->all())

@@ -31,11 +31,30 @@
 
         $quickMaterialLinks = [
             ['label' => __('admin.dashboard.quick_start.knowledge'), 'href' => route('admin.knowledge-bases.index'), 'class' => 'border-orange-100 bg-orange-50 text-orange-700 hover:bg-orange-100'],
-            ['label' => __('admin.dashboard.quick_start.titles'), 'href' => route('admin.title-libraries.index'), 'class' => 'border-green-100 bg-green-50 text-green-700 hover:bg-green-100'],
-            ['label' => __('admin.dashboard.quick_start.keywords'), 'href' => route('admin.keyword-libraries.index'), 'class' => 'border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-100'],
-            ['label' => __('admin.dashboard.quick_start.images'), 'href' => route('admin.image-libraries.index'), 'class' => 'border-purple-100 bg-purple-50 text-purple-700 hover:bg-purple-100'],
-            ['label' => __('admin.dashboard.quick_start.authors'), 'href' => route('admin.authors.index'), 'class' => 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'],
         ];
+
+        $recommendedDemoKnowledgeBase = is_array($recommendedDemoKnowledgeBase ?? null)
+            ? $recommendedDemoKnowledgeBase
+            : [
+                'id' => (int) config('geoflow.recommended_demo_knowledge_base_id', 9),
+                'name' => (string) config('geoflow.recommended_demo_knowledge_base_name', '中文产品演示包·DJI Mini 5 Pro'),
+                'exists' => false,
+                'detail_url' => route('admin.knowledge-bases.detail', ['knowledgeBaseId' => (int) config('geoflow.recommended_demo_knowledge_base_id', 9)]),
+                'list_url' => route('admin.knowledge-bases.index'),
+                'import_docs_url' => rtrim((string) env('GEOSUITE_PUBLIC_URL', 'http://localhost:3009'), '/').'/'.ltrim((string) config('geoflow.recommended_demo_import_docs_path', 'pilot-demo/cn-product-demo-v2/import-to-geoflow.md'), '/'),
+            ];
+        $recommendedDemoKbId = max(1, (int) ($recommendedDemoKnowledgeBase['id'] ?? 9));
+        $recommendedDemoDetailUrl = (string) ($recommendedDemoKnowledgeBase['detail_url'] ?? route('admin.knowledge-bases.detail', ['knowledgeBaseId' => $recommendedDemoKbId]));
+        $recommendedDemoListUrl = (string) ($recommendedDemoKnowledgeBase['list_url'] ?? route('admin.knowledge-bases.index'));
+        $recommendedDemoImportUrl = (string) ($recommendedDemoKnowledgeBase['import_docs_url'] ?? '#');
+        $recommendedDemoTitle = trim((string) ($recommendedDemoKnowledgeBase['name'] ?? '')) !== ''
+            ? (string) $recommendedDemoKnowledgeBase['name']
+            : __('admin.dashboard.quick_start.recommended_title');
+        $recommendedDemoShortTitle = trim((string) ($recommendedDemoKnowledgeBase['short_name'] ?? '')) !== ''
+            ? (string) $recommendedDemoKnowledgeBase['short_name']
+            : __('admin.dashboard.quick_start.recommended_short_title');
+        $recommendedDemoTooltip = trim($recommendedDemoTitle.' · '.__('admin.dashboard.quick_start.recommended_desc'));
+        $recommendedDemoImportLabel = __('admin.dashboard.quick_start.recommended_import').' · cn-product-demo-v2';
 
         $demoJourney = [
             [
@@ -475,12 +494,31 @@
                         <div class="min-w-0 flex-1">
                             <h3 class="text-base font-semibold text-gray-900">{{ __('admin.dashboard.quick_start.material_title') }}</h3>
                             <p class="mt-2 text-sm leading-6 text-gray-500">{{ __('admin.dashboard.quick_start.material_desc') }}</p>
-                            <div class="mt-4 flex flex-wrap gap-2">
+                            <div class="mt-4 flex flex-wrap items-center gap-2">
                                 @foreach ($quickMaterialLinks as $link)
                                     <a href="{{ $link['href'] }}" class="inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-medium {{ $link['class'] }}">
                                         {{ $link['label'] }}
                                     </a>
                                 @endforeach
+                            </div>
+                            <div class="mt-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 rounded border border-emerald-900/20 bg-emerald-50/60 px-2.5 py-1 text-sm leading-5 text-emerald-900" title="{{ $recommendedDemoTooltip }}">
+                                <span class="min-w-0 truncate font-medium">
+                                    {{ __('admin.dashboard.quick_start.recommended_compact', ['name' => $recommendedDemoShortTitle, 'id' => $recommendedDemoKbId]) }}
+                                </span>
+                                <a href="{{ $recommendedDemoDetailUrl }}" class="shrink-0 font-medium text-emerald-700 underline-offset-2 hover:underline">
+                                    {{ __('admin.dashboard.quick_start.recommended_open') }}
+                                </a>
+                                <a href="{{ $recommendedDemoListUrl }}" class="shrink-0 text-xs text-emerald-800/70 underline-offset-2 hover:text-emerald-900 hover:underline">
+                                    {{ __('admin.dashboard.quick_start.recommended_list') }}
+                                </a>
+                                <a
+                                    href="{{ $recommendedDemoImportUrl }}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-emerald-900/25 text-[10px] font-semibold leading-none text-emerald-800/80 hover:border-emerald-900/40 hover:bg-emerald-100/80 hover:text-emerald-950"
+                                    title="{{ $recommendedDemoImportLabel }}"
+                                    aria-label="{{ $recommendedDemoImportLabel }}"
+                                >?</a>
                             </div>
                         </div>
                     </div>

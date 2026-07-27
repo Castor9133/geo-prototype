@@ -2,5 +2,7 @@
   "id": "default",
   "name": "默认主题（占位）",
   "version": "1.0.0",
-  "description": "在 theme/default/ 下按需添加 home、article、category、archive-index、archive-month 等 Blade 即可覆盖 site.*；未提供的页面自动使用内置 site 模板。"
+  "description": "不启用外部主题包时的占位说明：可在 theme/default/ 按需添加 home、article、category、archive-index、archive-month 等 Blade 覆盖内置 site.*；未提供的页面自动回退系统内置模板。面向中国 GEO 生态站点时可优先选用 DeepSeek/元宝/豆包策略主题。",
+  "locale": "zh_CN",
+  "ecosystem_focus": "china_geo"
 }

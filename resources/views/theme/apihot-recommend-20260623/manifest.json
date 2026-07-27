@@ -2,7 +2,7 @@
   "id": "apihot-recommend-20260623",
   "name": "API热点网精选推荐",
   "version": "1.0.0",
-  "description": "A GEOFlow frontend theme for API recommendation portals, with a full static-style recommendation homepage, dynamic latest-article section, and NetEase-derived list/detail page contracts.",
+  "description": "面向 API/工具推荐门户的 GEO 前台：静态风格精选推荐首页 + 动态最新文章区，列表与详情页遵循现有前台契约，适合技术产品与开发者生态内容分发。",
   "templates": [
     "layout",
     "home",
@@ -12,10 +12,9 @@
     "archive-month"
   ],
   "notes": [
-    "Homepage is derived from the local recommend static page and adapted into a GEOFlow Blade theme.",
-    "Default homepage shows the API recommendation modules plus the latest 10 published articles using the existing article paginator.",
-    "Search, category, article, archive, SEO meta, JSON-LD, route helpers, and article rendering contracts are preserved.",
-    "The original netease-news-20260507 theme is not modified."
+    "面向中国生成式引擎生态（DeepSeek / 腾讯元宝 / 豆包等）的站点主题。",
+    "保留 GEOFlow Blade 变量、SEO Meta、JSON-LD、分类导航、文章路由与正文渲染契约。",
+    "视觉与栏目文案可按策略标签继续本地化，不改变发布/主题加载契约。"
   ],
   "base_theme_id": "netease-news-20260507",
   "target_theme_id": "apihot-recommend-20260623",
@@ -27,5 +26,13 @@
     "/category/{slug}",
     "/article/{slug}",
     "/archive"
+  ],
+  "locale": "zh_CN",
+  "ecosystem_focus": "china_geo",
+  "ecosystem": "knowledge",
+  "strategy_tags": [
+    "API",
+    "推荐",
+    "工具"
   ]
 }

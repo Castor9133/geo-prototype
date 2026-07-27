@@ -80,6 +80,13 @@ class AdminDashboardQuickStartTest extends TestCase
             ->assertSee(__('admin.dashboard.quick_start.api_title'))
             ->assertSee(__('admin.dashboard.quick_start.material_title'))
             ->assertSee(__('admin.dashboard.quick_start.task_title'))
+            ->assertSee(__('admin.dashboard.quick_start.recommended_badge'))
+            ->assertSee(__('admin.dashboard.quick_start.recommended_title'))
+            ->assertSee(__('admin.dashboard.quick_start.recommended_desc'))
+            ->assertSee(__('admin.dashboard.quick_start.recommended_open'))
+            ->assertSee(__('admin.dashboard.quick_start.recommended_list'))
+            ->assertSee(__('admin.dashboard.quick_start.recommended_import'))
+            ->assertSee('cn-product-demo-v2')
             ->assertDontSee(__('admin.dashboard.analytics_card_title'))
             ->assertDontSee(__('admin.dashboard.analytics_card_button'))
             ->assertDontSee(__('admin.dashboard.category_distribution'))
@@ -92,10 +99,11 @@ class AdminDashboardQuickStartTest extends TestCase
             ->assertDontSee(__('admin.dashboard.content_funnel'))
             ->assertSee(route('admin.ai-models.index'), false)
             ->assertSee(route('admin.knowledge-bases.index'), false)
-            ->assertSee(route('admin.title-libraries.index'), false)
-            ->assertSee(route('admin.keyword-libraries.index'), false)
-            ->assertSee(route('admin.image-libraries.index'), false)
-            ->assertSee(route('admin.authors.index'), false)
+            ->assertSee(route('admin.knowledge-bases.detail', ['knowledgeBaseId' => 9]), false)
+            ->assertDontSee(route('admin.title-libraries.index'), false)
+            ->assertDontSee(route('admin.keyword-libraries.index'), false)
+            ->assertDontSee(route('admin.image-libraries.index'), false)
+            ->assertDontSee(route('admin.authors.index'), false)
             ->assertSee(route('admin.materials.index'), false)
             ->assertSee(route('admin.tasks.create'), false)
             ->assertSee(route('admin.articles.index'), false)
@@ -114,10 +122,12 @@ class AdminDashboardQuickStartTest extends TestCase
 
         $html = $response->getContent();
         $this->assertGreaterThanOrEqual(1, substr_count($html, route('admin.knowledge-bases.index')));
-        $this->assertGreaterThanOrEqual(1, substr_count($html, route('admin.title-libraries.index')));
-        $this->assertGreaterThanOrEqual(1, substr_count($html, route('admin.keyword-libraries.index')));
-        $this->assertGreaterThanOrEqual(1, substr_count($html, route('admin.image-libraries.index')));
-        $this->assertGreaterThanOrEqual(1, substr_count($html, route('admin.authors.index')));
+        $this->assertGreaterThanOrEqual(1, substr_count($html, route('admin.knowledge-bases.detail', ['knowledgeBaseId' => 9])));
+        $this->assertStringContainsString('pilot-demo/cn-product-demo-v2/import-to-geoflow.md', $html);
+        $this->assertStringNotContainsString(route('admin.title-libraries.index'), $html);
+        $this->assertStringNotContainsString(route('admin.keyword-libraries.index'), $html);
+        $this->assertStringNotContainsString(route('admin.image-libraries.index'), $html);
+        $this->assertStringNotContainsString(route('admin.authors.index'), $html);
         $this->assertStringContainsString(__('admin.dashboard.automation.metric_materials', ['count' => 0]), $html);
         $this->assertStringContainsString(__('admin.dashboard.automation.metric_vectorized', ['done' => 0, 'total' => 0]), $html);
         $this->assertStringContainsString(__('admin.dashboard.automation.metric_ai_today', ['count' => 0]), $html);

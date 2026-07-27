@@ -1,16 +1,16 @@
 :root {
-    --ne-red: #d71920;
-    --ne-red-dark: #a90f15;
-    --ne-green: #2bb79a;
-    --ne-coral: #f46f61;
-    --ne-ink: #222;
-    --ne-muted: #666;
-    --ne-subtle: #999;
-    --ne-line: #e6e6e6;
-    --ne-soft-line: #f1f1f1;
-    --ne-bg: #fff;
-    --ne-panel: #fff;
-    --ne-soft: #f7f8fa;
+    --ne-red: #07C160;
+    --ne-red-dark: #059669;
+    --ne-green: #07C160;
+    --ne-coral: #A855F7;
+    --ne-ink: #E8F5EE;
+    --ne-muted: #8FBEA4;
+    --ne-subtle: #5F8A72;
+    --ne-line: #24352C;
+    --ne-soft-line: #1A2A22;
+    --ne-bg: #0A0F1E;
+    --ne-panel: #14201A;
+    --ne-soft: #10181A;
 }
 
 * {
@@ -41,7 +41,7 @@
 }
 
 .ne-globalbar {
-    background: #2b2b2b;
+    background: #070b14;
     color: #d6d6d6;
     font-size: 12px;
 }
@@ -69,7 +69,7 @@
     top: 0;
     z-index: 50;
     border-bottom: 1px solid var(--ne-line);
-    background: rgba(255, 255, 255, .97);
+    background: rgba(10, 15, 30, .94);
 }
 
 .ne-header-row {
@@ -2081,3 +2081,11 @@ body,
     }
 }
 /* GEOFlow white editorial rhythm v4: end */
+
+
+/* china-geo-strategy-panel */
+.ne-body { background: var(--ne-bg); color: var(--ne-ink); }
+.ne-header { border-bottom-color: var(--ne-line); }
+.ne-panel, .ne-card, .ne-side-panel, .ne-article-card { background: var(--ne-panel); border-color: var(--ne-line); }
+.ne-brand, .ne-title, h1, h2, h3 { color: var(--ne-ink); }
+.ne-globalbar a:hover, .ne-topnav a:hover, .ne-channel:hover { color: var(--ne-coral); }

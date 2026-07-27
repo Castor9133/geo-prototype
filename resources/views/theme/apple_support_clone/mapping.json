@@ -1,50 +1,50 @@
 {
   "header": {
-    "source": "apple.com global nav",
+    "source": "中国企业官网顶部导航",
     "implementation": "Restyle existing site.layout header to a compact translucent global navigation while preserving navCategories from the site composer."
   },
   "footer": {
-    "source": "Apple Support footer",
+    "source": "官网帮助中心页脚",
     "implementation": "Restyle existing footer as a quiet legal footer, preserving GEOFlow copyright text."
   },
   "home.hero": {
-    "source": "apple.com first viewport hero",
+    "source": "知识库首页首屏",
     "implementation": "Centered oversized site title, subtitle, search, and two primary text actions mapped to home and archive routes."
   },
   "home.featured_list": {
-    "source": "apple.com product tiles",
+    "source": "知识库精选专题区",
     "implementation": "Featured articles render as large product-like editorial tiles with badges and blue text actions."
   },
   "home.article_card": {
-    "source": "apple.com lower promo grid",
+    "source": "知识库文章网格",
     "implementation": "Latest articles use a responsive two-column tile grid and the shared theme article card partial."
   },
   "category.article_card": {
-    "source": "support.apple.com/mac support link groups",
+    "source": "帮助中心分类列表",
     "implementation": "Category pages show a support-center header, quick topic chips, and compact article rows."
   },
   "article.hero": {
-    "source": "support.apple.com/en-us/102655",
+    "source": "帮助文档页头",
     "implementation": "Narrow support document header with category breadcrumb, title, summary, and published date."
   },
   "article.prose_shell": {
-    "source": "Apple Support article body",
+    "source": "帮助文档正文",
     "implementation": "Rendered article HTML remains untouched and is styled for headings, lists, tables, code, images, and blockquotes."
   },
   "article.related_articles": {
-    "source": "Apple Support related topics",
+    "source": "相关主题推荐",
     "implementation": "Related items are presented as simple numbered support links."
   },
   "article.sticky_ad": {
-    "source": "Apple Support help CTA",
+    "source": "帮助中心悬浮 CTA",
     "implementation": "Existing sticky ad data is rendered as a floating help card with dismiss behavior preserved."
   },
   "archive.overview_row": {
-    "source": "Apple Support topic list",
+    "source": "主题归档列表",
     "implementation": "Archive months render as quiet list rows with counts."
   },
   "archive.article_card": {
-    "source": "Apple Support article links",
+    "source": "归档文章链接",
     "implementation": "Archive article rows use the same compact support card partial."
   },
   "unchanged_contracts": [

@@ -1,0 +1,90 @@
+# 开发机省 CPU（Windows Docker Desktop / 本机演示）
+#
+# 组合用法（推荐，与已有 windows-perf 叠加）：
+#   docker compose -f docker-compose.yml -f docker-compose.windows-perf.yml -f docker-compose.dev.lite.yml up -d
+#
+# 日常重启 app/queue（跳过 assets 重建，避免 vite 再吃满 CPU）：
+#   docker compose -f docker-compose.yml -f docker-compose.windows-perf.yml -f docker-compose.dev.lite.yml up -d --no-deps app queue
+#
+# 演示最小集（默认不启 reverb / scheduler / assets）：
+#   docker compose -f docker-compose.yml -f docker-compose.windows-perf.yml -f docker-compose.dev.lite.yml up -d --no-deps postgres redis app queue
+#
+# 需要前端构建 / WebSocket / 定时入队时再开 profile：
+#   --profile build --profile realtime --profile cron
+#
+# 说明：
+# - Compose 项目名仍是 geoflow-laravel；Docker Desktop 可能把整组显示为「geoflow-laravel」CPU。
+# - queue --sleep=3：空转少轮询；scheduler/reverb/assets 进 profile，开发不需要时可关掉。
+# - OPcache CLI 开启 + 时间戳校验：artisan serve 请求不再每次全量编译。
+
+services:
+  # npm ci + vite build 很吃 CPU；仅首次或前端变更时 --profile build
+  assets:
+    profiles: ["build", "full"]
+
+  init:
+    profiles: ["build", "full"]
+
+  app:
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      COMPOSER_ON_START: "false"
+      LOG_LEVEL: ${LOG_LEVEL:-warning}
+      TELESCOPE_ENABLED: ${TELESCOPE_ENABLED:-false}
+      AUTO_MIGRATE: ${AUTO_MIGRATE:-false}
+    cpus: ${GEOFLOW_APP_CPUS:-1.0}
+    mem_limit: ${GEOFLOW_APP_MEM:-768m}
+    volumes:
+      - ./docker/php/opcache-dev.ini:/usr/local/etc/php/conf.d/zz-opcache-dev.ini:ro
+
+  queue:
+    depends_on:
+      redis:
+        condition: service_started
+    environment:
+      COMPOSER_ON_START: "false"
+      LOG_LEVEL: ${LOG_LEVEL:-warning}
+      AUTO_MIGRATE: ${AUTO_MIGRATE:-false}
+    command:
+      [
+        "php",
+        "artisan",
+        "queue:work",
+        "redis",
+        "--queue=geoflow,distribution,theme-replication,default",
+        "--sleep=3",
+        "--tries=1",
+        "--timeout=300",
+        "--max-jobs=100",
+        "--memory=192",
+      ]
+    cpus: ${GEOFLOW_QUEUE_CPUS:-0.75}
+    mem_limit: ${GEOFLOW_QUEUE_MEM:-512m}
+    volumes:
+      - ./docker/php/opcache-dev.ini:/usr/local/etc/php/conf.d/zz-opcache-dev.ini:ro
+
+  scheduler:
+    profiles: ["cron", "full"]
+    environment:
+      COMPOSER_ON_START: "false"
+      LOG_LEVEL: ${LOG_LEVEL:-warning}
+      AUTO_MIGRATE: ${AUTO_MIGRATE:-false}
+    cpus: ${GEOFLOW_SCHEDULER_CPUS:-0.5}
+    mem_limit: ${GEOFLOW_SCHEDULER_MEM:-384m}
+    volumes:
+      - ./docker/php/opcache-dev.ini:/usr/local/etc/php/conf.d/zz-opcache-dev.ini:ro
+
+  reverb:
+    profiles: ["realtime", "full"]
+    environment:
+      COMPOSER_ON_START: "false"
+      LOG_LEVEL: ${LOG_LEVEL:-warning}
+      AUTO_MIGRATE: ${AUTO_MIGRATE:-false}
+    cpus: ${GEOFLOW_REVERB_CPUS:-0.5}
+    mem_limit: ${GEOFLOW_REVERB_MEM:-384m}
+    volumes:
+      - ./docker/php/opcache-dev.ini:/usr/local/etc/php/conf.d/zz-opcache-dev.ini:ro
