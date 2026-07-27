@@ -16,16 +16,25 @@ class NavigationSettingsTests(unittest.TestCase):
     def test_default_menu_uses_new_tab(self):
         menu = get_default_navigation_menu()
 
-        self.assertGreaterEqual(len(menu["items"]), 6)
+        self.assertGreaterEqual(len(menu["items"]), 4)
         self.assertEqual(menu["items"][0]["id"], "suite")
         self.assertEqual(menu["items"][0]["url"], "/suite")
         self.assertEqual(menu["items"][0]["target"], "_self")
         self.assertTrue(
-            all(item["target"] == "_blank" for item in menu["items"] if item["id"] != "suite")
+            all(
+                item["target"] == "_blank"
+                for item in menu["items"]
+                if item["id"] not in {"suite", "measure"}
+            )
         )
         self.assertEqual(menu["items"][1]["url"], "/diagnostic")
         self.assertFalse(
-            {"companies", "experts", "tutorial", "github"} & {item["id"] for item in menu["items"]}
+            {"companies", "experts", "tutorial", "github", "solutions", "plans", "tools"}
+            & {item["id"] for item in menu["items"]}
+        )
+        self.assertEqual(
+            {item["id"] for item in menu["items"]},
+            {"suite", "diagnostic", "keywords", "measure", "config"},
         )
 
     def test_normalizer_preserves_order_and_supported_targets(self):
@@ -62,6 +71,7 @@ class NavigationSettingsTests(unittest.TestCase):
                 "items": [
                     {"id": "diagnostic", "label": "诊断", "url": "/diagnostic", "target": "_blank"},
                     {"id": "solutions", "label": "问答", "url": "/solutions", "target": "_blank"},
+                    {"id": "plans", "label": "方案", "url": "/plans", "target": "_blank"},
                 ]
             }
         )
@@ -69,6 +79,7 @@ class NavigationSettingsTests(unittest.TestCase):
         self.assertEqual(menu["items"][0]["id"], "suite")
         self.assertEqual(menu["items"][0]["url"], "/suite")
         self.assertEqual(menu["items"][1]["id"], "diagnostic")
+        self.assertFalse({"solutions", "plans"} & {item["id"] for item in menu["items"]})
 
     def test_ensure_suite_keeps_existing_suite(self):
         menu = ensure_suite_in_navigation_menu(
@@ -91,12 +102,14 @@ class NavigationSettingsTests(unittest.TestCase):
                     {"id": "experts", "label": "专家", "url": "/experts", "target": "_blank"},
                     {"id": "tutorial", "label": "教程", "url": "/tutorial", "target": "_blank"},
                     {"id": "github", "label": "GitHub", "url": "https://github.com/yaojingang/georank", "target": "_blank"},
+                    {"id": "tools", "label": "工具", "url": "/tools", "target": "_blank"},
                     {"id": "diagnostic", "label": "诊断", "url": "/diagnostic", "target": "_blank"},
                 ]
             }
         )
 
         self.assertEqual([item["id"] for item in menu["items"]], ["suite", "diagnostic"])
+        self.assertFalse({"tools", "companies"} & {item["id"] for item in menu["items"]})
 
 
 if __name__ == "__main__":

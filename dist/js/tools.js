@@ -6,6 +6,17 @@
     || ((callback) => callback()))(() => {
     'use strict';
 
+    // Soft-hide: 演示主路径默认跳转 Suite；加 ?force=1 可临时恢复工具页。
+    try {
+        const params = new URLSearchParams(window.location.search || '');
+        if (!params.has('force')) {
+            window.location.replace('/suite');
+            return;
+        }
+    } catch (_) {
+        /* ignore */
+    }
+
     const $ = (selector, root = document) => root.querySelector(selector);
     const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
     const KB_MAX_FILES = 5;

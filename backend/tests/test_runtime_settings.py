@@ -145,18 +145,22 @@ class RuntimeSettingsTests(unittest.TestCase):
         config = _build_frontend_module_config({})
 
         self.assertEqual(config["default_module"], "diagnostic")
-        self.assertEqual(len(config["modules"]), 5)
-        self.assertTrue(all(module["enabled"] for module in config["modules"]))
+        self.assertEqual(len(config["modules"]), 3)
         modules = {module["key"]: module for module in config["modules"]}
         self.assertEqual(
             set(modules),
-            {"diagnostic", "solutions", "plans", "keywords", "tools"},
+            {"diagnostic", "keywords", "tools"},
         )
+        self.assertTrue(modules["diagnostic"]["enabled"])
+        self.assertTrue(modules["keywords"]["enabled"])
+        self.assertFalse(modules["tools"]["enabled"])
         self.assertNotIn("companies", modules)
         self.assertNotIn("experts", modules)
         self.assertNotIn("tutorial", modules)
+        self.assertNotIn("solutions", modules)
+        self.assertNotIn("plans", modules)
         self.assertEqual(modules["diagnostic"]["path"], "/diagnostic")
-        self.assertEqual(modules["solutions"]["protected_paths"], [])
+        self.assertEqual(modules["keywords"]["protected_paths"], ["/keywords"])
 
     def test_build_frontend_module_config_moves_default_to_enabled_module(self):
         config = _build_frontend_module_config(
@@ -165,10 +169,10 @@ class RuntimeSettingsTests(unittest.TestCase):
                     "default_module": "diagnostic",
                     "modules": [
                         {"key": "diagnostic", "enabled": False},
-                        {"key": "solutions", "enabled": False},
-                        {"key": "plans", "enabled": False},
                         {"key": "keywords", "enabled": False},
                         {"key": "tools", "enabled": True},
+                        {"key": "solutions", "enabled": True},
+                        {"key": "plans", "enabled": True},
                         {"key": "companies", "enabled": True},
                         {"key": "unknown", "enabled": True},
                     ],
@@ -184,6 +188,8 @@ class RuntimeSettingsTests(unittest.TestCase):
         self.assertNotIn("unknown", modules)
         self.assertNotIn("experts", modules)
         self.assertNotIn("tutorial", modules)
+        self.assertNotIn("solutions", modules)
+        self.assertNotIn("plans", modules)
 
     def test_build_homepage_runtime_config_defaults_to_builtin_homepage(self):
         config = _build_homepage_runtime_config({})

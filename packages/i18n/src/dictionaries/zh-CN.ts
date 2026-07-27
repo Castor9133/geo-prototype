@@ -1,8 +1,7 @@
 export default {
   nav: {
     diagnostic: '诊断',
-    solutions: '方案',
-    plans: '方案',
+
     keywords: '拓词',
     tools: '工具'
   },

@@ -16,15 +16,16 @@ SUITE_NAVIGATION_ITEM: dict[str, Any] = {
     "target": "_self",
     "enabled": True,
 }
-REMOVED_NAVIGATION_IDS = frozenset({"companies", "experts", "tutorial", "github"})
+REMOVED_NAVIGATION_IDS = frozenset({"companies", "experts", "tutorial", "github", "solutions", "plans"})
+# Soft-hidden from public nav (recoverable via admin menu editor / module switch).
+HIDDEN_NAVIGATION_IDS = frozenset({"tools"})
 DEFAULT_NAVIGATION_MENU = {
     "items": [
         deepcopy(SUITE_NAVIGATION_ITEM),
         {"id": "diagnostic", "label": "诊断", "url": "/diagnostic", "target": "_blank", "enabled": True},
-        {"id": "solutions", "label": "问答", "url": "/solutions", "target": "_blank", "enabled": True},
-        {"id": "plans", "label": "方案", "url": "/plans", "target": "_blank", "enabled": True},
         {"id": "keywords", "label": "拓词", "url": "/keywords", "target": "_blank", "enabled": True},
-        {"id": "tools", "label": "工具", "url": "/tools", "target": "_blank", "enabled": True},
+        {"id": "measure", "label": "观测", "url": "/suite?step=measure", "target": "_self", "enabled": True},
+        {"id": "config", "label": "配置", "url": "/admin/settings", "target": "_blank", "enabled": True},
     ]
 }
 
@@ -49,7 +50,7 @@ def _has_suite_navigation_item(items: list[Any]) -> bool:
 
 
 def ensure_suite_in_navigation_menu(payload: Any) -> dict[str, list[dict[str, Any]]]:
-    """Ensure GEO Suite appears; strip deleted public entries (companies/experts/tutorial/github)."""
+    """Ensure GEO Suite appears; strip deleted public entries (companies/experts/tutorial/github/solutions/plans)."""
     if not isinstance(payload, dict) or not isinstance(payload.get("items"), list) or not payload["items"]:
         return get_default_navigation_menu()
 
@@ -58,7 +59,9 @@ def ensure_suite_in_navigation_menu(payload: Any) -> dict[str, list[dict[str, An
         for item in payload["items"]
         if isinstance(item, dict)
         and str(item.get("id") or "").strip().lower() not in REMOVED_NAVIGATION_IDS
+        and str(item.get("id") or "").strip().lower() not in HIDDEN_NAVIGATION_IDS
         and not _is_removed_navigation_url(item.get("url"))
+        and not _is_hidden_navigation_url(item.get("url"))
     ]
     if not items:
         return get_default_navigation_menu()
@@ -75,13 +78,24 @@ def _is_removed_navigation_url(value: Any) -> bool:
     url = str(value or "").strip().rstrip("/").lower()
     if not url:
         return False
-    if url in {"/companies", "/company", "/submit-company", "/company-submit", "/experts", "/tutorial"}:
+    if url in {"/companies", "/company", "/submit-company", "/company-submit", "/experts", "/tutorial", "/solutions", "/plans", "/qa"}:
         return True
     if url.startswith("/companies/") or url.startswith("/company/") or url.startswith("/c/"):
         return True
     if url.startswith("/experts/") or url.startswith("/tutorial/"):
         return True
+    if url.startswith("/solutions/") or url.startswith("/plans/") or url.startswith("/qa/"):
+        return True
     return "github.com/yaojingang/georank" in url
+
+
+def _is_hidden_navigation_url(value: Any) -> bool:
+    """Soft-hide tools (and aliases) from public nav until re-enabled in admin."""
+    url = str(value or "").strip().rstrip("/").lower()
+    if not url:
+        return False
+    path = url.split("?", 1)[0]
+    return path == "/tools" or path.startswith("/tools/")
 
 
 def _normalize_navigation_url(value: Any, index: int) -> str:

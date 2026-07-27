@@ -14,9 +14,7 @@
     const ADMIN_ALIAS_PATTERN = /^admin-[A-Za-z0-9][A-Za-z0-9_-]{1,42}$/;
     const DEFAULT_NAVIGATION_MENU_ITEMS = [
         { id: 'suite', label: 'GEO Suite', url: '/suite', target: '_self', enabled: true },
-                { id: 'diagnostic', label: '诊断', url: '/diagnostic', target: '_blank', enabled: true },
-        { id: 'solutions', label: '问答', url: '/solutions', target: '_blank', enabled: true },
-        { id: 'plans', label: '方案', url: '/plans', target: '_blank', enabled: true },
+        { id: 'diagnostic', label: '诊断', url: '/diagnostic', target: '_blank', enabled: true },
         { id: 'keywords', label: '拓词', url: '/keywords', target: '_blank', enabled: true },
         { id: 'tools', label: '工具', url: '/tools', target: '_blank', enabled: true },
     ];
@@ -24,7 +22,6 @@
         dashboard: '仪表盘',
         companies: '公司管理',
         diagnostics: '诊断管理',
-        solutions: '问答管理',
         keywords: '拓词管理',
         'trust-obs': '可信观测',
         users: '用户管理',
@@ -158,7 +155,7 @@
         if (cleanPath.includes('trust-obs')) return '/admin/trust-obs';
         if (cleanPath.includes('keywords')) return '/admin/keywords';
         if (cleanPath.includes('diagnostics')) return '/admin/diagnostics';
-        if (cleanPath.includes('solutions')) return '/admin/solutions';
+        if (cleanPath.includes('solutions')) return '/admin';
         if (cleanPath.includes('users')) return '/admin/users';
         if (cleanPath.includes('settings')) return '/admin/settings';
         return '/admin';
@@ -536,19 +533,13 @@
         <a href="${withAppOrigin('/admin/diagnostics')}" data-admin-link class="sidebar-link">
             <span class="material-symbols-outlined text-lg">analytics</span><span>诊断管理</span>
         </a>
-        <a href="${withAppOrigin('/admin/solutions')}" data-admin-link class="sidebar-link">
-            <span class="material-symbols-outlined text-lg">psychology</span><span>问答管理</span>
-        </a>
         <a href="${withAppOrigin('/admin/keywords')}" data-admin-link class="sidebar-link">
             <span class="material-symbols-outlined text-lg">manage_search</span><span>拓词管理</span>
         </a>
         <a href="${withAppOrigin('/admin/trust-obs')}" data-admin-link class="sidebar-link">
             <span class="material-symbols-outlined text-lg">monitoring</span><span>可信观测</span>
         </a>
-        <p class="px-3 mt-6 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">平台管理</p>
-        <a href="${withAppOrigin('/admin/users')}" data-admin-link class="sidebar-link">
-            <span class="material-symbols-outlined text-lg">group</span><span>用户管理</span>
-        </a>
+        <p class="px-3 mt-6 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">配置</p>
         <a href="${withAppOrigin('/admin/settings')}" data-admin-link class="sidebar-link">
             <span class="material-symbols-outlined text-lg">settings</span><span>系统设置</span>
         </a>
@@ -792,11 +783,9 @@
 
     // ─── 仪表盘页 ────────────────────────────────────────────────────────────
     const DASHBOARD_TREND_SERIES = [
-        { key: 'companies', label: '公司', color: '#2563eb' },
         { key: 'diagnostics', label: '诊断', color: '#7c3aed' },
         { key: 'conversations', label: '问答', color: '#16a34a' },
         { key: 'keyword_packs', label: '拓词', color: '#059669' },
-        { key: 'contents', label: '内容', color: '#f97316' },
     ];
 
     function renderDashboardTrend(trend = []) {
@@ -878,11 +867,9 @@ ${pointDots}`;
         const container = document.getElementById('dashboard-module-health');
         if (!container) return;
         const rows = [
-            { key: 'companies', label: '公司库', doneLabel: '已发布', attentionLabel: '待审/失败' },
             { key: 'diagnostics', label: '诊断报告', doneLabel: '已完成', attentionLabel: '失败' },
             { key: 'qa', label: '问答归档', doneLabel: '已归档', attentionLabel: '待处理' },
             { key: 'keywords', label: '拓词资产', doneLabel: '已保存', attentionLabel: '待处理' },
-            { key: 'content', label: '教程内容', doneLabel: '已发布', attentionLabel: '草稿' },
         ];
         container.innerHTML = rows.map(row => {
             const item = health[row.key] || {};
@@ -937,45 +924,35 @@ ${pointDots}`;
     async function initDashboard() {
         renderTopbar('仪表盘');
         try {
-            const [stats, recentCompanies, failures, recentSolutions, keywordSummary] = await Promise.all([
+            const [stats, failures, recentSolutions, keywordSummary] = await Promise.all([
                 api('GET', '/api/admin/dashboard'),
-                api('GET', '/api/admin/companies?size=5&sort=created_at'),
                 api('GET', '/api/admin/ops/recent-failures?limit=4'),
                 api('GET', '/api/admin/solutions/conversations?size=3'),
                 api('GET', '/api/admin/keywords/summary'),
             ]);
-            const draftTutorials = { items: [], total: 0, summary: {} };
 
             // 统计卡片
             const setStatValue = (id, value) => {
                 const el = document.getElementById(id);
                 if (el) el.textContent = value;
             };
-            setStatValue('dashboard-stat-companies', stats.total_companies.toLocaleString());
             setStatValue('dashboard-stat-diagnostics', stats.total_diagnostics.toLocaleString());
-            setStatValue('dashboard-stat-solutions', (stats.total_solutions ?? 0).toLocaleString());
             setStatValue('dashboard-stat-keywords', Number(keywordSummary.total_packs || 0).toLocaleString());
-            setStatValue('dashboard-stat-contents', stats.total_contents.toLocaleString());
+            setStatValue('dashboard-stat-users', Number(stats.total_users || 0).toLocaleString());
 
-            const pipelineStats = stats.pipeline_stats || {};
             const failureStats = stats.failure_stats || {};
-            const draftSummary = draftTutorials.summary || {};
 
-            const companiesPendingEl = document.getElementById('dashboard-companies-pending');
             const diagnosticsFailedEl = document.getElementById('dashboard-diagnostics-failed');
-            const solutionsRecentEl = document.getElementById('dashboard-solutions-recent');
-            const contentDraftsEl = document.getElementById('dashboard-content-drafts');
+            const solutionsRecentEl = null;
 
-            if (companiesPendingEl) companiesPendingEl.textContent = Number(pipelineStats.pending_review || 0).toLocaleString();
             if (diagnosticsFailedEl) diagnosticsFailedEl.textContent = Number(failureStats.failed_diagnostics || 0).toLocaleString();
             if (solutionsRecentEl) solutionsRecentEl.textContent = Number(stats.total_solutions ?? recentSolutions.total ?? 0).toLocaleString();
             setStatValue('dashboard-keywords-packs', Number(keywordSummary.total_packs || 0).toLocaleString());
-            if (contentDraftsEl) contentDraftsEl.textContent = Number(draftSummary.draft_assets || draftTutorials.total || 0).toLocaleString();
 
             renderDashboardTrend(stats.trend || []);
             renderDashboardModuleHealth(stats.module_health || {});
 
-            // GEO 评分分布（真实数据）
+            // GEO 评分分布（诊断报告）
             const dist = stats.geo_distribution || {};
             const distRows = document.querySelectorAll('#dashboard-score-distribution > div');
             const distData = [
@@ -993,49 +970,7 @@ ${pointDots}`;
                 if (bar) bar.style.width = pct + '%';
             });
 
-            // 最近公司列表
-            const companyActivityEl = document.getElementById('dashboard-company-activity');
-            if (companyActivityEl) {
-                const companies = Array.isArray(recentCompanies?.items) ? recentCompanies.items : [];
-                if (!companies.length) {
-                    companyActivityEl.innerHTML = renderDashboardEmpty('暂无公司动态');
-                } else {
-                    companyActivityEl.innerHTML = companies.slice(0, 5).map(c => {
-                        const title = c.name || c.url || '未命名公司';
-                        const href = c.id ? withAppOrigin(`/admin/companies?company=${c.id}`) : withAppOrigin('/admin/companies');
-                        const status = PUBLISH_BADGE[c.publish_status] || `<span class="badge badge-neutral">${escapeHtml(c.publish_status || '未设置')}</span>`;
-                        return `
-<a href="${href}" class="admin-dashboard-company-item">
-    <span class="admin-dashboard-company-item__avatar">${escapeHtml(getCompanyInitials(title))}</span>
-    <span class="admin-dashboard-company-item__body">
-        <span class="admin-dashboard-company-item__top">
-            <strong>${escapeHtml(title)}</strong>
-            <span>${escapeHtml(timeAgo(c.updated_at || c.created_at))}</span>
-        </span>
-        <span class="admin-dashboard-company-item__meta">
-            <span class="admin-dashboard-company-tag">${escapeHtml(c.category || '未分类')}</span>
-            ${status}
-        </span>
-    </span>
-    <span class="admin-dashboard-company-score">
-        <strong>${formatDashboardScore(c.geo_score)}</strong>
-        <span>GEO</span>
-    </span>
-</a>`;
-                    }).join('');
-                }
-            }
-
             const failureItems = [
-                ...(failures.companies || []).map(item => ({
-                    label: '公司入库失败',
-                    title: item.name || item.url || '未命名公司',
-                    meta: item.pipeline_error || item.url || '无详细错误',
-                    href: withAppOrigin(`/admin/companies?company=${item.id}`),
-                    time: item.updated_at || item.created_at,
-                    icon: 'business',
-                    tone: 'warning',
-                })),
                 ...(failures.diagnostics || []).map(item => ({
                     label: '诊断失败',
                     title: item.url || '未知诊断地址',
@@ -1100,15 +1035,6 @@ ${rows.slice(0, 3).map(item => {
                     icon: 'manage_search',
                     tone: 'info',
                 },
-                ...(draftTutorials.items || []).map(item => ({
-                    label: '教程草稿',
-                    title: item.title || '未命名教程',
-                    meta: `${CONTENT_TYPE_LABEL[item.content_type] || item.content_type} · ${item.reading_time_minutes ? `${item.reading_time_minutes} 分钟` : '待完善'}`,
-                    href: withAppOrigin(`/admin/tutorials?content=${item.id}`),
-                    time: item.updated_at || item.created_at,
-                    icon: 'menu_book',
-                    tone: 'warning',
-                })),
                 ...(recentSolutions.items || []).map(item => ({
                     label: '问答会话',
                     title: item.title || '未命名问答会话',
@@ -1122,7 +1048,7 @@ ${rows.slice(0, 3).map(item => {
 
             const followupsEl = document.getElementById('dashboard-followups');
             if (followupsEl) {
-                followupsEl.innerHTML = renderDashboardReminderItems(followupItems, '暂无需要跟进的教程或问答记录');
+                followupsEl.innerHTML = renderDashboardReminderItems(followupItems, '暂无需要跟进的问答或拓词记录');
             }
         } catch (err) {
             toast('加载仪表盘数据失败: ' + err.message, 'error');
@@ -5756,7 +5682,7 @@ ${pages.map(p => p === '…'
                         </label>
                         <label class="block">
                             <span class="mb-1.5 block text-xs font-semibold text-on-surface-variant">URL</span>
-                            <input type="text" maxlength="2048" class="form-input bg-white font-mono text-xs" value="${escapeHtml(item.url)}" data-navigation-menu-url placeholder="/companies 或 https://example.com">
+                            <input type="text" maxlength="2048" class="form-input bg-white font-mono text-xs" value="${escapeHtml(item.url)}" data-navigation-menu-url placeholder="/suite 或 https://example.com">
                         </label>
                         <label class="block">
                             <span class="mb-1.5 block text-xs font-semibold text-on-surface-variant">打开方式</span>
@@ -5854,7 +5780,7 @@ ${pages.map(p => p === '…'
             if (summaryEl) summaryEl.textContent = active ? '自定义首页已启用' : '当前使用默认首页';
             if (modeEl) modeEl.textContent = active ? '自定义首页' : '默认首页';
             if (activeTitleEl) activeTitleEl.textContent = activeRelease?.title || '--';
-            if (companyPathEl) companyPathEl.textContent = runtime.company_list_path || '/companies';
+            if (companyPathEl) companyPathEl.textContent = runtime.company_list_path || '/suite';
             if (fallbackEl) fallbackEl.textContent = runtime.fallback_enabled === false ? '未开启' : '已开启';
 
             if (!list) return;
@@ -6083,7 +6009,13 @@ ${pages.map(p => p === '…'
         if (path.includes('diagnostics')) return 'diagnostics';
         if (path.includes('solutions')) return 'solutions';
         if (path.includes('keywords')) return 'keywords';
-        if (path.includes('experts') || path.includes('tutorials') || path.includes('content-edit') || path.includes('content')) {
+        if (
+            path.includes('companies')
+            || path.includes('experts')
+            || path.includes('tutorials')
+            || path.includes('content-edit')
+            || path.includes('content')
+        ) {
             return 'removed';
         }
         if (path.includes('users')) return 'users';

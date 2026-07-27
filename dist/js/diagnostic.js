@@ -268,18 +268,18 @@
         }
         if (transitionCopy && mode === 'loading') {
             const statusText = {
-                pending: '任务已创建，正在排队准备诊断并替换当前示例报告。',
-                crawling: '正在抓取目标页面 HTML、Schema 标记与内容结构，示例报告即将切换。',
-                analyzing: '抓取完成，正在进行多维分析与建议生成，马上替换为真实诊断结果。',
+                pending: '任务已创建，正在排队；完成后将替换当前示例报告。',
+                crawling: '正在抓取页面 HTML、Schema 与问句化结构，示例即将切换。',
+                analyzing: '抓取完成，正在汇总就绪信号与修复建议，马上换成真实结果。',
             };
-            transitionCopy.textContent = statusText[context.step] || '系统正在抓取页面代码、分析结构化标签，并生成你的专属 GEO 报告。';
+            transitionCopy.textContent = statusText[context.step] || '正在抓取页面、检测 Schema 与结构，并生成你的 GEO 就绪报告。';
         }
 
         const meta = {
             demo: {
                 eyebrow: '示例诊断报告',
-                title: '先看一份高质量 GEO 诊断样例',
-                copy: '下面先展示一份企业服务官网的高质量示例报告，帮助你快速理解完整诊断结构、图表和行动路线。发起真实诊断后，这份样例会通过动画过渡替换成你自己的 GEO 诊断结果。',
+                title: '先看一份 GEO 诊断示例',
+                copy: '下方是典型页面的诊断样例，帮你快速看清报告结构与修复优先级。发起真实诊断后，样例会平滑替换为你的结果。',
                 chip: '示例预览',
                 icon: 'visibility',
             },
@@ -287,8 +287,8 @@
                 eyebrow: '真实诊断生成中',
                 title: '正在用真实报告替换示例',
                 copy: context.url
-                    ? `当前正在分析 ${context.url} 的页面结构、Schema 标签与背书就绪信号，完成后会自动替换下方示例报告。`
-                    : '系统正在分析你的页面结构、Schema 标签与背书就绪信号，完成后会自动替换下方示例报告。',
+                    ? `正在分析 ${context.url} 的技术可访问性、Schema、问句结构与背书就绪信号（≠ AI 引用率）。`
+                    : '正在分析技术可访问性、Schema、问句结构与背书就绪信号（≠ AI 引用率）。',
                 chip: '分析中',
                 icon: 'progress_activity',
             },
@@ -296,8 +296,8 @@
                 eyebrow: '你的真实诊断报告',
                 title: '已切换为最新 GEO 诊断结果',
                 copy: context.url
-                    ? `下面展示的是 ${context.url} 的真实诊断结果。你可以继续导出报告，或将该诊断上下文发送到方案生成器生成执行方案。`
-                    : '下面展示的是刚刚生成的真实 GEO 诊断结果。你可以继续导出报告，或将该诊断上下文发送到方案生成器。',
+                    ? `下方是 ${context.url} 的真实就绪诊断。可导出报告，或进入拓词扩展选题。`
+                    : '下方是刚生成的真实 GEO 就绪诊断。可导出报告，或进入拓词扩展选题。',
                 chip: '实时结果',
                 icon: 'verified',
             },
@@ -316,7 +316,7 @@
             exportBtn.classList.toggle('cursor-not-allowed', !exportEnabled);
         }
         if (toSolutionsBtn && mode !== 'live') {
-            toSolutionsBtn.href = '/plans';
+            toSolutionsBtn.href = '/keywords';
         }
     }
 
@@ -338,7 +338,7 @@
         if (!diagnoseBtn) return;
         diagnoseBtn.disabled = loading;
         diagnoseBtn.innerHTML = loading
-            ? '<span class="animate-spin material-symbols-outlined text-lg">progress_activity</span><span class="font-bold text-sm">分析中...</span>'
+            ? '<span class="material-symbols-outlined text-lg" style="animation:diagnostic-spin .7s linear infinite">progress_activity</span><span class="font-bold text-sm">分析中</span>'
             : '开始诊断';
     }
 
@@ -371,10 +371,10 @@
     }
 
     function scoreTone(score) {
-        if (score >= 80) return { label: '优秀', bar: 'bg-green-500' };
-        if (score >= 60) return { label: '良好', bar: 'bg-primary' };
-        if (score >= 40) return { label: '待优化', bar: 'bg-orange-400' };
-        return { label: '偏弱', bar: 'bg-red-400' };
+        if (score >= 80) return { label: '优秀', bar: 'diag-bar diag-bar--excellent' };
+        if (score >= 60) return { label: '良好', bar: 'diag-bar diag-bar--good' };
+        if (score >= 40) return { label: '待优化', bar: 'diag-bar diag-bar--ok' };
+        return { label: '偏弱', bar: 'diag-bar diag-bar--weak' };
     }
 
     function average(values) {
@@ -467,7 +467,7 @@
                 key: 'content',
                 title: '内容组织',
                 icon: 'article',
-                summary: '从正文体量、标题层级和内容组件判断页面是否具备可引用结构。',
+                summary: '从正文体量、标题层级和内容组件判断页面是否具备答案型可抽取结构。',
                 items: [
                     boolMetric('H1 唯一性', !!content.has_single_h1, '页面 H1 数量合理。', `当前检测到 ${content.h1_count || 0} 个 H1，建议只保留一个。`, `${content.h1_count || 0} 个 H1`),
                     boolMetric('标题层级', !!content.heading_hierarchy_ok, 'H1/H2 结构已形成清晰层级。', 'H1/H2 层级仍需梳理。'),
@@ -565,10 +565,10 @@
 
     function buildSignalMix(report) {
         return [
-            { label: 'Schema', value: Number(report.schema_analysis?.score || 0), color: '#2563eb' },
-            { label: '内容', value: Number(report.content_analysis?.score || 0), color: '#0f766e' },
-            { label: 'Meta', value: Number(report.meta_analysis?.score || 0), color: '#7c3aed' },
-            { label: '背书信号', value: Number(report.citation_analysis?.score || 0), color: '#ea580c' },
+            { label: 'Schema', value: Number(report.schema_analysis?.score || 0), color: '#8FB8E8' },
+            { label: '内容', value: Number(report.content_analysis?.score || 0), color: '#A8C5A0' },
+            { label: 'Meta', value: Number(report.meta_analysis?.score || 0), color: '#C4B0E0' },
+            { label: '背书信号', value: Number(report.citation_analysis?.score || 0), color: '#E8A07A' },
         ];
     }
 
@@ -653,10 +653,10 @@
         if (scoreLabel) scoreLabel.textContent = `GEO 评分：${tone.label}`;
         if (scoreSummary) {
             scoreSummary.textContent = safeScore >= 80
-                ? '页面已经具备较强的 GEO 基础，可继续针对高价值结构化数据和引用策略做增强。'
+                ? '页面 GEO 就绪度较好，可继续强化 Schema、问句 H2 / FAQ 与背书就绪信号。'
                 : safeScore >= 60
-                    ? '页面已有一定 GEO 可见性，但仍有明显结构化和引用优化空间。'
-                    : '页面在结构化标签、内容组织或权威外链方面仍较薄弱，建议尽快按报告清单补齐。';
+                    ? '页面已有一定 GEO 就绪度，结构化与背书信号仍有提升空间。'
+                    : '技术可访问、Schema 或权威外链偏弱，建议按报告清单优先补齐（就绪 ≠ 引用率）。';
         }
         if (scoreRing) {
             scoreRing.style.strokeDasharray = `${circumference}`;
@@ -676,7 +676,7 @@
         if (scoreEl) scoreEl.textContent = `${Math.round(safeScore)}%`;
         if (barEl) {
             barEl.style.width = `${safeScore}%`;
-            barEl.className = `${tone.bar} h-full rounded-full`;
+            barEl.className = `${tone.bar} h-full`;
         }
         if (noteEl) {
             noteEl.textContent = note;
@@ -684,11 +684,10 @@
     }
 
     function renderSchemaCard(title, body, tone) {
-        const colorClass = tone === 'missing' ? 'bg-red-50/50' : 'bg-slate-50';
-        const titleClass = tone === 'missing' ? 'text-red-600' : 'text-green-700';
+        const toneClass = tone === 'missing' ? 'diag-schema-item--miss' : 'diag-schema-item--ok';
         return `
-            <div class="p-3 ${colorClass} rounded-lg">
-                <p class="text-xs font-bold font-mono ${titleClass}">${escapeHtml(title)}</p>
+            <div class="diag-schema-item ${toneClass}">
+                <p class="text-xs font-bold font-mono">${escapeHtml(title)}</p>
                 <p class="text-[10px] text-on-surface-variant mt-1">${escapeHtml(body)}</p>
             </div>
         `;
@@ -720,26 +719,20 @@
     function recommendationTone(kind) {
         if (kind === 'urgent') {
             return {
-                badge: 'text-red-500',
-                iconWrap: 'bg-red-50',
-                icon: 'text-red-500',
+                iconWrap: 'diag-rec-urgent',
                 iconName: 'error',
                 label: '紧急',
             };
         }
         if (kind === 'recommended') {
             return {
-                badge: 'text-primary',
-                iconWrap: 'bg-blue-50',
-                icon: 'text-primary',
+                iconWrap: 'diag-rec-suggest',
                 iconName: 'bolt',
                 label: '建议',
             };
         }
         return {
-            badge: 'text-slate-400',
-            iconWrap: 'bg-slate-100',
-            icon: 'text-slate-400',
+            iconWrap: 'diag-rec-opt',
             iconName: 'info',
             label: '优化',
         };
@@ -754,8 +747,8 @@
 
         if (!entries.length) {
             list.innerHTML = `
-                <div class="col-span-1 md:col-span-3 p-6 rounded-xl bg-white border border-slate-100 text-sm text-slate-400">
-                    当前没有额外优化建议，建议继续补充 FAQ、案例和权威外链以稳步提升 GEO 就绪表现。
+                <div class="col-span-1 md:col-span-3 diag-card p-6 text-sm text-on-surface-variant">
+                    暂无额外建议。可继续补 FAQPage、问句化 H2 与权威外链，稳步提升 GEO 就绪表现（≠ AI 引用率）。
                 </div>
             `;
             return;
@@ -764,13 +757,13 @@
         list.innerHTML = entries.slice(0, 6).map(({ kind, item }) => {
             const tone = recommendationTone(kind);
             return `
-                <div class="p-6 rounded-xl bg-white border border-slate-100">
+                <div class="diag-card diag-card--interactive p-6">
                     <div class="flex items-center gap-2 mb-4">
-                        <span class="w-5 h-5 rounded ${tone.iconWrap} flex items-center justify-center"><span class="material-symbols-outlined ${tone.icon} text-xs filled">${tone.iconName}</span></span>
-                        <span class="text-xs font-bold ${tone.badge}">${tone.label}</span>
+                        <span class="w-6 h-6 rounded flex items-center justify-center ${tone.iconWrap}" style="border:1.5px solid var(--border)"><span class="material-symbols-outlined text-xs filled">${tone.iconName}</span></span>
+                        <span class="text-xs font-bold">${tone.label}</span>
                     </div>
                     <h4 class="text-sm font-bold mb-2">${escapeHtml(item.item || '优化项')}</h4>
-                    <p class="text-xs text-on-surface-variant leading-relaxed">${escapeHtml(item.action || '建议按诊断结果补齐相关内容与结构化标记。')}</p>
+                    <p class="text-xs text-on-surface-variant leading-relaxed">${escapeHtml(item.action || '建议按诊断结果补齐 Schema、问句结构与背书就绪信号。')}</p>
                 </div>
             `;
         }).join('');
@@ -782,16 +775,16 @@
         root.innerHTML = sections.map((section) => `
             <div>
                 <div class="flex items-center justify-between text-sm mb-2">
-                    <span class="font-medium text-slate-700 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-base text-primary">${escapeHtml(section.icon)}</span>
+                    <span class="font-medium flex items-center gap-2">
+                        <span class="material-symbols-outlined text-base">${escapeHtml(section.icon)}</span>
                         ${escapeHtml(section.title)}
                     </span>
-                    <span class="font-bold text-primary">${Math.round(section.score)}%</span>
+                    <span class="font-bold">${Math.round(section.score)}%</span>
                 </div>
-                <div class="h-2 rounded-full bg-slate-100 overflow-hidden">
-                    <div class="${scoreTone(section.score).bar} h-full rounded-full" style="width:${Math.round(section.score)}%"></div>
+                <div class="h-2 diag-bar-track overflow-hidden">
+                    <div class="${scoreTone(section.score).bar} h-full" style="width:${Math.round(section.score)}%"></div>
                 </div>
-                <p class="mt-2 text-xs leading-6 text-slate-500">${escapeHtml(section.summary)}</p>
+                <p class="mt-2 text-xs leading-6 text-on-surface-variant">${escapeHtml(section.summary)}</p>
             </div>
         `).join('');
     }
@@ -803,14 +796,14 @@
             const width = Math.max(24, Math.round(stage.score));
             return `
                 <div class="diagnostic-funnel-stage">
-                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                    <div class="flex items-center justify-between text-xs font-bold uppercase tracking-[0.14em] text-on-surface-variant">
                         <span>${escapeHtml(stage.label)}</span>
                         <span>${Math.round(stage.score)}%</span>
                     </div>
-                    <div class="mt-2 h-11 rounded-2xl bg-slate-50 overflow-hidden relative">
-                        <div class="absolute inset-y-0 left-0 rounded-2xl bg-gradient-to-r from-primary to-blue-400" style="width:${width}%"></div>
-                        <div class="relative h-full flex items-center px-4 text-sm font-semibold text-slate-700">
-                            <span class="w-6 h-6 mr-3 rounded-full bg-white/80 text-primary flex items-center justify-center text-xs font-black">${index + 1}</span>
+                    <div class="mt-2 h-11 diag-funnel-track overflow-hidden relative">
+                        <div class="absolute inset-y-0 left-0 diag-funnel-fill" style="width:${width}%"></div>
+                        <div class="relative h-full flex items-center px-4 text-sm font-semibold">
+                            <span class="w-6 h-6 mr-3 rounded flex items-center justify-center text-xs font-black" style="border:1.5px solid var(--border);background:var(--bg-elevated)">${index + 1}</span>
                             ${escapeHtml(stage.label)}
                         </div>
                     </div>
@@ -835,12 +828,12 @@
         donut.style.background = `conic-gradient(${segments.join(', ')})`;
         if (donutScore) donutScore.textContent = String(Math.round(overallScore || 0));
         legend.innerHTML = mix.map((item) => `
-            <div class="flex items-center justify-between rounded-2xl border border-slate-100 px-4 py-3">
+            <div class="diag-card flex items-center justify-between px-4 py-3">
                 <div class="flex items-center gap-3">
-                    <span class="w-3 h-3 rounded-full" style="background:${item.color}"></span>
-                    <span class="text-sm font-medium text-slate-700">${escapeHtml(item.label)}</span>
+                    <span class="w-3 h-3 rounded" style="background:${item.color};border:1.5px solid var(--border)"></span>
+                    <span class="text-sm font-medium">${escapeHtml(item.label)}</span>
                 </div>
-                <span class="text-sm font-bold text-slate-900">${Math.round(item.value)}%</span>
+                <span class="text-sm font-bold">${Math.round(item.value)}%</span>
             </div>
         `).join('');
     }
@@ -853,15 +846,15 @@
             .sort((a, b) => a.score - b.score)
             .slice(0, 6);
         root.innerHTML = risks.map((item) => `
-            <div class="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4">
+            <div class="diag-card diag-zone-soft px-4 py-4">
                 <div class="flex items-start justify-between gap-3">
                     <div>
-                        <p class="text-[11px] font-extrabold uppercase tracking-[0.14em] text-slate-400">${escapeHtml(item.sectionTitle)}</p>
-                        <h4 class="mt-2 text-sm font-bold text-slate-900">${escapeHtml(item.title)}</h4>
+                        <p class="diag-eyebrow text-[11px] font-extrabold uppercase tracking-[0.14em]">${escapeHtml(item.sectionTitle)}</p>
+                        <h4 class="mt-2 text-sm font-bold">${escapeHtml(item.title)}</h4>
                     </div>
-                    <span class="rounded-full bg-red-50 px-2.5 py-1 text-xs font-bold text-red-500">${Math.round(item.score)}%</span>
+                    <span class="diag-rec-urgent px-2.5 py-1 text-xs font-bold" style="border:1.5px solid var(--border);border-radius:8px">${Math.round(item.score)}%</span>
                 </div>
-                <p class="mt-3 text-xs leading-6 text-slate-500">${escapeHtml(item.note)}</p>
+                <p class="mt-3 text-xs leading-6 text-on-surface-variant">${escapeHtml(item.note)}</p>
             </div>
         `).join('');
     }
@@ -875,34 +868,34 @@
             summary.textContent = `覆盖 ${sections.length} 个章节 · ${moduleCount} 个模块`;
         }
         root.innerHTML = sections.map((section) => `
-            <section class="rounded-2xl border border-slate-100 bg-white p-5 md:p-6">
+            <section class="diag-card p-5 md:p-6">
                 <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div class="max-w-2xl">
                         <div class="flex items-center gap-3">
-                            <span class="w-11 h-11 shrink-0 rounded-2xl bg-primary/[0.08] text-primary flex items-center justify-center overflow-hidden" aria-hidden="true">
+                            <span class="w-11 h-11 shrink-0 flex items-center justify-center overflow-hidden" style="border:2px solid var(--border);border-radius:8px;background:color-mix(in srgb, var(--accent-blue) 28%, white)" aria-hidden="true">
                                 <span class="material-symbols-outlined text-[22px] leading-none">${escapeHtml(section.icon)}</span>
                             </span>
                             <div class="min-w-0">
-                                <p class="text-[11px] font-extrabold uppercase tracking-[0.14em] text-slate-400">诊断章节</p>
-                                <h4 class="mt-1 text-lg font-bold text-slate-900">${escapeHtml(section.title)}</h4>
+                                <p class="diag-eyebrow text-[11px] font-extrabold uppercase tracking-[0.14em]">诊断章节</p>
+                                <h4 class="mt-1 text-lg font-bold">${escapeHtml(section.title)}</h4>
                             </div>
                         </div>
-                        <p class="mt-4 text-sm leading-7 text-slate-500">${escapeHtml(section.summary)}</p>
+                        <p class="mt-4 text-sm leading-7 text-on-surface-variant">${escapeHtml(section.summary)}</p>
                     </div>
-                    <div class="self-start rounded-full border border-primary/10 bg-primary/[0.05] px-4 py-2 text-sm font-bold text-primary">${Math.round(section.score)}%</div>
+                    <div class="self-start px-4 py-2 text-sm font-bold" style="border:1.5px solid var(--border);border-radius:8px;background:color-mix(in srgb, var(--accent-orange) 22%, white)">${Math.round(section.score)}%</div>
                 </div>
                 <div class="mt-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                     ${section.items.map((item) => `
-                        <article class="rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-4">
+                        <article class="diag-card diag-zone-soft px-4 py-4">
                             <div class="flex items-center justify-between gap-3">
-                                <h5 class="text-sm font-bold text-slate-900">${escapeHtml(item.title)}</h5>
-                                <span class="rounded-full bg-white px-2.5 py-1 text-xs font-bold ${item.score >= 80 ? 'text-green-600' : item.score >= 60 ? 'text-primary' : item.score >= 40 ? 'text-orange-500' : 'text-red-500'}">${Math.round(item.score)}%</span>
+                                <h5 class="text-sm font-bold">${escapeHtml(item.title)}</h5>
+                                <span class="px-2.5 py-1 text-xs font-bold" style="border:1.5px solid var(--border);border-radius:8px;background:var(--bg-elevated)">${Math.round(item.score)}%</span>
                             </div>
-                            <p class="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">${escapeHtml(item.metric || '')}</p>
-                            <div class="mt-3 h-1.5 rounded-full bg-white overflow-hidden">
-                                <div class="${scoreTone(item.score).bar} h-full rounded-full" style="width:${Math.round(item.score)}%"></div>
+                            <p class="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-on-surface-variant">${escapeHtml(item.metric || '')}</p>
+                            <div class="mt-3 h-1.5 diag-bar-track overflow-hidden">
+                                <div class="${scoreTone(item.score).bar} h-full" style="width:${Math.round(item.score)}%"></div>
                             </div>
-                            <p class="mt-3 text-xs leading-6 text-slate-500">${escapeHtml(item.note)}</p>
+                            <p class="mt-3 text-xs leading-6 text-on-surface-variant">${escapeHtml(item.note)}</p>
                         </article>
                     `).join('')}
                 </div>
@@ -915,13 +908,13 @@
         if (!root) return;
         const plans = buildRoadmap(report);
         root.innerHTML = plans.map((plan, index) => `
-            <div class="relative rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-5">
-                <div class="absolute left-5 top-5 bottom-5 ${index === plans.length - 1 ? 'hidden' : 'block'} w-px bg-slate-200"></div>
+            <div class="relative diag-card diag-zone-soft px-5 py-5">
+                <div class="absolute left-5 top-5 bottom-5 ${index === plans.length - 1 ? 'hidden' : 'block'} w-px" style="background:var(--border)"></div>
                 <div class="relative pl-12">
-                    <span class="absolute left-0 top-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-black text-white">${escapeHtml(plan.phase)}</span>
-                    <h4 class="text-sm font-bold text-slate-900">${escapeHtml(plan.title)}</h4>
-                    <p class="mt-2 text-sm leading-7 text-slate-600">${escapeHtml(plan.goal)}</p>
-                    <div class="mt-3 inline-flex rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-500">
+                    <span class="absolute left-0 top-0 flex h-8 w-8 items-center justify-center text-xs font-black" style="border:2px solid var(--border);border-radius:8px;background:var(--accent-orange)">${escapeHtml(plan.phase)}</span>
+                    <h4 class="text-sm font-bold">${escapeHtml(plan.title)}</h4>
+                    <p class="mt-2 text-sm leading-7 text-on-surface-variant">${escapeHtml(plan.goal)}</p>
+                    <div class="mt-3 inline-flex px-3 py-1 text-xs font-medium text-on-surface-variant" style="border:1.5px solid var(--border);border-radius:8px;background:var(--bg-elevated)">
                         成功标记：${escapeHtml(plan.success_metric || '形成可执行的修复闭环')}
                     </div>
                 </div>
@@ -933,12 +926,12 @@
         const root = document.getElementById('diagnostic-evidence-grid');
         if (!root) return;
         root.innerHTML = buildEvidenceCards(report).map((card) => `
-            <div class="rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-4">
+            <div class="diag-card diag-zone-soft px-4 py-4">
                 <div class="flex items-center justify-between gap-3">
-                    <h4 class="text-sm font-bold text-slate-900">${escapeHtml(card.title)}</h4>
-                    <span class="text-xs font-bold text-primary">${escapeHtml(card.value)}</span>
+                    <h4 class="text-sm font-bold">${escapeHtml(card.title)}</h4>
+                    <span class="text-xs font-bold">${escapeHtml(card.value)}</span>
                 </div>
-                <p class="mt-3 text-xs leading-6 text-slate-500">${escapeHtml(card.note)}</p>
+                <p class="mt-3 text-xs leading-6 text-on-surface-variant">${escapeHtml(card.note)}</p>
             </div>
         `).join('');
     }
@@ -948,13 +941,13 @@
         const values = Array.isArray(items) ? items.filter(Boolean).slice(0, 3) : [];
         root.innerHTML = values.length
             ? values.map((item) => `
-                <li class="flex items-start gap-3 text-sm text-slate-600">
+                <li class="flex items-start gap-3 text-sm text-on-surface-variant">
                     <span class="material-symbols-outlined text-base ${iconClass} mt-0.5">${iconName}</span>
                     <span>${escapeHtml(item)}</span>
                 </li>
             `).join('')
             : `
-                <li class="flex items-start gap-3 text-sm text-slate-500">
+                <li class="flex items-start gap-3 text-sm text-on-surface-variant">
                     <span class="material-symbols-outlined text-base ${iconClass} mt-0.5">${iconName}</span>
                     <span>${escapeHtml(emptyText)}</span>
                 </li>
@@ -978,19 +971,19 @@
             gaps.push(`缺少 ${schema.missing_recommended.slice(0, 3).join('、')} 等关键 Schema 类型。`);
         }
         if ((citation.authority_link_count || 0) < 1) {
-            gaps.push('页面缺少权威外链来源，难以提升生成式引擎在回答中调用你的内容。');
+            gaps.push('权威外链不足，背书就绪信号偏弱（≠ AI 答案引用率）。');
         }
         if (!content.first_para_quality) {
-            gaps.push('首段缺少直达答案式表达，AI 不容易快速截取可引用摘要。');
+            gaps.push('首段缺少直答式摘要，不利于被抽取为答案候选片段。');
         }
 
         const headline = overall >= 80
-            ? '当前页面 GEO 基础较强，适合继续强化高价值引用与结构化细节。'
+            ? '当前页面 GEO 就绪度较强，适合继续强化 Schema 细节与背书信号。'
             : overall >= 60
-                ? '当前页面已有一定 GEO 基础，但结构化与背书就绪信号仍有明显优化空间。'
-                : '当前页面 GEO 基础偏弱，建议优先补齐结构化和答案型内容。';
-        const overview = `综合 GEO 评分为 ${overall} 分。建议优先把结构化标记、首段摘要表达和权威外链补齐，再继续优化开放图谱和内容层级。`;
-        const priority = gaps[0] || '继续补充 FAQ、案例与结构化标签，让页面更适合被 AI 检索与引用。';
+                ? '当前页面已有一定 GEO 基础，但结构化与背书就绪信号仍有优化空间。'
+                : '当前页面 GEO 就绪度偏弱，建议优先补齐 Schema、问句 H2 / FAQ 与技术可访问项。';
+        const overview = `综合 GEO 评分为 ${overall} 分。建议优先补齐 Schema、问句化 H2 / FAQ、首段直答与权威外链（背书维 ≠ AI 答案引用率）。`;
+        const priority = gaps[0] || '继续补充 FAQPage、问句化 H2 与权威外链，提升可发现/可理解的就绪信号。';
 
         return { headline, overview, priority, strengths, gaps };
     }
@@ -1045,32 +1038,31 @@
         renderMetric(
             'content',
             content.score,
-            `检测到 ${content.h1_count ?? 0} 个 H1、${content.h2_count ?? 0} 个 H2，正文约 ${content.character_count ?? content.word_count ?? 0} 字。`
+            `H1 ${content.h1_count ?? 0} · H2 ${content.h2_count ?? 0} · FAQ 样块 ${content.faq_like_sections ?? 0}；建议关键 H2 用用户问句。`
         );
         renderMetric(
             'meta',
             meta.score,
             Array.isArray(meta.missing) && meta.missing.length
-                ? `待补充 ${meta.missing.slice(0, 3).join('、')} 等 Meta / OG 字段。`
-                : 'Meta、Open Graph 与 Twitter Card 信息较完整。'
+                ? `技术可访问待补：${meta.missing.slice(0, 3).join('、')}。`
+                : 'Meta / OG / Twitter Card 与基础抓取信号较完整。'
         );
         renderMetric(
             'citation',
             citation.score,
-            `外部链接 ${citation.external_link_count ?? 0} 个，权威外链 ${citation.authority_link_count ?? 0} 个。`
+            `外链 ${citation.external_link_count ?? 0} · 权威 ${citation.authority_link_count ?? 0}（就绪信号 ≠ AI 答案引用率）。`
         );
         renderSchema(schema);
         renderRecommendations(report.recommendations || {});
 
         if (toSolutionsBtn) {
-            if (Routes?.buildPlanPath) {
-                toSolutionsBtn.href = Routes.buildPlanPath({
-                    diagnosticReportId: report.report_id,
-                    companyId: report.company_id || '',
+            if (Workflow?.buildHref) {
+                toSolutionsBtn.href = Workflow.buildHref('keywords', {
+                    diagnostic_report_id: report.report_id || '',
                     url: report.url || '',
                 });
             } else {
-                const next = new URL('/plans', window.location.origin);
+                const next = new URL('/keywords', window.location.origin);
                 next.searchParams.set('diagnostic_report_id', report.report_id);
                 next.searchParams.set('url', report.url);
                 if (report.company_id) next.searchParams.set('company_id', report.company_id);
@@ -1093,29 +1085,26 @@
         Workflow.mountBar({
             stepId: 'diagnostic',
             force: true,
-            hint: '诊断已完成，可进入问答/方案继续全套工作流。',
-            nextHref: Workflow.buildHref('solutions', {
+            hint: '诊断已完成，可进入拓词继续全套工作流。',
+            nextHref: Workflow.buildHref('keywords', {
                 diagnostic_report_id: report.report_id || '',
                 url: report.url || '',
             }),
-            nextLabel: '下一步：问答/方案',
+            nextLabel: '下一步：拓词',
         });
         const host = reportShell || resultsGrid || document.querySelector('main');
-        const solutionsHref = Workflow.buildHref('solutions', {
+        const keywordsHref = Workflow.buildHref('keywords', {
             diagnostic_report_id: report.report_id || '',
             url: report.url || '',
         });
-        const plansHref = `/plans?from=suite&workflow=1&diagnostic_report_id=${encodeURIComponent(report.report_id || '')}&url=${encodeURIComponent(report.url || '')}`;
         Workflow.mountNextCard(host, {
             id: 'suite-wf-next-diagnostic',
             prepend: true,
             stepId: 'diagnostic',
-            title: '诊断完成 · 进入问答/方案',
-            copy: '已记入 GEO Suite。下一步可解释诊断结果，或生成可执行行动方案。',
-            primaryHref: solutionsHref,
-            primaryLabel: '进入 GEO 问答',
-            secondaryHref: plansHref,
-            secondaryLabel: '生成行动方案',
+            title: '诊断完成 · 进入拓词',
+            copy: '已记入 GEO Suite。下一步扩展问题词与场景词，形成可移交的内容选题资产。',
+            primaryHref: keywordsHref,
+            primaryLabel: '进入拓词',
         });
     }
 
@@ -1174,6 +1163,7 @@
 
         const rawUrl = urlInput?.value?.trim();
         if (!rawUrl) {
+            setStatus('请先输入要诊断的网址，例如 example.com', 'error');
             urlInput?.focus();
             urlInput?.classList.add('ring-2', 'ring-red-300');
             window.setTimeout(() => urlInput?.classList.remove('ring-2', 'ring-red-300'), 2000);
@@ -1217,9 +1207,9 @@
 
     Workflow?.mountBar({
         stepId: 'diagnostic',
-        nextHref: Workflow.buildHref('solutions'),
-        nextLabel: '下一步：问答/方案',
-        hint: '全套工作流第 1 步：完成诊断后进入问答/方案。',
+        nextHref: Workflow.buildHref('keywords'),
+        nextLabel: '下一步：拓词',
+        hint: '全套工作流第 1 步：完成诊断后进入拓词。',
     });
 
     if (initialReportId) {

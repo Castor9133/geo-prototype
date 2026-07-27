@@ -401,11 +401,13 @@ async def resolve_catalog_defaults(
         return int(prompt_id), int(ai_model_id)
 
     catalog = await _geoflow_request(config, token, "GET", "/api/v1/catalog")
-    prompts = catalog.get("prompts") or (catalog.get("data") or {}).get("prompts") or []
+    data = catalog.get("data") if isinstance(catalog.get("data"), dict) else {}
+    prompts = catalog.get("prompts") or data.get("prompts") or []
     models = (
         catalog.get("ai_models")
         or catalog.get("models")
-        or (catalog.get("data") or {}).get("ai_models")
+        or data.get("ai_models")
+        or data.get("models")
         or []
     )
 

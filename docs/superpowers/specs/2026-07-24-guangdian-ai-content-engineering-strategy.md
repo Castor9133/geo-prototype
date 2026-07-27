@@ -202,6 +202,7 @@ L2 提供事实与证据骨架；L3 提供信任与叙事血肉。没有 L2，L3
 | [L2 试点工程计划](./2026-07-24-l2-pilot-factcard-measurement.md) | 事实卡 + 手工测量 SOP |
 | [GEO 可信仪表盘产品文档](./2026-07-22-geo-trust-dashboard-product.md) | L2 效果如何「合法测量」 |
 | [GEO Suite 领导演示手册](../../GEO-Suite-leadership-demo-guide.md) | L1/L2 现有半成品演示 |
+| [内容工程 SOP / 清单](../../content-engineering-sop.md) | 双层方法 → Suite 6 能力执行清单（2026-07-27） |
 | [geo-suite.md](../../geo-suite.md) | 工程集成契约 |
 
 ---

@@ -1,0 +1,32 @@
+﻿# GEORank 开发机 / 演示省 CPU（不删业务，按需关 profile）
+#
+# 用法：
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.dev.lite.yml up -d
+#
+# 演示最小集（API + 前端 + 基础依赖；无 crawler / 可关 beat）：
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.dev.lite.yml up -d traefik frontend api worker postgres redis qdrant neo4j minio
+#
+# 需要爬虫 / 定时：
+#   ... --profile crawl --profile cron up -d
+
+services:
+  worker:
+    command: celery -A app.core.celery_app worker -l warning -c 1 -Q process,diagnose
+    cpus: ${GEORANK_WORKER_CPUS:-1.0}
+    mem_limit: ${GEORANK_WORKER_MEM:-768m}
+
+  beat:
+    profiles: ["cron", "full"]
+    command: celery -A app.core.celery_app beat -l warning
+    cpus: ${GEORANK_BEAT_CPUS:-0.25}
+    mem_limit: ${GEORANK_BEAT_MEM:-256m}
+
+  crawler:
+    profiles: ["crawl", "full"]
+    command: celery -A app.core.celery_app worker -l warning -c 1 -Q crawl --hostname=crawler@%h
+    cpus: ${GEORANK_CRAWLER_CPUS:-1.0}
+    mem_limit: ${GEORANK_CRAWLER_MEM:-1g}
+
+  api:
+    cpus: ${GEORANK_API_CPUS:-1.0}
+    mem_limit: ${GEORANK_API_MEM:-768m}

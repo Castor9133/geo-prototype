@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GEORank · 六大能力 Hub 设计稿</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #F9F7F2;
+      --bg-elevated: #FFFFFF;
+      --ink: #1A1A1A;
+      --ink-muted: #5C5A55;
+      --accent-blue: #8FB8E8;
+      --accent-blue-mid: #7BA3D4;
+      --accent-blue-deep: #6A9FD4;
+      --accent-orange: #E8A07A;
+      --accent-orange-deep: #D4845C;
+      --accent-green: #A8C5A0;
+      --accent-green-deep: #7FA876;
+      --accent-lavender: #C4B0E0;
+      --accent-lavender-deep: #A890C8;
+      --accent-sand: #EDE6D9;
+      --accent-mark: #E07070;
+      --border: #1A1A1A;
+      --border-width: 2px;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --font-display: "Noto Serif SC", "Songti SC", "SimSun", serif;
+      --font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+      --shadow-hard: 4px 4px 0 var(--border);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .page {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 32px 24px 80px;
+    }
+
+    /* —— Top bar —— */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 40px;
+      padding-bottom: 20px;
+      border-bottom: var(--border-width) solid var(--border);
+    }
+
+    .brand-mark {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.25rem;
+      letter-spacing: 0.02em;
+    }
+
+    .brand-mark .dot {
+      width: 14px;
+      height: 14px;
+      border: var(--border-width) solid var(--border);
+      border-radius: 4px;
+      background: var(--accent-blue);
+    }
+
+    .topbar-meta {
+      font-size: 0.8125rem;
+      color: var(--ink-muted);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border: var(--border-width) solid var(--border);
+      border-radius: 999px;
+      background: var(--bg-elevated);
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    /* —— Screen 1: Hero —— */
+    .screen {
+      margin-bottom: 72px;
+    }
+
+    .screen-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+
+    .screen-label::before {
+      content: "";
+      width: 18px;
+      height: 3px;
+      background: var(--accent-mark);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 28px;
+      align-items: end;
+      margin-bottom: 36px;
+    }
+
+    @media (max-width: 800px) {
+      .hero { grid-template-columns: 1fr; }
+    }
+
+    .hero h1 {
+      font-family: var(--font-display);
+      font-size: clamp(2.4rem, 5vw, 3.4rem);
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+    }
+
+    .hero h1 .wiggle {
+      display: block;
+      width: 72px;
+      height: 8px;
+      margin-top: 12px;
+      background:
+        radial-gradient(circle at 8px 4px, var(--accent-mark) 3px, transparent 3.5px),
+        radial-gradient(circle at 24px 6px, var(--accent-mark) 3px, transparent 3.5px),
+        radial-gradient(circle at 40px 3px, var(--accent-mark) 3px, transparent 3.5px),
+        radial-gradient(circle at 56px 6px, var(--accent-mark) 3px, transparent 3.5px),
+        radial-gradient(circle at 68px 4px, var(--accent-mark) 2.5px, transparent 3px);
+    }
+
+    .hero-lead {
+      font-size: 1.0625rem;
+      color: var(--ink-muted);
+      max-width: 28em;
+      margin-top: 14px;
+    }
+
+    .hero-aside {
+      border: var(--border-width) solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-elevated);
+      padding: 18px 20px;
+      box-shadow: var(--shadow-hard);
+    }
+
+    .hero-aside h3 {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .hero-aside ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 0.875rem;
+      color: var(--ink-muted);
+    }
+
+    .hero-aside li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hero-aside .swatch {
+      width: 12px;
+      height: 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* —— Flow bar —— */
+    .flow {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: stretch;
+      gap: 0;
+      border: var(--border-width) solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--bg-elevated);
+      margin-bottom: 36px;
+      box-shadow: var(--shadow-hard);
+    }
+
+    .flow-step {
+      flex: 1 1 120px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      border-right: var(--border-width) solid var(--border);
+      font-size: 0.875rem;
+      font-weight: 600;
+      min-height: 56px;
+    }
+
+    .flow-step:last-child { border-right: none; }
+
+    .flow-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border: var(--border-width) solid var(--border);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .flow-step:nth-child(1) .flow-num { background: var(--accent-blue); }
+    .flow-step:nth-child(2) .flow-num { background: var(--accent-lavender); }
+    .flow-step:nth-child(3) .flow-num { background: var(--accent-orange); }
+    .flow-step:nth-child(4) .flow-num { background: var(--accent-green); }
+    .flow-step:nth-child(5) .flow-num { background: var(--accent-blue); }
+
+    .flow-arrow {
+      color: var(--ink-muted);
+      font-weight: 400;
+      margin-left: auto;
+      padding-left: 8px;
+    }
+
+    .flow-step:last-child .flow-arrow { display: none; }
+
+    /* —— 6 pillar cards —— */
+    .section-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .section-head h2 {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .section-head p {
+      font-size: 0.875rem;
+      color: var(--ink-muted);
+    }
+
+    .pillars {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    @media (max-width: 900px) {
+      .pillars { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 560px) {
+      .pillars { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      border: var(--border-width) solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-elevated);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 220px;
+      transition: transform 0.15s ease;
+    }
+
+    .card:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: var(--shadow-hard);
+    }
+
+    .card-head {
+      padding: 14px 16px 12px;
+      border-bottom: var(--border-width) solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .card-head .idx {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border: var(--border-width) solid var(--border);
+      border-radius: 6px;
+      background: var(--bg-elevated);
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .card-head .tag {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      opacity: 0.85;
+    }
+
+    .card.blue .card-head { background: var(--accent-blue); }
+    .card.orange .card-head { background: var(--accent-orange); }
+    .card.green .card-head { background: var(--accent-green); }
+    .card.lavender .card-head { background: var(--accent-lavender); }
+    .card.blue-deep .card-head { background: var(--accent-blue-mid); }
+    .card.sand .card-head { background: var(--accent-orange); }
+    .card.blue { background: color-mix(in srgb, var(--accent-blue) 28%, white); }
+    .card.lavender { background: color-mix(in srgb, var(--accent-lavender) 28%, white); }
+    .card.orange { background: color-mix(in srgb, var(--accent-orange) 28%, white); }
+    .card.green { background: color-mix(in srgb, var(--accent-green) 28%, white); }
+    .card.blue-deep { background: color-mix(in srgb, var(--accent-blue-mid) 28%, white); }
+    .card.sand { background: var(--accent-sand); }
+
+    .card-body {
+      padding: 16px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .card-body h3 {
+      font-family: var(--font-display);
+      font-size: 1.0625rem;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .card-body p {
+      font-size: 0.875rem;
+      color: var(--ink-muted);
+      flex: 1;
+    }
+
+    .card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .chip {
+      display: inline-block;
+      padding: 3px 8px;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.6875rem;
+      font-weight: 500;
+      background: var(--bg);
+    }
+
+    .card.blue .chip { background: color-mix(in srgb, var(--accent-blue) 35%, white); }
+    .card.orange .chip { background: color-mix(in srgb, var(--accent-orange) 35%, white); }
+    .card.green .chip { background: color-mix(in srgb, var(--accent-green) 35%, white); }
+    .card.lavender .chip { background: color-mix(in srgb, var(--accent-lavender) 35%, white); }
+    .card.blue-deep .chip { background: color-mix(in srgb, var(--accent-blue-mid) 42%, white); }
+    .card.sand .chip { background: color-mix(in srgb, var(--accent-orange) 35%, var(--accent-sand)); }
+
+    /* —— Palette strip —— */
+    .palette {
+      margin-top: 36px;
+      border: var(--border-width) solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-elevated);
+      padding: 18px 20px;
+    }
+
+    .palette h3 {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      margin-bottom: 14px;
+    }
+
+    .palette-row {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+    }
+
+    @media (max-width: 700px) {
+      .palette-row { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    .swatch-card {
+      border: var(--border-width) solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .swatch-card .block {
+      height: 48px;
+      border-bottom: var(--border-width) solid var(--border);
+    }
+
+    .swatch-card .label {
+      padding: 8px;
+      font-size: 0.6875rem;
+      line-height: 1.35;
+    }
+
+    .swatch-card code {
+      display: block;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.625rem;
+      color: var(--ink-muted);
+      margin-top: 2px;
+    }
+
+    /* —— Screen 2: detail panels —— */
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 800px) {
+      .detail-grid { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      border: var(--border-width) solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-elevated);
+      overflow: hidden;
+      box-shadow: var(--shadow-hard);
+    }
+
+    .panel-bar {
+      padding: 12px 16px;
+      border-bottom: var(--border-width) solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 700;
+      font-size: 0.9375rem;
+    }
+
+    .panel.diag .panel-bar { background: var(--accent-blue); }
+    .panel.obs .panel-bar { background: var(--accent-green); }
+
+    .panel-body { padding: 16px; }
+
+    .metric-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .metric {
+      border: var(--border-width) solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 10px;
+      text-align: center;
+      background: var(--bg);
+    }
+
+    .metric .n {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .metric .l {
+      font-size: 0.6875rem;
+      color: var(--ink-muted);
+      margin-top: 4px;
+    }
+
+    .metric.t-blue { border-top: 4px solid var(--accent-blue-deep); }
+    .metric.t-orange { border-top: 4px solid var(--accent-orange-deep); }
+    .metric.t-lavender { border-top: 4px solid var(--accent-lavender-deep); }
+    .metric.t-green { border-top: 4px solid var(--accent-green-deep); }
+
+    .list-box {
+      border: var(--border-width) solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .list-box .item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 12px;
+      font-size: 0.8125rem;
+      border-bottom: 1.5px solid var(--border);
+      background: var(--bg-elevated);
+    }
+
+    .list-box .item:last-child { border-bottom: none; }
+
+    .list-box .item:nth-child(odd) { background: var(--bg); }
+
+    .status {
+      display: inline-block;
+      padding: 2px 8px;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+    }
+
+    .status.ok { background: var(--accent-green); }
+    .status.warn { background: var(--accent-orange); }
+    .status.info { background: var(--accent-lavender); }
+
+    .bar-chart {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 72px 1fr 40px;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.75rem;
+    }
+
+    .bar-track {
+      height: 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 4px;
+      background: var(--bg);
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-right: 1.5px solid var(--border);
+    }
+
+    .bar-fill.b1 { width: 78%; background: var(--accent-blue); }
+    .bar-fill.b2 { width: 62%; background: var(--accent-lavender); }
+    .bar-fill.b3 { width: 45%; background: var(--accent-orange); }
+    .bar-fill.b4 { width: 88%; background: var(--accent-green); }
+
+    .note {
+      margin-top: 28px;
+      padding: 14px 16px;
+      border: var(--border-width) solid var(--border);
+      border-left: 6px solid var(--accent-mark);
+      border-radius: var(--radius-sm);
+      background: var(--bg-elevated);
+      font-size: 0.8125rem;
+      color: var(--ink-muted);
+    }
+
+    .note strong { color: var(--ink); }
+
+    footer {
+      margin-top: 48px;
+      padding-top: 20px;
+      border-top: var(--border-width) solid var(--border);
+      font-size: 0.75rem;
+      color: var(--ink-muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div class="brand-mark">
+        <span class="dot" aria-hidden="true"></span>
+        GEORank
+      </div>
+      <div class="topbar-meta">
+        <span class="badge">设计稿 · Soft Neubrutalism</span>
+        &nbsp; 不改生产首页 · 仅配色与布局示意
+      </div>
+    </header>
+
+    <!-- ========== Screen 1 ========== -->
+    <section class="screen" id="screen-1" aria-label="Hub 一屏">
+      <div class="screen-label">Screen 01 · Hub</div>
+
+      <div class="hero">
+        <div>
+          <h1>
+            GEORank
+            <span class="wiggle" aria-hidden="true"></span>
+          </h1>
+          <p class="hero-lead">
+            把 GEO 能力收成六个可执行入口——从排查、知识库到拓词、分发与观测，一条主流程看清内容工程闭环。
+          </p>
+        </div>
+        <aside class="hero-aside" aria-label="风格说明">
+          <h3>风格要点</h3>
+          <ul>
+            <li><span class="swatch" style="background:var(--bg)"></span>奶油底 · 粗黑描边 · 中圆角</li>
+            <li><span class="swatch" style="background:var(--accent-blue)"></span>雾蓝 · 分区强调</li>
+            <li><span class="swatch" style="background:var(--accent-orange)"></span>陶土橙 · 行动/告警</li>
+            <li><span class="swatch" style="background:var(--accent-green)"></span>鼠尾草绿 · 结果/健康</li>
+            <li><span class="swatch" style="background:var(--accent-lavender)"></span>淡紫 · 内容/知识</li>
+          </ul>
+        </aside>
+      </div>
+
+      <nav class="flow" aria-label="主流程">
+        <div class="flow-step"><span class="flow-num">1</span>诊断<span class="flow-arrow">→</span></div>
+        <div class="flow-step"><span class="flow-num">2</span>知识库<span class="flow-arrow">→</span></div>
+        <div class="flow-step"><span class="flow-num">3</span>拓词<span class="flow-arrow">→</span></div>
+        <div class="flow-step"><span class="flow-num">4</span>分发<span class="flow-arrow">→</span></div>
+        <div class="flow-step"><span class="flow-num">5</span>观测</div>
+      </nav>
+
+      <div class="section-head">
+        <h2>六大能力</h2>
+        <p>配色分块 · 信息图感 · 少毛玻璃少炫光</p>
+      </div>
+
+      <div class="pillars">
+        <article class="card blue">
+          <div class="card-head">
+            <span class="idx">01</span>
+            <span class="tag">Diagnose</span>
+          </div>
+          <div class="card-body">
+            <h3>网站 SEO 排查测试</h3>
+            <p>抓取可达性、结构化数据、核心页面健康度与 AI 可见性风险，输出可执行清单。</p>
+            <div class="card-meta">
+              <span class="chip">技术 SEO</span>
+              <span class="chip">可访问性</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="card lavender">
+          <div class="card-head">
+            <span class="idx">02</span>
+            <span class="tag">Knowledge</span>
+          </div>
+          <div class="card-body">
+            <h3>内容切片量化生成知识库</h3>
+            <p>将长文切成可引用事实卡片，量化覆盖度；目标产出 ≥10 篇结构化知识条目。</p>
+            <div class="card-meta">
+              <span class="chip">切片</span>
+              <span class="chip">≥10 篇</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="card orange">
+          <div class="card-head">
+            <span class="idx">03</span>
+            <span class="tag">Expand</span>
+          </div>
+          <div class="card-body">
+            <h3>GEO 拓词 / 提示词扩词</h3>
+            <p>围绕意图与场景扩展查询词与提示词簇，为后续分发提供可控词表。</p>
+            <div class="card-meta">
+              <span class="chip">意图簇</span>
+              <span class="chip">提示词</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="card green">
+          <div class="card-head">
+            <span class="idx">04</span>
+            <span class="tag">Distribute</span>
+          </div>
+          <div class="card-body">
+            <h3>多渠道 + 模板 + 提示词扩写分发</h3>
+            <p>按渠道模板扩写并分发，保持品牌口径一致，闭环回到知识约束。</p>
+            <div class="card-meta">
+              <span class="chip">多渠道</span>
+              <span class="chip">模板</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="card blue-deep">
+          <div class="card-head">
+            <span class="idx">05</span>
+            <span class="tag">Observe</span>
+          </div>
+          <div class="card-body">
+            <h3>观测结果</h3>
+            <p>追踪引用、排名与回答一致性，把「有没有被 AI 说到」变成可复盘指标。</p>
+            <div class="card-meta">
+              <span class="chip">引用</span>
+              <span class="chip">一致性</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="card sand">
+          <div class="card-head">
+            <span class="idx">06</span>
+            <span class="tag">Configure</span>
+          </div>
+          <div class="card-body">
+            <h3>配置页面</h3>
+            <p>租户、渠道、知识库与导航开关的统一配置面，支撑六大入口稳态运行。</p>
+            <div class="card-meta">
+              <span class="chip">租户</span>
+              <span class="chip">开关</span>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <div class="palette">
+        <h3>色板（CSS 变量）</h3>
+        <div class="palette-row">
+          <div class="swatch-card">
+            <div class="block" style="background:var(--bg)"></div>
+            <div class="label">背景<br /><code>--bg #F9F7F2</code></div>
+          </div>
+          <div class="swatch-card">
+            <div class="block" style="background:var(--ink)"></div>
+            <div class="label">墨色/描边<br /><code>--ink / --border</code></div>
+          </div>
+          <div class="swatch-card">
+            <div class="block" style="background:var(--accent-blue)"></div>
+            <div class="label">雾蓝<br /><code>--accent-blue</code></div>
+          </div>
+          <div class="swatch-card">
+            <div class="block" style="background:var(--accent-orange)"></div>
+            <div class="label">陶土橙<br /><code>--accent-orange</code></div>
+          </div>
+          <div class="swatch-card">
+            <div class="block" style="background:var(--accent-green)"></div>
+            <div class="label">鼠尾草绿<br /><code>--accent-green</code></div>
+          </div>
+          <div class="swatch-card">
+            <div class="block" style="background:var(--accent-lavender)"></div>
+            <div class="label">淡紫<br /><code>--accent-lavender</code></div>
+          </div>
+          <div class="swatch-card">
+            <div class="block" style="background:var(--bg-elevated); border-bottom-color:var(--border)"></div>
+            <div class="label">卡片白<br /><code>#FFFFFF</code></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== Screen 2 ========== -->
+    <section class="screen" id="screen-2" aria-label="内页配色示意">
+      <div class="screen-label">Screen 02 · 内页示意</div>
+      <div class="section-head">
+        <h2>诊断 / 观测 · 内页配色</h2>
+        <p>同色板落地到工作台，不换肤生产站</p>
+      </div>
+
+      <div class="detail-grid">
+        <div class="panel diag">
+          <div class="panel-bar">
+            <span>网站 SEO 排查测试</span>
+            <span class="badge" style="background:var(--bg-elevated)">示意</span>
+          </div>
+          <div class="panel-body">
+            <div class="metric-row">
+              <div class="metric t-blue">
+                <div class="n">86</div>
+                <div class="l">健康分</div>
+              </div>
+              <div class="metric t-orange">
+                <div class="n">12</div>
+                <div class="l">待修复</div>
+              </div>
+              <div class="metric t-lavender">
+                <div class="n">4</div>
+                <div class="l">高优先级</div>
+              </div>
+            </div>
+            <div class="list-box">
+              <div class="item">
+                <span>robots.txt 可抓取</span>
+                <span class="status ok">通过</span>
+              </div>
+              <div class="item">
+                <span>结构化数据覆盖</span>
+                <span class="status warn">缺口</span>
+              </div>
+              <div class="item">
+                <span>核心页 LCP / CLS</span>
+                <span class="status info">观察</span>
+              </div>
+              <div class="item">
+                <span>AI 引用可达性</span>
+                <span class="status warn">待测</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel obs">
+          <div class="panel-bar">
+            <span>观测结果</span>
+            <span class="badge" style="background:var(--bg-elevated)">示意</span>
+          </div>
+          <div class="panel-body">
+            <div class="metric-row">
+              <div class="metric t-green">
+                <div class="n">3.2×</div>
+                <div class="l">引用增长</div>
+              </div>
+              <div class="metric t-blue">
+                <div class="n">71%</div>
+                <div class="l">回答一致</div>
+              </div>
+              <div class="metric t-orange">
+                <div class="n">9</div>
+                <div class="l">活跃渠道</div>
+              </div>
+            </div>
+            <div class="bar-chart" aria-label="渠道表现示意">
+              <div class="bar-row">
+                <span>搜索摘要</span>
+                <div class="bar-track"><div class="bar-fill b1"></div></div>
+                <span>78%</span>
+              </div>
+              <div class="bar-row">
+                <span>对话引用</span>
+                <div class="bar-track"><div class="bar-fill b2"></div></div>
+                <span>62%</span>
+              </div>
+              <div class="bar-row">
+                <span>社媒模板</span>
+                <div class="bar-track"><div class="bar-fill b3"></div></div>
+                <span>45%</span>
+              </div>
+              <div class="bar-row">
+                <span>知识命中</span>
+                <div class="bar-track"><div class="bar-fill b4"></div></div>
+                <span>88%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="note">
+        <strong>交付说明：</strong>本页为独立设计稿，用于确认 Soft Neubrutalism 配色与六大入口信息架构。
+        未修改生产首页 / Suite 皮肤。预览图见同目录
+        <code>geo-hub-6pillars-design.png</code>。
+      </p>
+    </section>
+
+    <footer>
+      <span>GEORank · docs/design/geo-hub-6pillars-mock.html</span>
+      <span>--bg · --ink · --accent-blue · --accent-orange · --accent-green · --accent-lavender · --border</span>
+    </footer>
+  </div>
+</body>
+</html>

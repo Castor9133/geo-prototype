@@ -5,8 +5,6 @@ import type {Metadata} from 'next';
 export type LegacyPageId =
   | 'index'
   | 'diagnostic'
-  | 'solutions'
-  | 'plans'
   | 'keywords'
   | 'tools'
   | 'profile'

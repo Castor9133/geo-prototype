@@ -81,9 +81,9 @@ export function SiteHeader({locale = 'zh-CN'}: SiteHeaderProps) {
         <nav className="site-header__nav">
           <a href={localizeHref(locale, '/suite')}>GEO Suite</a>
           <a href={localizeHref(locale, '/diagnostic')}>{nav('diagnostic')}</a>
-          <a href={localizeHref(locale, '/solutions')}>{nav('solutions')}</a>
           <a href={localizeHref(locale, '/keywords')}>{nav('keywords')}</a>
-          <a href={localizeHref(locale, '/tools')}>{nav('tools')}</a>
+          <a href={localizeHref(locale, '/suite?step=measure')}>观测</a>
+          <a href={localizeHref(locale, '/admin/settings')}>配置</a>
         </nav>
         <div className="site-header__actions">
           <LanguageSwitcher locale={locale} variant="site" />

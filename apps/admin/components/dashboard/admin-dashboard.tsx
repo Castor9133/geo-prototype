@@ -63,7 +63,6 @@ export function AdminDashboard({token, userLabel}: AdminDashboardProps) {
     return [
       {label: t('totalCompanies'), value: state.dashboard.total_companies, tone: 'brand'},
       {label: t('totalDiagnostics'), value: state.dashboard.total_diagnostics, tone: 'warning'},
-      {label: t('totalSolutions'), value: state.dashboard.total_solutions, tone: 'success'},
       {label: t('keywordDimensions'), value: 8, tone: 'brand'},
       {label: t('totalContents'), value: state.dashboard.total_contents, tone: 'warning'}
     ];
@@ -152,11 +151,6 @@ export function AdminDashboard({token, userLabel}: AdminDashboardProps) {
               <span className="admin-queue-card__title">{t('diagnosticsTitle')}</span>
               <strong>{dashboard.failure_stats.failed_diagnostics || 0}</strong>
               <p>{t('diagnosticsCopy')}</p>
-            </Link>
-            <Link className="admin-queue-card" href={localizeHref(locale, '/solutions')}>
-              <span className="admin-queue-card__title">{t('solutionsTitle')}</span>
-              <strong>{dashboard.total_solutions || 0}</strong>
-              <p>{t('solutionsCopy')}</p>
             </Link>
             <Link className="admin-queue-card" href={localizeHref(locale, '/keywords')}>
               <span className="admin-queue-card__title">{t('keywordsTitle')}</span>

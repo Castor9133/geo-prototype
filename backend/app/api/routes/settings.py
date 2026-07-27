@@ -54,7 +54,8 @@ async def get_frontend_modules():
                 "name": module.get("name"),
                 "path": module.get("path"),
                 "description": module.get("description"),
-                "enabled": module.get("enabled", True),
+                # Soft-hide tools for demo focus path; keep record for admin recovery.
+                "enabled": False if module.get("key") == "tools" else module.get("enabled", True),
                 "protected_paths": module.get("protected_paths") or [],
                 "is_default": module.get("key") == default_module,
             }

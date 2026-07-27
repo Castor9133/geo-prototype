@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const statusText = document.getElementById('suite-status-text');
     const openGeoflow = document.getElementById('suite-open-geoflow');
     const integrationCopy = document.getElementById('suite-integration-copy');
+    const nextStepsEl = document.getElementById('suite-next-steps');
     const stepperEl = document.getElementById('suite-stepper');
     const progressBar = document.getElementById('suite-progress-bar');
     const progressLabel = document.getElementById('suite-progress-label');
@@ -23,12 +24,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     const handoffMeta = document.getElementById('suite-handoff-meta');
     const handoffActions = document.getElementById('suite-handoff-actions');
 
+    const DEMO_KB = window.GEOrank?.SuiteExtra?.DEMO_KB || {
+        kbId: 9,
+        kbName: '中文产品演示包·DJI Mini 5 Pro',
+        entity: 'DJI Mini 5 Pro',
+        docsPath: 'docs/pilot-demo/cn-product-demo-v2/',
+        defaultDetailPath: '/geo_admin/knowledge-bases/9/detail',
+        tasksPath: '/geo_admin/tasks',
+        defaultBase: 'http://localhost:18080',
+    };
+
     let integrationStatus = null;
     let activeStepId = 'diagnostic';
 
     if (!Workflow) {
         console.error('[suite] SuiteWorkflow missing');
         return;
+    }
+
+    function geoflowBase() {
+        if (window.GEOrank?.SuiteExtra?.geoflowBase) {
+            return window.GEOrank.SuiteExtra.geoflowBase();
+        }
+        const base = (integrationStatus && integrationStatus.public_base_url) || DEMO_KB.defaultBase;
+        return String(base).replace(/\/$/, '');
+    }
+
+    function geoflowUrl(path) {
+        return geoflowBase() + path;
     }
 
     function readStepFromUrl() {
@@ -52,6 +75,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    function isDemoAlignedHandoff(record) {
+        const blob = [
+            record?.task_name,
+            record?.message,
+            record?.preview?.task_name,
+            JSON.stringify(record?.preview || {}),
+        ].join(' ').toLowerCase();
+        if (!blob.trim()) return false;
+        if (/mini\s*5|dji|大疆|航拍|mini5/.test(blob)) return true;
+        if (/geo\s*优化|哪家.*公司|哪家 geo|seo 公司|优化公司好/.test(blob)) return false;
+        if (/飞书|多维表格|feishu/.test(blob) && !/mini|dji|大疆/.test(blob)) return false;
+        return null;
+    }
+
     function renderHandoff(state) {
         const record = state.lastHandoff;
         if (!record) {
@@ -63,22 +100,45 @@ document.addEventListener('DOMContentLoaded', async () => {
             handoffMode.textContent = record.mode || 'preview';
             handoffMode.dataset.mode = record.mode || 'preview';
         }
+
+        const aligned = isDemoAlignedHandoff(record);
+        const tasksUrl = geoflowUrl(DEMO_KB.tasksPath);
+        const kbUrl = geoflowUrl(DEMO_KB.defaultDetailPath);
+
         if (handoffMessage) {
-            handoffMessage.textContent = record.message || '已完成移交。';
+            if (aligned === false) {
+                handoffMessage.innerHTML = [
+                    escapeHtml(record.message || '已完成移交。'),
+                    `<br><span class="suite-handoff-warn">此记录像是旧拓词任务（非 ${escapeHtml(DEMO_KB.entity)}）。`,
+                    `演示请<strong>新建任务并绑定 KB #${DEMO_KB.kbId}</strong>，勿把本条当成已生成 DJI 正文。</span>`,
+                ].join('');
+            } else {
+                handoffMessage.textContent = record.message || '已完成移交。';
+            }
         }
         if (handoffMeta) {
             const bits = [];
             if (record.source) bits.push(`来源：${record.source}`);
             if (record.task_name) bits.push(`任务：${record.task_name}`);
             if (record.at) bits.push(`时间：${formatTime(record.at)}`);
+            if (aligned === false) bits.push('演示对齐：未绑定 Mini 5 Pro');
+            else if (aligned === true) bits.push('演示对齐：疑似 Mini 5 Pro');
             handoffMeta.textContent = bits.join(' · ');
         }
         if (handoffActions) {
             const buttons = [];
             const taskUrl = record.geoflow_task_url || record.geoflow_admin_url;
+            if (aligned === false) {
+                buttons.push(
+                    `<a class="suite-btn suite-btn--primary suite-btn--tiny" href="${tasksUrl}" target="_blank" rel="noreferrer">一键打开任务中心新建</a>`
+                );
+                buttons.push(
+                    `<a class="suite-btn suite-btn--ghost suite-btn--tiny" href="${kbUrl}" target="_blank" rel="noreferrer">绑定前核对 KB #${DEMO_KB.kbId}</a>`
+                );
+            }
             if (taskUrl && record.mode === 'live') {
                 buttons.push(
-                    `<button type="button" class="suite-btn suite-btn--primary suite-btn--tiny" data-open-sso="${taskUrl}">SSO 打开任务</button>`
+                    `<button type="button" class="suite-btn suite-btn--${aligned === false ? 'ghost' : 'primary'} suite-btn--tiny" data-open-sso="${taskUrl}">SSO 打开旧任务</button>`
                 );
                 buttons.push(
                     `<a class="suite-btn suite-btn--ghost suite-btn--tiny" href="${taskUrl}" target="_blank" rel="noreferrer">直接打开</a>`
@@ -87,6 +147,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (record.task_id && record.mode === 'live') {
                 buttons.push(
                     `<button type="button" class="suite-btn suite-btn--ghost suite-btn--tiny" data-refresh-task="${record.task_id}">刷新任务状态</button>`
+                );
+            }
+            if (aligned !== false) {
+                buttons.push(
+                    `<a class="suite-btn suite-btn--ghost suite-btn--tiny" href="${tasksUrl}" target="_blank" rel="noreferrer">任务中心新建（绑 KB #${DEMO_KB.kbId}）</a>`
                 );
             }
             buttons.push(
@@ -111,7 +176,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     try {
                         const status = await window.GEOrank.GeoflowHandoff.fetchTaskStatus(button.getAttribute('data-refresh-task'));
                         if (handoffMessage) {
-                            handoffMessage.textContent = `任务状态：${status.status || 'unknown'} · ${status.name || ''}`;
+                            const base = `任务状态：${status.status || 'unknown'} · ${status.name || ''}`;
+                            if (aligned === false) {
+                                handoffMessage.innerHTML = `${escapeHtml(base)}<br><span class="suite-handoff-warn">仍建议新建任务并绑定 KB #${DEMO_KB.kbId}。</span>`;
+                            } else {
+                                handoffMessage.textContent = base;
+                            }
                         }
                     } catch (error) {
                         window.alert(error.message || '刷新任务状态失败');
@@ -119,6 +189,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             });
         }
+    }
+
+    function escapeHtml(value) {
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
     }
 
     function renderStepper(state) {
@@ -148,8 +226,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         const step = Workflow.getStep(activeStepId);
         const idx = Workflow.stepIndex(activeStepId) + 1;
         const done = Boolean(state.completed[step.id]);
+        const panelEl = document.getElementById('suite-step-panel');
+        if (panelEl) {
+            panelEl.classList.remove('suite-step-panel--enter');
+            void panelEl.offsetWidth;
+            panelEl.classList.add('suite-step-panel--enter');
+        }
         const next = Workflow.nextOf(step.id);
         const percent = Workflow.progressPercent(state);
+        const kbUrl = geoflowUrl(DEMO_KB.defaultDetailPath);
+        const tasksUrl = geoflowUrl(DEMO_KB.tasksPath);
 
         if (progressBar) progressBar.style.width = `${Math.max(8, percent)}%`;
         if (progressLabel) progressLabel.textContent = `进度 ${percent}% · 完成 ${Object.keys(state.completed).filter((key) => state.completed[key]).length}/${Workflow.STEPS.length}`;
@@ -162,20 +248,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (stepDesc) stepDesc.textContent = step.desc;
         if (stepState) stepState.textContent = done ? '已完成' : (state.currentStep === step.id ? '进行中' : '未开始');
         if (stepNote) {
-            if (step.id === 'handoff') {
-                stepNote.textContent = integrationStatus?.configured
-                    ? 'Live 已就绪：在拓词或问答页点「发送到 GEOFlow」将创建真实任务（勿用 force preview）。'
-                    : '当前为 preview：可演示载荷，但验收要求配置 Token 后走 live。';
-            } else if (step.id === 'review') {
-                stepNote.textContent = integrationStatus?.configured
-                    ? '验收点：mode=live、任务可刷新、发布回调可见；然后进入事实卡看板。'
-                    : '未配置 Token 时只能演示 preview；请到系统设置补齐 GEO Suite Token。';
+            if (step.id === 'diagnostic') {
+                stepNote.textContent = done
+                    ? '诊断完成：把 P0（FAQPage / 问句 H2 / 实体一致）记入 Backlog，再进知识库。'
+                    : '按内容工程：先确认「可被抓取与理解」，再谈引用；详见 docs/content-engineering-sop.md。';
             } else if (step.id === 'knowledge') {
-                stepNote.textContent = '只读看板来自演示资产；真实向量化率可在灌入 Flow KB 后改写 metrics.json。';
-            } else if (step.id === 'trust_asset') {
-                stepNote.textContent = 'L3-C1 样板：图文 + 文字稿元数据，不做真视频管线。';
+                stepNote.textContent = `推荐演示包：${DEMO_KB.kbName}（KB #${DEMO_KB.kbId}）。下方看板读自 ${DEMO_KB.docsPath}metrics.json；旧飞书/示范栏目已降为次要。`;
+            } else if (step.id === 'keywords') {
+                stepNote.textContent = done
+                    ? '拓词完成：确认 P0 提示簇与 Mini 5 Pro 探针题已对齐事实卡 ID，再进分发。'
+                    : '按内容工程：扩展真实用户问题（非堆砌词）；主演示用 Mini 5 Pro 探针，勿沿用旧 GEO 公司词包。';
+            } else if (step.id === 'distribute') {
+                stepNote.textContent = integrationStatus?.configured
+                    ? `实际操作：任务中心新建 → 中国生态提示词 + 绑定 KB #${DEMO_KB.kbId} → 答案优先正文 → 渠道/模板。下方有分步指引。`
+                    : `可先打开任务中心；配置 Token 后可 live 移交。演示仍须手动绑定 KB #${DEMO_KB.kbId}，勿假装旧移交已是 DJI 文。`;
             } else if (step.id === 'measure') {
-                stepNote.textContent = '优先读取后台最新 completed 采样；若无则回落演示数据。徽章声明「非网页抓取」。';
+                stepNote.textContent = '按内容工程：用 Mini 5 Pro 固定探针看 mention/citation/absent；缺口回写事实卡。非网页抓取。';
             } else {
                 stepNote.textContent = done
                     ? '本步已完成。可进入下一步，或点步骤条回看。'
@@ -186,34 +274,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (stepActions) {
             const actions = [];
             const suitePanel = Boolean(step.suitePanel);
-            if (step.id === 'review') {
+            if (step.id === 'distribute') {
                 actions.push(
-                    `<a class="suite-btn suite-btn--primary" href="/suite?step=knowledge"><span class="material-symbols-outlined text-sm">arrow_forward</span>进入事实卡</a>`
+                    `<a class="suite-btn suite-btn--primary" href="${tasksUrl}" target="_blank" rel="noreferrer"><span class="material-symbols-outlined text-sm">sync_alt</span>打开任务中心新建</a>`
                 );
-                if (openGeoflow?.href) {
-                    actions.push(
-                        `<a class="suite-btn suite-btn--ghost" href="${openGeoflow.href}" target="_blank" rel="noreferrer"><span class="material-symbols-outlined text-sm">open_in_new</span>打开 GEOFlow</a>`
-                    );
-                }
                 actions.push(
-                    `<a class="suite-btn suite-btn--ghost" href="${Workflow.buildHref('diagnostic')}"><span class="material-symbols-outlined text-sm">replay</span>再跑诊断</a>`
+                    `<a class="suite-btn suite-btn--ghost" href="${kbUrl}" target="_blank" rel="noreferrer"><span class="material-symbols-outlined text-sm">database</span>核对 KB #${DEMO_KB.kbId}</a>`
                 );
-            } else if (step.id === 'handoff') {
                 actions.push(
-                    `<a class="suite-btn suite-btn--primary" href="${Workflow.buildHref('keywords')}"><span class="material-symbols-outlined text-sm">sync_alt</span>${step.cta}</a>`
+                    `<a class="suite-btn suite-btn--ghost" href="${geoflowUrl('/geo_admin/distribution')}" target="_blank" rel="noreferrer"><span class="material-symbols-outlined text-sm">share</span>分发渠道</a>`
                 );
-                if (step.altHref) {
-                    actions.push(
-                        `<a class="suite-btn suite-btn--ghost" href="${Workflow.buildHref('solutions')}"><span class="material-symbols-outlined text-sm">forum</span>${step.altCta}</a>`
-                    );
-                }
+                actions.push(
+                    `<button type="button" class="suite-btn suite-btn--ghost" data-mark-done="${step.id}"><span class="material-symbols-outlined text-sm">check</span>标记完成并继续</button>`
+                );
+            } else if (step.id === 'knowledge') {
+                actions.push(
+                    `<a class="suite-btn suite-btn--primary" href="${kbUrl}" target="_blank" rel="noreferrer"><span class="material-symbols-outlined text-sm">database</span>打开 DJI Mini 5 Pro KB</a>`
+                );
+                actions.push(
+                    `<a class="suite-btn suite-btn--ghost" href="${geoflowUrl('/geo_admin/knowledge-bases')}" target="_blank" rel="noreferrer"><span class="material-symbols-outlined text-sm">list</span>知识库列表</a>`
+                );
+                actions.push(
+                    `<button type="button" class="suite-btn suite-btn--ghost" data-mark-done="${step.id}"><span class="material-symbols-outlined text-sm">check</span>标记完成并继续</button>`
+                );
             } else if (suitePanel) {
                 actions.push(
                     `<button type="button" class="suite-btn suite-btn--primary" data-mark-done="${step.id}"><span class="material-symbols-outlined text-sm">check</span>标记完成并继续</button>`
                 );
             } else {
+                const primaryHref = Workflow.buildHref(step);
+                const externalAttrs = step.external ? ' target="_blank" rel="noreferrer"' : '';
                 actions.push(
-                    `<a class="suite-btn suite-btn--primary" href="${Workflow.buildHref(step)}"><span class="material-symbols-outlined text-sm">${step.icon}</span>${step.cta}</a>`
+                    `<a class="suite-btn suite-btn--primary" href="${primaryHref}"${externalAttrs}><span class="material-symbols-outlined text-sm">${step.icon}</span>${step.cta}</a>`
                 );
                 if (step.altHref) {
                     actions.push(
@@ -222,7 +314,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
 
-            if (!done && !suitePanel && step.id !== 'review') {
+            if (!done && !suitePanel && step.id !== 'distribute') {
                 actions.push(
                     `<button type="button" class="suite-btn suite-btn--ghost" data-mark-done="${step.id}"><span class="material-symbols-outlined text-sm">check</span>标记完成</button>`
                 );
@@ -261,7 +353,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         if (continueCta) {
             const continueStep = Workflow.getStep(state.currentStep || activeStepId);
-            continueCta.href = continueStep.suitePanel || continueStep.id === 'review'
+            continueCta.href = continueStep.suitePanel || continueStep.external
                 ? `/suite?step=${continueStep.id}`
                 : Workflow.buildHref(continueStep);
             continueCta.textContent = '';
@@ -286,7 +378,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderStepper(state);
         renderPanel(state);
         renderHandoff(state);
-        document.getElementById('suite-workflow')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById('suite-workflow')?.scrollIntoView({ behavior: 'auto', block: 'nearest' });
     }
 
     function refresh() {
@@ -296,7 +388,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderHandoff(state);
     }
 
-    // 初始：URL ?step= 优先，否则用会话 currentStep
     Workflow.syncFromQuery();
     const fromUrl = readStepFromUrl();
     const state = Workflow.load();
@@ -319,12 +410,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
         integrationStatus = await window.GEOrank.GeoflowHandoff.fetchStatus();
+        window.GEOrank._suiteIntegrationStatus = integrationStatus;
         const mode = integrationStatus.mode || 'preview';
         if (statusEl) statusEl.dataset.mode = mode;
         if (statusText) {
             statusText.textContent = integrationStatus.configured
-                ? 'GEOFlow 已连接（live）：验收要求走真实移交 + 回调回看'
-                : '预览模式（preview）：演示可用，但 L1 验收未通过——请配置 Token';
+                ? `GEOFlow 已连接（live）：演示请绑定 KB #${DEMO_KB.kbId}（${DEMO_KB.entity}）`
+                : '预览模式（preview）：演示可用；真实任务须配置 Token，并手动绑定 KB #9';
         }
         if (openGeoflow && integrationStatus.public_base_url) {
             openGeoflow.href = `${String(integrationStatus.public_base_url).replace(/\/$/, '')}/geo_admin`;
@@ -340,8 +432,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         if (integrationCopy) {
             integrationCopy.textContent = integrationStatus.configured
-                ? `已连接到 ${integrationStatus.public_base_url || 'GEOFlow'}。在问答或拓词页点击「${integrationStatus.public_cta_label || '发送到 GEOFlow'}」即可创建任务；可用 SSO 免二次登录。`
-                : '当前为预览模式。先在后台「系统设置 → GEO Suite」填写 base_url 与 API Token；未配置也可走通 handoff 演示并在本页查看最近移交。';
+                ? `已连接到 ${integrationStatus.public_base_url || 'GEOFlow'}。推荐演示 KB #${DEMO_KB.kbId}（${DEMO_KB.kbName}）。拓词「发送到 GEOFlow」若仍是旧词包，演示请改在任务中心新建并绑定该 KB。`
+                : `当前为预览模式。配置 Token 后可 live 移交。主演示入口：KB #${DEMO_KB.kbId} 详情 + 任务中心绑定；包路径 ${DEMO_KB.docsPath}。`;
+        }
+        if (nextStepsEl) {
+            nextStepsEl.textContent = `本地可用 scripts/start-geo-suite.ps1；导入/刷新 DJI 包：scripts/import-cn-product-demo-v2-kb.ps1。`;
         }
         try {
             const review = await window.GEOrank.GeoflowHandoff.fetchReview();
@@ -359,7 +454,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         refresh();
     } catch (error) {
         if (statusEl) statusEl.dataset.mode = 'preview';
-        if (statusText) statusText.textContent = '暂未读取到集成状态，仍可使用 GEORank 工作流';
+        if (statusText) statusText.textContent = '暂未读取到集成状态，仍可使用 GEORank 工作流（演示绑定 KB #9）';
         console.warn('[suite] status failed', error);
     }
 });

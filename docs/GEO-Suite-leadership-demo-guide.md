@@ -10,7 +10,7 @@
 
 **GEO Suite** 把「被找到 → 被引用 → 被信任」连成可演示闭环：
 
-**诊断（就绪信号）→ 方案/拓词 → live 移交 GEOFlow → 回看 → 事实卡看板 → L3 信任素材 → 可信观测抽样。**
+**诊断（就绪信号）→ 拓词 → live 移交 GEOFlow → 回看 → 事实卡看板 → L3 信任素材 → 可信观测抽样。**
 
 它不是把两套系统揉成一个大单体，而是用薄集成做成**可运营的内容工程链路**；测量与生产解耦。
 
@@ -40,7 +40,7 @@
           ▼                                         ▼
    GEORank（规划侧）                          GEOFlow（生产侧）
    · 诊断                                      · 知识库 / 素材库
-   · AI 问答 / 方案                            · 内容任务 / 文章
+   · 拓词                                      · 内容任务 / 文章
    · 拓词                                      · 审核 / 发布 / 分发
           │                                         ▲
           └──── handoff（服务端代理） ───────────────┘
@@ -58,7 +58,7 @@
 ## 4. 价值主张（对领导的收益）
 
 1. **看得见**：诊断结果把「AI 可见性缺口」讲清楚。  
-2. **做得动**：拓词/方案可一键变成 GEOFlow 内容任务。  
+2. **做得动**：拓词可一键变成 GEOFlow 内容任务。  
 3. **控得住**：知识库约束生成，人工审核后再发布。  
 4. **算得清**：先用 DeepSeek Flash 验证链路与成本，再按需升级模型。
 
@@ -71,7 +71,7 @@
 | 套件中枢 | http://localhost:3009/suite | 诊断→拓词→live移交→回看→事实卡→信任素材→观测 |
 | 可信观测后台 | http://localhost:3009/admin/trust-obs | 一键跑探针 / 看样本 / 导出 |
 | L3 样板 | http://localhost:3009/pilot-demo/geo-demo-column/trust-asset.html | 模型可读图文 |
-| GEORank 首页 | http://localhost:3009/ | 诊断 / 问答 / 拓词入口 |
+| GEORank 首页 | http://localhost:3009/ | 诊断 / 拓词入口 |
 | GEOFlow 后台 | http://localhost:18080/geo_admin | 知识库、文章、AI 模型、任务 |
 | GEOFlow 登录 | http://localhost:18080/geo_admin/login | 账号见本机 `.env`：`GEOFLOW_ADMIN_USERNAME` / `GEOFLOW_ADMIN_PASSWORD` |
 
@@ -100,8 +100,8 @@ docker compose up -d
 | 步 | 操作 | 话术要点 |
 |----|------|----------|
 | 1 | 打开 `/suite` | 统一工作台；合成栏目「GEO 示范栏目」 |
-| 2 | 诊断页 | 看就绪信号；强调「外链背分类 ≠ AI 答案引用率」 |
-| 3 | 问答 / 拓词 | 形成可移交选题 |
+| 2 | 诊断页 | 看就绪信号；强调「外链背书 ≠ AI 答案引用率」 |
+| 3 | 拓词 | 形成可移交选题 |
 | 4 | 「发送到 GEOFlow」 | **必须 live**（已配 Token）；preview 不算验收通过 |
 | 5 | `/suite?step=review` | 看 mode=live、任务状态、发布回调 |
 | 6 | `/suite?step=knowledge` | 事实卡覆盖率 / 向量化率看板 |
@@ -110,10 +110,13 @@ docker compose up -d
 
 ### Live handoff 验收清单（L1）
 
-1. 后台「系统设置 → GEO Suite」已填 `base_url` + API Token  
-2. 拓词/问答点移交后，Suite 最近移交显示 `mode=live`（不是 preview）  
-3. 可 SSO/深链打开 Flow 任务；「刷新任务状态」有返回  
-4. 若 Flow 发布回调已配，回看区可见最近回调事件  
+1. 后台「系统设置 → GEO Suite」已填 `base_url` + API Token（或 `.env` 的 `GEOFLOW_API_TOKEN`）  
+2. GEOFlow 已有可用 **content 提示词** + **chat 模型**（catalog `/api/v1/catalog` 能列出）  
+3. 拓词页点移交后，Suite 最近移交显示 `mode=live`（不是 preview）  
+4. 可 SSO/深链打开 Flow 任务；「刷新任务状态」有返回  
+5. 若 Flow 发布回调已配，回看区可见最近回调事件  
+
+**预览限制**：未配 Token 时 `mode=preview`，仍可演示载荷与步骤故事线，但 **不算 L1 验收通过**。Suite 顶栏会明确标出 preview / live。  
 
 ### 收尾 30 秒
 
@@ -139,8 +142,11 @@ docker compose up -d
 2. KB2 · GEO 落地清单  
 3. KB3 · 行业信号摘录（公开报道要点，非全文转载）  
 4. KB4 · GEO Suite 事实卡  
+5. **KB · 中文产品演示包·DJI Mini 5 Pro（推荐）**（真实公开消费电子规格事实卡；资产见 [`pilot-demo/cn-product-demo-v2/`](./pilot-demo/cn-product-demo-v2/README.md)；详情 http://localhost:18080/geo_admin/knowledge-bases/9/detail ）  
+6. ~~KB · 中文产品演示包·飞书多维表格~~（**已不推荐**；旧资产 [`pilot-demo/cn-product-demo/`](./pilot-demo/cn-product-demo/README.md)）
 
-本地原文备份：`GEOFlow/storage/app/demo-kb/`。
+本地原文备份：`GEOFlow/storage/app/demo-kb/`；中文产品包 v2 导入：`.\scripts\import-cn-product-demo-v2-kb.ps1` 或 `cn-product-demo-v2/import-to-geoflow.md`。  
+Suite 演示：任务中心绑定 **DJI Mini 5 Pro** KB + 使用 `cn-product-demo-v2/prompts/library.md` 中 P01/P06；探针题见 `probe-questions.md`；看板 JSON：`/pilot-demo/cn-product-demo-v2/metrics.json`。
 
 ### 7.3 文章（已发布）
 

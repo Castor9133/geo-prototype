@@ -333,7 +333,7 @@
         profileAudienceEl.innerHTML = '';
         (profile.target_users || []).forEach((user) => {
             const chip = document.createElement('span');
-            chip.className = 'inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600';
+            chip.className = 'kw-audience-chip';
             chip.textContent = user;
             profileAudienceEl.appendChild(chip);
         });
@@ -373,7 +373,7 @@
             card.innerHTML = `
                 <div class="dim-card-header">
                     <div class="flex items-center gap-2">
-                        <span class="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center"><span class="material-symbols-outlined text-slate-500 text-base">${esc(meta.icon || dimension.icon || 'category')}</span></span>
+                        <span class="dim-icon"><span class="material-symbols-outlined text-base">${esc(meta.icon || dimension.icon || 'category')}</span></span>
                         <div><span class="text-sm font-bold">${esc(meta.name || dimension.name)}</span><span class="text-xs text-on-surface-variant ml-2">${items.length} 词</span></div>
                     </div>
                     <span class="text-[10px] text-on-surface-variant">${esc(meta.desc || dimension.description || '')}</span>

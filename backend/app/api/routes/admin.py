@@ -510,21 +510,12 @@ async def dashboard_stats(db: DbSession, _: AdminUser):
     completed_diagnostics = await db.scalar(
         select(func.count(DiagnosticReport.id)).where(DiagnosticReport.status == DiagnosticStatus.COMPLETED)
     )
-    published_companies = await db.scalar(
-        select(func.count(Company.id)).where(Company.publish_status == PublishStatus.PUBLISHED)
-    )
-    draft_contents = await db.scalar(
-        select(func.count(Content.id)).where(Content.status == ContentStatus.DRAFT)
-    )
-    published_contents = await db.scalar(
-        select(func.count(Content.id)).where(Content.status == ContentStatus.PUBLISHED)
-    )
 
-    # GEO 评分分布（仅已有评分的公司）
+    # GEO 评分分布（已完成诊断报告）
     scored = await db.execute(
-        select(Company.geo_score).where(
-            Company.geo_score.isnot(None),
-            Company.publish_status == PublishStatus.PUBLISHED,
+        select(DiagnosticReport.overall_score).where(
+            DiagnosticReport.overall_score.isnot(None),
+            DiagnosticReport.status == DiagnosticStatus.COMPLETED,
         )
     )
     scores = [row[0] for row in scored.fetchall()]
@@ -553,21 +544,17 @@ async def dashboard_stats(db: DbSession, _: AdminUser):
         return {row[0].isoformat(): int(row[1] or 0) for row in rows.fetchall()}
 
     trend_series = {
-        "companies": await count_by_day(Company, Company.created_at),
         "diagnostics": await count_by_day(DiagnosticReport, DiagnosticReport.created_at),
         "conversations": await count_by_day(Conversation, Conversation.created_at),
         "keyword_packs": await count_by_day(KeywordPack, KeywordPack.created_at),
-        "contents": await count_by_day(Content, Content.created_at),
     }
     trend = [
         {
             "date": (trend_start + timedelta(days=offset)).isoformat(),
             "label": (trend_start + timedelta(days=offset)).strftime("%m-%d"),
-            "companies": trend_series["companies"].get((trend_start + timedelta(days=offset)).isoformat(), 0),
             "diagnostics": trend_series["diagnostics"].get((trend_start + timedelta(days=offset)).isoformat(), 0),
             "conversations": trend_series["conversations"].get((trend_start + timedelta(days=offset)).isoformat(), 0),
             "keyword_packs": trend_series["keyword_packs"].get((trend_start + timedelta(days=offset)).isoformat(), 0),
-            "contents": trend_series["contents"].get((trend_start + timedelta(days=offset)).isoformat(), 0),
         }
         for offset in range(14)
     ]
@@ -602,11 +589,6 @@ async def dashboard_stats(db: DbSession, _: AdminUser):
             "modules": usage_summary.get("async_modules", []),
         },
         "module_health": {
-            "companies": {
-                "total": total_companies,
-                "done": published_companies,
-                "attention": pending_review + failed_companies,
-            },
             "diagnostics": {
                 "total": total_diagnostics,
                 "done": completed_diagnostics,
@@ -621,11 +603,6 @@ async def dashboard_stats(db: DbSession, _: AdminUser):
                 "total": total_keyword_packs,
                 "done": total_keyword_packs,
                 "attention": 0,
-            },
-            "content": {
-                "total": published_contents + draft_contents,
-                "done": published_contents,
-                "attention": draft_contents,
             },
         },
     }

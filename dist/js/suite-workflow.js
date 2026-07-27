@@ -11,84 +11,52 @@
         {
             id: 'diagnostic',
             label: '诊断',
-            title: '诊断网站',
-            desc: '检查 Schema、内容结构、Meta 与外链背书就绪信号（≠ AI 答案引用率），拿到优先修复清单。',
+            title: '网站 SEO 排查测试',
+            desc: '内容工程 L1：查 Schema / H2 问句化 / Meta / 外链就绪，确认页面能进答案「候选池」。诊断就绪 ≠ 引用率。',
             href: '/diagnostic',
             cta: '开始诊断',
             icon: 'monitoring',
-            next: 'solutions',
-        },
-        {
-            id: 'solutions',
-            label: '问答/方案',
-            title: '问答与方案',
-            desc: '围绕诊断结果生成可执行解释，或进入 30/60/90 天行动方案。',
-            href: '/solutions',
-            cta: '进入问答',
-            icon: 'forum',
-            next: 'keywords',
-            altHref: '/plans',
-            altCta: '生成方案',
-        },
-        {
-            id: 'keywords',
-            label: '拓词',
-            title: '拓词沉淀',
-            desc: '扩展问题词与场景词，形成可移交的内容选题资产。',
-            href: '/keywords',
-            cta: '开始拓词',
-            icon: 'travel_explore',
-            next: 'handoff',
-        },
-        {
-            id: 'handoff',
-            label: 'GEOFlow',
-            title: '发送到 GEOFlow',
-            desc: '把词包或问答简报 live 移交内容工厂，创建知识库、标题库与生成任务。',
-            href: '/keywords',
-            cta: '去拓词页移交',
-            icon: 'sync_alt',
-            next: 'review',
-            altHref: '/solutions',
-            altCta: '从问答移交',
-        },
-        {
-            id: 'review',
-            label: '回看',
-            title: '回看状态与回调',
-            desc: '确认 live 移交、任务状态与发布回调；可用 SSO 打开 GEOFlow。',
-            href: '/suite?step=review',
-            cta: '查看集成状态',
-            icon: 'task_alt',
             next: 'knowledge',
         },
         {
             id: 'knowledge',
-            label: '事实卡',
-            title: '栏目事实卡看板',
-            desc: '查看合成演示栏目的事实卡覆盖率、向量化率与证据摘要（知识工程资产）。',
-            href: '/suite?step=knowledge',
-            cta: '查看事实卡',
+            label: '知识库',
+            title: '事实卡 → 切片向量化',
+            desc: '内容工程 L2：推荐演示包 DJI Mini 5 Pro（GEOFlow KB #9，docs/pilot-demo/cn-product-demo-v2/）。已导入 12 条事实卡并向量化；打开详情核对切片，再进拓词/分发。',
+            href: 'http://localhost:18080/geo_admin/knowledge-bases/9/detail',
+            cta: '打开 DJI Mini 5 Pro KB',
             icon: 'database',
-            next: 'trust_asset',
+            next: 'keywords',
+            external: true,
             suitePanel: true,
         },
         {
-            id: 'trust_asset',
-            label: '信任素材',
-            title: 'L3 模型可读样板',
-            desc: '展示一条「人共鸣 + 模型可读」的图文信任素材样板（非视频管线）。',
-            href: '/suite?step=trust_asset',
-            cta: '查看信任素材',
-            icon: 'auto_awesome',
+            id: 'keywords',
+            label: '拓词',
+            title: '提示词扩词 / 问题图谱',
+            desc: '内容工程：围绕 Mini 5 Pro 扩成 Prompt Universe（了解/比较/选择/实施/风险），对齐 probe-questions.md；勿沿用旧「GEO 优化公司」词包作主演示。',
+            href: '/keywords',
+            cta: '开始拓词',
+            icon: 'travel_explore',
+            next: 'distribute',
+        },
+        {
+            id: 'distribute',
+            label: '分发',
+            title: '任务中心 · 绑定 KB · 答案优先',
+            desc: '在 GEOFlow 任务中心新建任务 → 选中国生态提示词 → 绑定 KB #9（DJI Mini 5 Pro）→ 生成答案优先正文 → 再选渠道/模板。勿把旧拓词移交当成已生成 DJI 文。',
+            href: 'http://localhost:18080/geo_admin/tasks',
+            cta: '打开任务中心新建',
+            icon: 'sync_alt',
             next: 'measure',
+            external: true,
             suitePanel: true,
         },
         {
             id: 'measure',
-            label: '可信观测',
-            title: '答案抽样结果',
-            desc: '展示最新一轮 API 自动探针结果（mention/citation/absent）；非网页抓取。',
+            label: '观测',
+            title: '观测结果',
+            desc: '内容工程闭环：用 Mini 5 Pro 探针题重复抽样，区分 mention / citation / absent 与错误归因，缺口回写事实卡与正文。',
             href: '/suite?step=measure',
             cta: '查看观测结果',
             icon: 'monitoring',
@@ -126,24 +94,30 @@
         var aliases = {
             diagnose: 'diagnostic',
             diagnosis: 'diagnostic',
-            qa: 'solutions',
-            solution: 'solutions',
-            plans: 'solutions',
-            plan: 'solutions',
+            qa: 'keywords',
+            solution: 'keywords',
+            solutions: 'keywords',
+            plans: 'keywords',
+            plan: 'keywords',
             keyword: 'keywords',
-            flow: 'handoff',
-            geoflow: 'handoff',
-            send: 'handoff',
-            status: 'review',
-            next: 'review',
+            flow: 'distribute',
+            geoflow: 'distribute',
+            send: 'distribute',
+            handoff: 'distribute',
+            review: 'distribute',
+            status: 'distribute',
+            next: 'distribute',
             facts: 'knowledge',
             factcard: 'knowledge',
             kb: 'knowledge',
-            trust: 'trust_asset',
-            l3: 'trust_asset',
+            trust: 'measure',
+            trust_asset: 'measure',
+            l3: 'measure',
             obs: 'measure',
             trustobs: 'measure',
             measurement: 'measure',
+            distribution: 'distribute',
+            publish: 'distribute',
         };
         if (aliases[value]) value = aliases[value];
         return STEPS.some(function (step) {
@@ -221,8 +195,9 @@
 
     function saveHandoff(result) {
         var state = load();
+        state.completed.distribute = true;
         state.completed.handoff = true;
-        state.currentStep = 'review';
+        state.currentStep = 'measure';
         state.lastHandoff = {
             mode: result && result.mode ? result.mode : 'preview',
             message: result && result.message ? result.message : '已完成移交',
@@ -236,15 +211,15 @@
             geoflow_task_url: result && (result.geoflow_task_url || result.geoflow_admin_url)
                 ? (result.geoflow_task_url || result.geoflow_admin_url)
                 : null,
-            suite_path: result && result.suite_path ? result.suite_path : '/suite?step=review',
+            suite_path: result && result.suite_path ? result.suite_path : '/suite?step=measure',
             preview: result && result.preview ? result.preview : null,
             at: new Date().toISOString(),
         };
         if (result && result.source === 'keywords') {
             state.completed.keywords = true;
         }
-        if (result && result.source === 'solutions') {
-            state.completed.solutions = true;
+        if (result && (result.source === 'solutions' || result.source === 'plans')) {
+            state.completed.keywords = true;
         }
         return save(state);
     }
@@ -261,14 +236,19 @@
     function buildHref(stepOrId, extras) {
         var step = typeof stepOrId === 'string' ? getStep(stepOrId) : stepOrId;
         var url = new URL(step.href, global.location.origin);
-        url.searchParams.set('from', 'suite');
-        url.searchParams.set('workflow', '1');
-        url.searchParams.set('step', step.id);
+        if (!step.external) {
+            url.searchParams.set('from', 'suite');
+            url.searchParams.set('workflow', '1');
+            url.searchParams.set('step', step.id);
+        }
         if (extras && typeof extras === 'object') {
             Object.keys(extras).forEach(function (key) {
                 if (extras[key] == null || extras[key] === '') return;
                 url.searchParams.set(key, String(extras[key]));
             });
+        }
+        if (step.external || url.origin !== global.location.origin) {
+            return url.toString();
         }
         return url.pathname + url.search;
     }
@@ -310,7 +290,6 @@
             '.suite-wf-next__btn{display:inline-flex;align-items:center;gap:0.35rem;border-radius:999px;padding:0.65rem 1rem;font-size:0.78rem;font-weight:800;text-decoration:none}',
             '.suite-wf-next__btn--primary{color:#fff;background:linear-gradient(135deg,#1f6f5b,#2f9d82)}',
             '.suite-wf-next__btn--ghost{color:#10231f;background:rgba(255,255,255,0.8);border:1px solid rgba(16,35,31,0.12)}',
-            'body.solutions-page .suite-wf-bar,body:has(#solutions-workspace) .suite-wf-bar{top:0}',
         ].join('');
         document.head.appendChild(style);
     }
@@ -352,8 +331,8 @@
         bar.setAttribute('role', 'region');
         bar.setAttribute('aria-label', 'GEO Suite 工作流');
 
-        var nextHref = options.nextHref || (next ? buildHref(next) : '/suite?step=review');
-        var nextLabel = options.nextLabel || (next ? '下一步：' + next.label : '回 Suite 回看');
+        var nextHref = options.nextHref || (next ? buildHref(next) : '/suite?step=measure');
+        var nextLabel = options.nextLabel || (next ? '下一步：' + next.label : '回 Suite 观测');
         var hint = options.hint || (state.completed[stepId]
             ? '本步已完成，可继续全套工作流。'
             : '你正在 GEO Suite 全套工作流 · 第 ' + idx + ' / ' + STEPS.length + ' 步');
@@ -392,13 +371,13 @@
         card.className = 'suite-wf-next';
         card.id = options.id || 'suite-wf-next';
 
-        var title = options.title || (next ? '本步完成 · 进入下一步' : '本步完成 · 回 Suite 查看状态');
+        var title = options.title || (next ? '本步完成 · 进入下一步' : '本步完成 · 回 Suite 查看观测');
         var copy = options.copy || (next
             ? '已记录到 GEO Suite 工作流。下一步：' + next.title + '。'
-            : '已记录到 GEO Suite 工作流。可回 Suite 查看集成状态与最近移交。');
-        var primaryHref = options.primaryHref || (next ? buildHref(next) : '/suite?step=review');
+            : '已记录到 GEO Suite 工作流。可回 Suite 查看观测结果与最近移交。');
+        var primaryHref = options.primaryHref || (next ? buildHref(next) : '/suite?step=measure');
         var primaryLabel = options.primaryLabel || (next ? next.cta : '打开 GEO Suite');
-        var secondaryHref = options.secondaryHref || '/suite?step=' + (next ? next.id : 'review');
+        var secondaryHref = options.secondaryHref || '/suite?step=' + (next ? next.id : 'measure');
         var secondaryLabel = options.secondaryLabel || '返回 Suite';
 
         card.innerHTML = [

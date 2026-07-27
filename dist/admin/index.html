@@ -23,14 +23,14 @@
         <!-- Main -->
         <div class="admin-main">
             <div id="admin-topbar"></div>
-            <script src="../js/admin.js?v=20260615-dashboard-bottom-polish"></script>
+            <script src="../js/admin.js?v=20260727-dashboard-retire-company"></script>
 
             <main class="p-6 lg:p-8 space-y-5">
                 <!-- Page Header -->
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h1 class="text-2xl font-extrabold font-headline tracking-tight">仪表盘</h1>
-                        <p class="text-sm text-on-surface-variant mt-1">围绕公司、诊断、问答、拓词、教程五大模块的后台总览</p>
+                        <p class="text-sm text-on-surface-variant mt-1">围绕诊断、拓词与可信观测的后台运营总览</p>
                     </div>
                     <div class="flex items-center gap-3 text-xs font-semibold text-slate-500">
                         <span class="inline-flex items-center gap-1 rounded-full bg-white border border-slate-100 px-3 py-2">
@@ -43,18 +43,6 @@
                 <!-- Stats Cards -->
                 <div class="admin-kpi-grid">
                     <div class="stat-card admin-stat-compact">
-                        <div class="admin-stat-compact__icon bg-blue-50">
-                            <span class="material-symbols-outlined text-primary text-xl">apartment</span>
-                        </div>
-                        <div class="admin-stat-compact__meta">
-                            <div class="admin-stat-compact__top">
-                                <p class="text-xs text-on-surface-variant font-semibold">收录公司</p>
-                                <span class="badge badge-info">公司</span>
-                            </div>
-                            <p id="dashboard-stat-companies" class="admin-stat-compact__value">--</p>
-                        </div>
-                    </div>
-                    <div class="stat-card admin-stat-compact">
                         <div class="admin-stat-compact__icon bg-purple-50">
                             <span class="material-symbols-outlined text-purple-600 text-xl">analytics</span>
                         </div>
@@ -64,18 +52,6 @@
                                 <span class="badge badge-neutral">报告</span>
                             </div>
                             <p id="dashboard-stat-diagnostics" class="admin-stat-compact__value">--</p>
-                        </div>
-                    </div>
-                    <div class="stat-card admin-stat-compact">
-                        <div class="admin-stat-compact__icon bg-green-50">
-                            <span class="material-symbols-outlined text-green-600 text-xl">psychology</span>
-                        </div>
-                        <div class="admin-stat-compact__meta">
-                            <div class="admin-stat-compact__top">
-                                <p class="text-xs text-on-surface-variant font-semibold">问答会话</p>
-                                <span class="badge badge-success">会话</span>
-                            </div>
-                            <p id="dashboard-stat-solutions" class="admin-stat-compact__value">--</p>
                         </div>
                     </div>
                     <div class="stat-card admin-stat-compact">
@@ -91,15 +67,15 @@
                         </div>
                     </div>
                     <div class="stat-card admin-stat-compact">
-                        <div class="admin-stat-compact__icon bg-orange-50">
-                            <span class="material-symbols-outlined text-orange-500 text-xl">article</span>
+                        <div class="admin-stat-compact__icon bg-blue-50">
+                            <span class="material-symbols-outlined text-primary text-xl">group</span>
                         </div>
                         <div class="admin-stat-compact__meta">
                             <div class="admin-stat-compact__top">
-                                <p class="text-xs text-on-surface-variant font-semibold">教程内容</p>
-                                <span class="badge badge-warning">内容</span>
+                                <p class="text-xs text-on-surface-variant font-semibold">注册用户</p>
+                                <span class="badge badge-info">用户</span>
                             </div>
-                            <p id="dashboard-stat-contents" class="admin-stat-compact__value">--</p>
+                            <p id="dashboard-stat-users" class="admin-stat-compact__value">--</p>
                         </div>
                     </div>
                 </div>
@@ -109,7 +85,7 @@
                         <div class="admin-dashboard-panel__header">
                             <div>
                                 <h3 class="text-base font-bold font-headline">近 14 天运营趋势</h3>
-                                <p class="text-xs text-on-surface-variant mt-1">公司提交、诊断、问答、拓词和内容创建的日粒度走势</p>
+                                <p class="text-xs text-on-surface-variant mt-1">诊断与拓词的日粒度走势</p>
                             </div>
                             <div class="text-right">
                                 <p id="dashboard-trend-total" class="text-2xl font-extrabold tracking-tight text-slate-900">--</p>
@@ -159,19 +135,6 @@
                                     <span>失败</span>
                                 </div>
                             </a>
-                            <a href="./solutions" class="admin-dashboard-queue-item">
-                                <div class="admin-dashboard-queue-item__main">
-                                    <span class="material-symbols-outlined admin-dashboard-queue-item__icon text-green-600">forum</span>
-                                    <div>
-                                        <p class="admin-dashboard-queue-item__title">问答会话归档</p>
-                                        <p class="admin-dashboard-queue-item__meta">用于复盘用户问题和内容机会</p>
-                                    </div>
-                                </div>
-                                <div class="admin-dashboard-queue-item__value">
-                                    <strong id="dashboard-solutions-recent">--</strong>
-                                    <span>总会话</span>
-                                </div>
-                            </a>
                             <a href="./keywords" class="admin-dashboard-queue-item">
                                 <div class="admin-dashboard-queue-item__main">
                                     <span class="material-symbols-outlined admin-dashboard-queue-item__icon text-emerald-600">manage_search</span>
@@ -192,7 +155,7 @@
                         <div class="admin-dashboard-panel__header">
                             <div>
                                 <h3 class="text-base font-bold font-headline">GEO 评分分布</h3>
-                                <p class="text-xs text-on-surface-variant mt-1">已发布公司评分区间占比</p>
+                                <p class="text-xs text-on-surface-variant mt-1">已完成诊断报告的评分区间占比</p>
                             </div>
                         </div>
                         <div id="dashboard-score-distribution" class="space-y-4">
@@ -230,7 +193,7 @@
                                 <div class="admin-dashboard-ops-section__header">
                                     <div>
                                         <h4>失败与阻塞</h4>
-                                        <p>失败入库与失败诊断</p>
+                                        <p>失败诊断与阻塞项</p>
                                     </div>
                                     <a href="./diagnostics">查看诊断</a>
                                 </div>
@@ -243,7 +206,7 @@
                                 <div class="admin-dashboard-ops-section__header">
                                     <div>
                                         <h4>AI 异步消耗</h4>
-                                        <p>诊断与公司入库 Token</p>
+                                        <p>诊断等异步任务 Token</p>
                                     </div>
                                     <a href="./settings">成本控制</a>
                                 </div>
@@ -255,10 +218,10 @@
                             <section class="admin-dashboard-ops-section">
                                 <div class="admin-dashboard-ops-section__header">
                                     <div>
-                                        <h4>问答与拓词跟进</h4>
-                                        <p>业务资产的后续处理</p>
+                                        <h4>拓词跟进</h4>
+                                        <p>拓词资产的后续处理</p>
                                     </div>
-                                    <a href="./solutions">查看问答</a>
+                                    <a href="./keywords">查看拓词</a>
                                 </div>
                                 <div id="dashboard-followups" class="admin-dashboard-ops-list">
                                     <div class="admin-dashboard-empty-card">加载中...</div>

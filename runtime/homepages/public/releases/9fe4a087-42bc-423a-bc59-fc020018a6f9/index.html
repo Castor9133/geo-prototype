@@ -6,33 +6,33 @@
   <link rel="icon" href="/_custom_homepage/active/favicon.svg" type="image/svg+xml">
 
   <!-- SEO 核心 -->
-  <title>GEORankHub - GEO 研究平台 | 生成式引擎优化独立第三方研究与开源共享</title>
-  <meta name="description" content="GEORankHub 是公益性 GEO（生成式引擎优化）研究平台，汇聚 GEO 行业文档、实战文档、趋势文档、开源工具 GEOFlow、17 套 GEO Skill、41 篇前沿论文及《AI营销：从SEO到GEO》提示词合集。">
-  <meta name="keywords" content="GEO,生成式引擎优化,AI搜索优化,GEOFlow,GEO行业文档,GEO实战文档,GEO趋势文档,AI营销,SEO到GEO,GEORankHub,GEO技能,AEO">
-  <meta name="author" content="GEORankHub">
+  <title>GEORank · 六大能力工作台</title>
+  <meta name="description" content="GEORank：诊断、知识库、拓词、分发、观测与配置——六大可执行入口，走通 GEO 内容工程闭环。">
+  <meta name="keywords" content="GEO,生成式引擎优化,GEO Suite,SEO诊断,拓词,知识库,可信观测">
+  <meta name="author" content="GEORank">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://www.georankhub.com/">
 
   <!-- Open Graph -->
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="GEORankHub">
-  <meta property="og:title" content="GEORankHub - GEO 研究平台 | 生成式引擎优化">
-  <meta property="og:description" content="公益性 GEO 研究平台：专业文档、开源 GEOFlow、17 套 GEO Skill、41 篇前沿论文，全部免费开放。">
+  <meta property="og:site_name" content="GEORank">
+  <meta property="og:title" content="GEORank · 六大能力工作台">
+  <meta property="og:description" content="诊断 → 知识库 → 拓词 → 分发 → 观测，一条主流程看清内容工程闭环。">
   <meta property="og:url" content="https://www.georankhub.com/">
   <meta property="og:locale" content="zh_CN">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="GEORankHub - GEO 研究平台">
-  <meta name="twitter:description" content="公益性 GEO（生成式引擎优化）研究平台，汇聚专业文档、开源工具与前沿论文。">
+  <meta name="twitter:title" content="GEORank · 六大能力工作台">
+  <meta name="twitter:description" content="把 GEO 能力收成六个可执行入口。">
 
-  <!-- 字体 -->
+  <!-- 字体：衬线标题 + 正文 + Material Symbols；CSP 禁止 onload -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/_custom_homepage/active/css/style.css?v=20260617-book-cover-clean">
+  <link rel="stylesheet" href="/_custom_homepage/active/css/style.css?v=20260727-six-blocks">
 
   <!-- 结构化数据 -->
 
@@ -45,17 +45,16 @@
   <header class="site-header georank-platform-header" id="siteHeader">
     <nav class="nav container georank-platform-nav" aria-label="GEOrank 主导航">
       <a href="/" class="logo georank-platform-logo" aria-label="GEOrank 首页">
-        <span class="logo-text">GEOrank</span>
+        <span class="logo-dot" aria-hidden="true"></span>
+        <span class="logo-text">GEORank</span>
       </a>
       <ul class="nav-menu georank-platform-menu" id="navMenu" role="list">
         <li><a href="/suite">GEO Suite</a></li>
-        <li><a href="/companies">公司</a></li>
         <li><a href="/diagnostic">诊断</a></li>
-        <li><a href="/solutions">问答</a></li>
-        <li><a href="/plans">方案</a></li>
         <li><a href="/keywords">拓词</a></li>
-        <li><a href="/tools">工具</a></li>
-</ul>
+        <li><a href="/suite?step=measure">观测</a></li>
+        <li><a href="/admin/settings">配置</a></li>
+      </ul>
       <div class="georank-header-actions" aria-label="账号">
         <a href="/profile" class="georank-profile-link" aria-label="个人中心">
           <span class="georank-profile-link__icon">
@@ -68,123 +67,155 @@
 
   <main id="main">
 
-    <!-- Hero -->
+    <!-- Hero：品牌 + 主张 + 主流程 -->
     <section class="hero" id="about" aria-labelledby="heroTitle">
-      <div class="hero-bg" aria-hidden="true">
-        <div class="hero-grid"></div>
-      </div>
       <div class="container hero-inner">
-        <p class="hero-eyebrow reveal">
-          <span class="material-symbols-outlined" aria-hidden="true">travel_explore</span>
-          GEO · Generative Engine Optimization · 公益研究平台
-        </p>
-        <h1 class="hero-title reveal" id="heroTitle">
-          让好品牌被<span class="text-primary">AI</span>准确推荐
-        </h1>
-        <p class="hero-sub reveal">
-          GEORankHub 是独立第三方 GEO 研究平台，旨在推动科学、系统、有效、健康的 GEO 方法论
-        </p>
-        <div class="hero-actions reveal">
-          <a href="/suite" class="btn btn-primary">
-            <span class="material-symbols-outlined" aria-hidden="true">route</span>
-            进入全套工作流
-          </a>
-          <a href="#books" class="btn btn-ghost">
-            <span class="material-symbols-outlined" aria-hidden="true">menu_book</span>
-            阅读 GEO 开源文档
-          </a>
+        <div class="hero-layout">
+          <div class="hero-copy">
+            <h1 class="hero-brand reveal" id="heroTitle">
+              GEORank
+              <span class="hero-wiggle" aria-hidden="true"></span>
+            </h1>
+            <p class="hero-sub reveal">
+              把 GEO 能力收成六个可执行入口——从排查、知识库到拓词、分发与观测，一条主流程看清内容工程闭环。
+            </p>
+            <div class="hero-actions reveal">
+              <a href="/suite" class="btn btn-primary">
+                <span class="material-symbols-outlined" aria-hidden="true">route</span>
+                进入 GEO Suite
+              </a>
+              <a href="/diagnostic" class="btn btn-ghost">
+                <span class="material-symbols-outlined" aria-hidden="true">monitoring</span>
+                先做网站诊断
+              </a>
+            </div>
+          </div>
+          <aside class="hero-aside reveal" aria-label="主流程说明">
+            <h3>主流程</h3>
+            <ul>
+              <li><span class="swatch swatch-blue"></span>诊断 · 可达性与结构</li>
+              <li><span class="swatch swatch-lavender"></span>知识库 · 事实卡片</li>
+              <li><span class="swatch swatch-orange"></span>拓词 · 意图与提示词</li>
+              <li><span class="swatch swatch-green"></span>分发 · 渠道模板</li>
+              <li><span class="swatch swatch-blue"></span>观测 · 引用与一致</li>
+            </ul>
+          </aside>
         </div>
-        <ul class="hero-stats reveal" aria-label="平台核心数据">
-          <li>
-            <strong class="stat-num" data-count="3">3</strong>
-            <span>部 GEO 行业文档</span>
-          </li>
-          <li>
-            <strong class="stat-num" data-count="17">17</strong>
-            <span>套开源 GEO Skill</span>
-          </li>
-          <li>
-            <strong class="stat-num" data-count="41">41</strong>
-            <span>篇前沿研究论文</span>
-          </li>
-          <li>
-            <strong class="stat-num" data-count="1">1</strong>
-            <span>届全国 GEO 大会</span>
-          </li>
-        </ul>
+
+        <nav class="flow-bar reveal" aria-label="主流程">
+          <a class="flow-step" href="/diagnostic"><span class="flow-num">1</span>诊断<span class="flow-arrow" aria-hidden="true">→</span></a>
+          <a class="flow-step" href="http://localhost:18080/geo_admin/knowledge-bases" target="_blank" rel="noreferrer"><span class="flow-num">2</span>知识库<span class="flow-arrow" aria-hidden="true">→</span></a>
+          <a class="flow-step" href="/keywords"><span class="flow-num">3</span>拓词<span class="flow-arrow" aria-hidden="true">→</span></a>
+          <a class="flow-step" href="http://localhost:18080/geo_admin/tasks" target="_blank" rel="noreferrer"><span class="flow-num">4</span>分发<span class="flow-arrow" aria-hidden="true">→</span></a>
+          <a class="flow-step" href="/suite?step=measure"><span class="flow-num">5</span>观测</a>
+        </nav>
       </div>
     </section>
-<!-- 平台能力入口 -->
+
+    <!-- 六大能力 -->
     <section class="section platform-tools" id="platform" aria-labelledby="platformTitle">
       <div class="container">
-        <div class="section-head reveal">
-          <p class="section-eyebrow">GEO 工作台</p>
-          <h2 class="section-title" id="platformTitle">全套工作流：从诊断到内容生产</h2>
-          <p class="section-desc">按 Suite 步骤走通诊断 → 问答/方案 → 拓词 → GEOFlow 生产 → 回看；其余模块仍可单独使用。</p>
+        <div class="section-head section-head--row reveal">
+          <h2 class="section-title" id="platformTitle">六大能力</h2>
+          <p class="section-desc">配色分块 · 信息图感 · 少毛玻璃</p>
         </div>
-        <div class="platform-grid" aria-label="GEOrank 前台能力入口">
-          <a class="platform-card reveal" href="/suite" aria-labelledby="platformSuite">
-            <span class="platform-icon material-symbols-outlined" aria-hidden="true">hub</span>
+        <div class="platform-grid platform-grid--six" aria-label="GEOrank 六大能力入口">
+          <a class="platform-card pillar-blue reveal" href="/diagnostic" aria-labelledby="platformDiagnostic">
+            <div class="pillar-head">
+              <span class="pillar-idx">01</span>
+              <span class="material-symbols-outlined pillar-icon" aria-hidden="true">analytics</span>
+              <span class="pillar-tag">Diagnose</span>
+            </div>
             <span class="platform-card-body">
-              <strong id="platformSuite">GEO Suite</strong>
-              <span>一站式全套工作流中枢：诊断、问答、拓词，并移交 GEOFlow 做内容生产。</span>
+              <strong id="platformDiagnostic">网站 SEO 排查测试</strong>
+              <span>抓取可达性、结构化数据、核心页面健康度与 AI 可见性风险，输出可执行清单。</span>
             </span>
-            <span class="platform-card-action material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+            <div class="pillar-meta">
+              <span class="chip">技术 SEO</span>
+              <span class="chip">可访问性</span>
+            </div>
           </a>
-          <a class="platform-card reveal" href="/diagnostic" aria-labelledby="platformDiagnostic">
-            <span class="platform-icon material-symbols-outlined" aria-hidden="true">monitoring</span>
+          <a class="platform-card pillar-lavender reveal" href="http://localhost:18080/geo_admin/knowledge-bases" target="_blank" rel="noreferrer" aria-labelledby="platformKnowledge">
+            <div class="pillar-head">
+              <span class="pillar-idx">02</span>
+              <span class="material-symbols-outlined pillar-icon" aria-hidden="true">database</span>
+              <span class="pillar-tag">Knowledge</span>
+            </div>
             <span class="platform-card-body">
-              <strong id="platformDiagnostic">诊断</strong>
-              <span>检查页面结构、Schema、内容可读性和 AI 搜索可见性，快速定位优化重点。</span>
+              <strong id="platformKnowledge">内容切片量化生成知识库</strong>
+              <span>将长文切成可引用事实卡片，量化覆盖度；目标产出 ≥10 篇结构化知识条目。</span>
             </span>
-            <span class="platform-card-action material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+            <div class="pillar-meta">
+              <span class="chip">切片</span>
+              <span class="chip">≥10 篇</span>
+            </div>
           </a>
-          <a class="platform-card reveal" href="/solutions" aria-labelledby="platformQa">
-            <span class="platform-icon material-symbols-outlined" aria-hidden="true">forum</span>
+          <a class="platform-card pillar-orange reveal" href="/keywords" aria-labelledby="platformKeywords">
+            <div class="pillar-head">
+              <span class="pillar-idx">03</span>
+              <span class="material-symbols-outlined pillar-icon" aria-hidden="true">manage_search</span>
+              <span class="pillar-tag">Expand</span>
+            </div>
             <span class="platform-card-body">
-              <strong id="platformQa">问答</strong>
-              <span>围绕 GEO、AI 搜索和品牌可见性进行问答、科普和场景化解释。</span>
+              <strong id="platformKeywords">GEO 拓词 / 提示词扩词</strong>
+              <span>围绕意图与场景扩展查询词与提示词簇，为后续分发提供可控词表。</span>
             </span>
-            <span class="platform-card-action material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+            <div class="pillar-meta">
+              <span class="chip">意图簇</span>
+              <span class="chip">提示词</span>
+            </div>
           </a>
-          <a class="platform-card reveal" href="/plans" aria-labelledby="platformPlans">
-            <span class="platform-icon material-symbols-outlined" aria-hidden="true">task_alt</span>
+          <a class="platform-card pillar-green reveal" href="http://localhost:18080/geo_admin/tasks" target="_blank" rel="noreferrer" aria-labelledby="platformDistribute">
+            <div class="pillar-head">
+              <span class="pillar-idx">04</span>
+              <span class="material-symbols-outlined pillar-icon" aria-hidden="true">share</span>
+              <span class="pillar-tag">Distribute</span>
+            </div>
             <span class="platform-card-body">
-              <strong id="platformPlans">方案</strong>
-              <span>输入目标、网站和资源约束，生成面向团队落地的 GEO 行动方案。</span>
+              <strong id="platformDistribute">多渠道 + 模板 + 提示词扩写分发</strong>
+              <span>按渠道模板扩写并分发，保持品牌口径一致，闭环回到知识约束。</span>
             </span>
-            <span class="platform-card-action material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+            <div class="pillar-meta">
+              <span class="chip">多渠道</span>
+              <span class="chip">模板</span>
+            </div>
           </a>
-          <a class="platform-card reveal" href="/keywords" aria-labelledby="platformKeywords">
-            <span class="platform-icon material-symbols-outlined" aria-hidden="true">manage_search</span>
+          <a class="platform-card pillar-blue-deep reveal" href="/suite?step=measure" aria-labelledby="platformMeasure">
+            <div class="pillar-head">
+              <span class="pillar-idx">05</span>
+              <span class="material-symbols-outlined pillar-icon" aria-hidden="true">monitoring</span>
+              <span class="pillar-tag">Observe</span>
+            </div>
             <span class="platform-card-body">
-              <strong id="platformKeywords">拓词</strong>
-              <span>围绕业务词、问题词和场景词扩展 GEO 关键词资产，沉淀内容选题。</span>
+              <strong id="platformMeasure">观测结果</strong>
+              <span>追踪引用、排名与回答一致性，把「有没有被 AI 说到」变成可复盘指标。</span>
             </span>
-            <span class="platform-card-action material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+            <div class="pillar-meta">
+              <span class="chip">引用</span>
+              <span class="chip">一致性</span>
+            </div>
           </a>
-          <a class="platform-card reveal" href="/tools" aria-labelledby="platformTools">
-            <span class="platform-icon material-symbols-outlined" aria-hidden="true">construction</span>
+          <a class="platform-card pillar-sand reveal" href="/admin/settings" aria-labelledby="platformConfig">
+            <div class="pillar-head">
+              <span class="pillar-idx">06</span>
+              <span class="material-symbols-outlined pillar-icon" aria-hidden="true">settings</span>
+              <span class="pillar-tag">Configure</span>
+            </div>
             <span class="platform-card-body">
-              <strong id="platformTools">工具</strong>
-              <span>使用 JSON-LD、llms.txt、标题、知识库等轻量生成器，快速产出基础资产。</span>
+              <strong id="platformConfig">配置页面</strong>
+              <span>租户、渠道、知识库与导航开关的统一配置面，支撑六大入口稳态运行。</span>
             </span>
-            <span class="platform-card-action material-symbols-outlined" aria-hidden="true">arrow_forward</span>
-          </a>
-          <a class="platform-card reveal" href="/companies" aria-labelledby="platformCompanies">
-            <span class="platform-icon material-symbols-outlined" aria-hidden="true">apartment</span>
-            <span class="platform-card-body">
-              <strong id="platformCompanies">公司</strong>
-              <span>浏览 GEO 公司目录与认证信号，对照行业实践快速定位对标对象。</span>
-            </span>
-            <span class="platform-card-action material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+            <div class="pillar-meta">
+              <span class="chip">租户</span>
+              <span class="chip">开关</span>
+            </div>
           </a>
         </div>
       </div>
     </section>
 
-    <!-- 资源入口 -->
-    <section class="section resources" id="resources" aria-labelledby="resourcesTitle">
+    <!-- 资源入口（演示主路径外：默认隐藏，可恢复） -->
+    <section class="section resources" id="resources" aria-labelledby="resourcesTitle" hidden>
       <div class="container">
         <div class="section-head reveal">
           <p class="section-eyebrow">开源生态</p>
@@ -313,8 +344,8 @@
       </div>
     </section>
 
-    <!-- 文档与著作 -->
-    <section class="section books" id="books" aria-labelledby="booksTitle">
+    <!-- 文档与著作（演示主路径外：默认隐藏，可恢复） -->
+    <section class="section books" id="books" aria-labelledby="booksTitle" hidden>
       <div class="container">
         <div class="section-head reveal">
           <p class="section-eyebrow">知识体系</p>
@@ -369,8 +400,8 @@
         </div>
       </div>
     </section>
-<!-- 文章与洞见 -->
-    <section class="section articles" id="articles" aria-labelledby="articlesTitle">
+<!-- 文章与洞见（演示主路径外：默认隐藏，可恢复） -->
+    <section class="section articles" id="articles" aria-labelledby="articlesTitle" hidden>
       <div class="container">
         <div class="section-head reveal">
           <p class="section-eyebrow">深度阅读</p>
@@ -422,16 +453,12 @@
     <section class="section cta-band" aria-labelledby="ctaTitle">
       <div class="container">
         <div class="cta-inner reveal">
-          <span class="material-symbols-outlined cta-icon" aria-hidden="true">travel_explore</span>
-          <h2 id="ctaTitle">生成式引擎时代，从理解 GEO 开始</h2>
-          <p>阅读 GEO 文档、使用开源工具，加入这场搜索范式的迁移。</p>
+          <span class="material-symbols-outlined cta-icon" aria-hidden="true">route</span>
+          <h2 id="ctaTitle">从 Suite 走通闭环</h2>
+          <p>诊断 → 知识库 → 拓词 → 分发 → 观测；配置走后台设置。</p>
           <div class="cta-actions">
-            <a href="/diagnostic" class="btn btn-primary">
-              开始网站诊断
-            </a>
-            <a href="/suite" class="btn btn-ghost">
-              阅读 GEO 文档
-            </a>
+            <a href="/suite" class="btn btn-primary">打开 GEO Suite</a>
+            <a href="/diagnostic" class="btn btn-ghost">开始网站诊断</a>
           </div>
         </div>
       </div>
@@ -443,38 +470,35 @@
   <footer class="site-footer" aria-label="页脚">
     <div class="container footer-inner">
       <div class="footer-brand">
-        <a href="/" class="logo" aria-label="GEORankHub 首页">
-          <span class="logo-mark" aria-hidden="true">G</span>
-          <span class="logo-text">GEO<em>Rank</em>Hub</span>
+        <a href="/" class="logo" aria-label="GEORank 首页">
+          <span class="logo-dot" aria-hidden="true"></span>
+          <span class="logo-text">GEORank</span>
         </a>
-        <p>公益性 GEO 研究平台 · 独立第三方</p>
-        <p class="footer-tagline">研究、开源、共享</p>
+        <p>六大能力 · 内容工程闭环</p>
+        <p class="footer-tagline">诊断 · 知识库 · 拓词 · 分发 · 观测 · 配置</p>
       </div>
       <nav class="footer-links" aria-label="页脚链接">
         <div>
-          <h4>文档资料</h4>
-          <a href="/suite">GEO 行业文档</a>
-          <a href="/suite">GEO 实战文档</a>
-          <a href="/suite">GEO 趋势文档</a>
+          <h4>工作流</h4>
+          <a href="/suite">GEO Suite</a>
+          <a href="/diagnostic">网站诊断</a>
+          <a href="/keywords">拓词工具</a>
         </div>
         <div>
-          <h4>开源生态</h4>
-          <a href="https://github.com/yaojingang/GEOFlow" target="_blank" rel="noopener">GEOFlow 系统</a>
-          <a href="/suite">GEO Suite 工作流</a>
-          <a href="https://github.com/yaojingang/yao-meta-skill" target="_blank" rel="noopener">元 Skill</a>
-          <a href="https://github.com/yaojingang/yao-geo-skills" target="_blank" rel="noopener">17 套 GEO Skill</a>
-          <a href="https://github.com/yaojingang/geo-citation-lab/tree/main/02-geo-aeo-ai-search-papers" target="_blank" rel="noopener">41 篇论文</a>
+          <h4>观测与配置</h4>
+          <a href="/suite?step=measure">观测结果</a>
+          <a href="/admin/settings">后台配置</a>
+          <a href="/admin/trust-obs">可信观测</a>
         </div>
         <div>
-          <h4>文章资源</h4>
-          <a href="https://mp.weixin.qq.com/s/8Lyrzux7WacHjiHx_P9Fbg" target="_blank" rel="noopener">GEO 到底是什么</a>
-          <a href="https://mp.weixin.qq.com/s/GXuu0Hku-j-8ona5yzQSvA" target="_blank" rel="noopener">从 SEO 到 GEO</a>
-          <a href="/suite">打开 Suite</a>
-</div>
+          <h4>知识库 / 分发</h4>
+          <a href="http://localhost:18080/geo_admin/knowledge-bases" target="_blank" rel="noreferrer">GEOFlow 知识库</a>
+          <a href="http://localhost:18080/geo_admin/tasks" target="_blank" rel="noreferrer">GEOFlow 任务</a>
+        </div>
       </nav>
     </div>
     <div class="container footer-bottom">
-      <p>© 2026 GEORankHub · 公益性 GEO 研究平台 · 独立第三方</p>
+      <p>© 2026 GEORank</p>
     </div>
   </footer>
     <script data-georank-navigation-runtime src="/js/site-navigation.js" defer></script>

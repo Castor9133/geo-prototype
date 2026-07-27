@@ -70,10 +70,9 @@
                 items: [
                     { id: 'suite', label: 'GEO Suite', url: '/suite', target: '_self', enabled: true },
                     { id: 'diagnostic', label: '诊断', url: '/diagnostic', target: '_blank', enabled: true },
-                    { id: 'solutions', label: '问答', url: '/solutions', target: '_blank', enabled: true },
-                    { id: 'plans', label: '方案', url: '/plans', target: '_blank', enabled: true },
                     { id: 'keywords', label: '拓词', url: '/keywords', target: '_blank', enabled: true },
-                    { id: 'tools', label: '工具', url: '/tools', target: '_blank', enabled: true },
+                    { id: 'measure', label: '观测', url: '/suite?step=measure', target: '_self', enabled: true },
+                    { id: 'config', label: '配置', url: '/admin/settings', target: '_blank', enabled: true },
                 ],
             },
         },
@@ -83,29 +82,65 @@
             promise: null,
         },
 
+        CACHE_KEY: 'georank:public-settings:v1',
+        CACHE_TTL_MS: 60_000,
+
+        readCache() {
+            try {
+                const raw = sessionStorage.getItem(this.CACHE_KEY);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                if (!parsed || typeof parsed !== 'object') return null;
+                if (!Number.isFinite(parsed.ts) || Date.now() - parsed.ts > this.CACHE_TTL_MS) return null;
+                return parsed.payload ?? null;
+            } catch (_) {
+                return null;
+            }
+        },
+
+        writeCache(payload) {
+            try {
+                sessionStorage.setItem(this.CACHE_KEY, JSON.stringify({
+                    ts: Date.now(),
+                    payload,
+                }));
+            } catch (_) {
+                /* ignore quota / private mode */
+            }
+        },
+
         async load() {
             if (this.state.loaded) return this.state.settings;
             if (!this.state.promise) {
+                const cached = this.readCache();
+                if (cached !== null) {
+                    this.state.settings = this.normalize(cached);
+                    this.state.loaded = true;
+                }
                 const controller = new AbortController();
                 const timeout = window.setTimeout(() => controller.abort(), 2500);
                 this.state.promise = fetch(`${apiBase()}/api/settings/public`, {
-                    cache: 'no-store',
+                    cache: 'default',
                     signal: controller.signal,
                 })
                     .then(response => response.ok ? response.json() : null)
                     .then(payload => {
+                        this.writeCache(payload);
                         this.state.settings = this.normalize(payload);
                         this.state.loaded = true;
                         return this.state.settings;
                     })
                     .catch(() => {
-                        this.state.settings = this.normalize(null);
-                        this.state.loaded = true;
+                        if (!this.state.loaded) {
+                            this.state.settings = this.normalize(cached);
+                            this.state.loaded = true;
+                        }
                         return this.state.settings;
                     })
                     .finally(() => {
                         window.clearTimeout(timeout);
                     });
+                if (this.state.loaded) return this.state.settings;
             }
             return this.state.promise;
         },
@@ -159,11 +194,13 @@
                 .filter(item => {
                     const id = String(item.id || '').toLowerCase();
                     const url = String(item.url || '').toLowerCase();
-                    if (id === 'companies' || id === 'experts' || id === 'tutorial' || id === 'github') return false;
+                    if (id === 'companies' || id === 'experts' || id === 'tutorial' || id === 'github' || id === 'solutions' || id === 'plans' || id === 'tools') return false;
                     if (url === '/companies' || url.startsWith('/companies/') || url === '/company' || url.startsWith('/company/')) return false;
                     if (url === '/submit-company' || url === '/company-submit' || url.startsWith('/c/')) return false;
                     if (url === '/experts' || url.startsWith('/experts/')) return false;
                     if (url === '/tutorial' || url.startsWith('/tutorial/')) return false;
+                    if (url === '/solutions' || url.startsWith('/solutions/') || url === '/plans' || url.startsWith('/plans/') || url === '/qa' || url.startsWith('/qa/')) return false;
+                    if (url === '/tools' || url.startsWith('/tools/')) return false;
                     if (url.includes('github.com/yaojingang/georank')) return false;
                     return true;
                 });
@@ -271,9 +308,7 @@
             const path = String(window.location.pathname || '').replace(/\.html$/, '');
             const sensitivePaths = [
                 '/profile',
-                '/solutions',
                 '/keywords',
-                '/plans',
                 '/tools',
                 '/diagnostic',
                 '/submit-company',
@@ -344,8 +379,6 @@
         dictionaries: {
             'zh-CN': {
                 'nav.diagnostic': '诊断',
-                'nav.solutions': '问答',
-                'nav.plans': '方案',
                 'nav.keywords': '拓词',
                 'nav.tools': '工具',
                 'header.mobileMenu': '打开菜单',
@@ -390,7 +423,7 @@
                 'auth.invalidPassword': '密码至少 6 位',
                 'auth.failed': '登录失败，请稍后重试',
                 'auth.requireReason': '请先登录后继续使用该功能。',
-                'auth.firstVisitReason': '注册或登录后可使用诊断、问答、方案、拓词等功能页面。',
+                'auth.firstVisitReason': '注册或登录后可使用诊断、拓词等功能页面。',
                 'auth.reasonSolutions': '登录后才可提问、保存和继续追问。',
                 'auth.reasonKeywords': '登录后才可生成并保存拓词结果。',
                 'auth.reasonDiagnostic': '登录后才可发起官网诊断并保存诊断报告。',
@@ -408,9 +441,9 @@
                 'profile.title': '个人中心',
                 'profile.copy': '管理账户与模型调用设置。',
                 'profile.accountTitle': '账号状态',
-                'profile.accountSubtitle': '当前浏览器会保存你的登录状态，用于继续诊断、问答、方案和拓词流程。',
+                'profile.accountSubtitle': '当前浏览器会保存你的登录状态，用于继续诊断与拓词流程。',
                 'profile.statusLabel': '当前账号',
-                'profile.signedOutCopy': '当前未登录。登录后可以保存诊断、问答和方案记录。',
+                'profile.signedOutCopy': '当前未登录。登录后可以保存诊断与拓词记录。',
                 'profile.signedInCopy': '当前已登录，可以继续使用需要账号的功能页面。',
                 'profile.login': '登录账号',
                 'profile.register': '注册账号',
@@ -491,8 +524,6 @@
             },
             'en-US': {
                 'nav.diagnostic': 'Diagnostic',
-                'nav.solutions': 'Q&A',
-                'nav.plans': 'Plans',
                 'nav.keywords': 'Keywords',
                 'nav.tools': 'Tools',
                 'header.mobileMenu': 'Open menu',
@@ -555,7 +586,7 @@
                 'profile.title': 'Account center',
                 'profile.copy': 'Manage your account and model API settings.',
                 'profile.accountTitle': 'Account status',
-                'profile.accountSubtitle': 'This browser keeps your session for diagnostics, Q&A, plans, and keyword workflows.',
+                'profile.accountSubtitle': 'This browser keeps your session for diagnostics and keyword workflows.',
                 'profile.statusLabel': 'Current account',
                 'profile.signedOutCopy': 'You are not signed in. Sign in to save diagnostics, Q&A, and plan records.',
                 'profile.signedInCopy': 'You are signed in and can continue using account-based workflows.',
@@ -696,20 +727,19 @@
 
     // ===== 首屏完整导航与 file:// 协议 fallback =====
     const HEADER_HTML = `
-<nav id="main-nav" class="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 shadow-[0_10px_40px_rgba(25,27,35,0.04)]">
+<nav id="main-nav" class="fixed top-0 w-full z-50 border-b shadow-none" style="background:var(--bg,#F9F7F2);border-color:var(--border,#1A1A1A);border-bottom-width:2px;">
     <div class="flex justify-between items-center px-6 md:px-8 h-16 w-full max-w-7xl mx-auto">
         <div class="flex items-center gap-8">
-            <a href="/" data-logo-link class="text-xl font-bold tracking-tighter text-blue-700 dark:text-blue-500 font-headline hover:opacity-90 transition-opacity">
-                GEOrank
+            <a href="/" data-logo-link class="text-xl font-bold tracking-tight font-headline hover:opacity-90 transition-opacity" style="color:var(--ink,#1A1A1A);">
+                GEORank
             </a>
             <div class="hidden md:flex items-center gap-5" data-site-navigation data-navigation-variant="desktop">
-                <a href="/suite" data-nav-link data-navigation-item="suite" class="font-manrope font-medium tracking-tight text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">GEO Suite</a>
-<a href="/diagnostic" data-nav-link data-i18n="nav.diagnostic" class="font-manrope font-medium tracking-tight text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">诊断</a>
-                <a href="/solutions" data-nav-link data-i18n="nav.solutions" class="font-manrope font-medium tracking-tight text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">问答</a>
-                <a href="/plans" data-nav-link data-i18n="nav.plans" class="font-manrope font-medium tracking-tight text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">方案</a>
-                <a href="/keywords" data-nav-link data-i18n="nav.keywords" class="font-manrope font-medium tracking-tight text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">拓词</a>
-                <a href="/tools" data-nav-link data-i18n="nav.tools" class="font-manrope font-medium tracking-tight text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">工具</a>
-</div>
+                <a href="/suite" data-nav-link data-navigation-item="suite" class="font-manrope font-medium tracking-tight transition-colors" style="color:var(--ink-muted,#5C5A55);">GEO Suite</a>
+                <a href="/diagnostic" data-nav-link data-i18n="nav.diagnostic" class="font-manrope font-medium tracking-tight transition-colors" style="color:var(--ink-muted,#5C5A55);">诊断</a>
+                <a href="/keywords" data-nav-link data-i18n="nav.keywords" class="font-manrope font-medium tracking-tight transition-colors" style="color:var(--ink-muted,#5C5A55);">拓词</a>
+                <a href="/suite?step=measure" data-nav-link data-navigation-item="measure" class="font-manrope font-medium tracking-tight transition-colors" style="color:var(--ink-muted,#5C5A55);">观测</a>
+                <a href="/admin/settings" data-nav-link data-navigation-item="config" class="font-manrope font-medium tracking-tight transition-colors" style="color:var(--ink-muted,#5C5A55);">配置</a>
+            </div>
         </div>
         <div class="header-actions flex items-center gap-2 md:gap-3">
             <a href="/login" data-auth-trigger data-profile-link class="auth-trigger header-profile-button" aria-label="登录 / 个人中心" data-i18n-aria-label="auth.triggerSignedOut">
@@ -728,15 +758,14 @@
             </button>
         </div>
     </div>
-    <div id="mobile-menu" class="hidden md:hidden bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+    <div id="mobile-menu" class="hidden md:hidden border-t" style="background:var(--bg,#F9F7F2);border-color:var(--border,#1A1A1A);border-top-width:2px;">
         <div class="flex flex-col px-6 py-4 space-y-3" data-site-navigation data-navigation-variant="mobile">
-            <a href="/suite" data-nav-link data-navigation-item="suite" class="font-manrope font-medium py-2 text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors">GEO Suite</a>
-<a href="/diagnostic" data-nav-link data-i18n="nav.diagnostic" class="font-manrope font-medium py-2 text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors">诊断</a>
-            <a href="/solutions" data-nav-link data-i18n="nav.solutions" class="font-manrope font-medium py-2 text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors">问答</a>
-            <a href="/plans" data-nav-link data-i18n="nav.plans" class="font-manrope font-medium py-2 text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors">方案</a>
-            <a href="/keywords" data-nav-link data-i18n="nav.keywords" class="font-manrope font-medium py-2 text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors">拓词</a>
-            <a href="/tools" data-nav-link data-i18n="nav.tools" class="font-manrope font-medium py-2 text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors">工具</a>
-</div>
+            <a href="/suite" data-nav-link data-navigation-item="suite" class="font-manrope font-medium py-2 transition-colors" style="color:var(--ink-muted,#5C5A55);">GEO Suite</a>
+            <a href="/diagnostic" data-nav-link data-i18n="nav.diagnostic" class="font-manrope font-medium py-2 transition-colors" style="color:var(--ink-muted,#5C5A55);">诊断</a>
+            <a href="/keywords" data-nav-link data-i18n="nav.keywords" class="font-manrope font-medium py-2 transition-colors" style="color:var(--ink-muted,#5C5A55);">拓词</a>
+            <a href="/suite?step=measure" data-nav-link data-navigation-item="measure" class="font-manrope font-medium py-2 transition-colors" style="color:var(--ink-muted,#5C5A55);">观测</a>
+            <a href="/admin/settings" data-nav-link data-navigation-item="config" class="font-manrope font-medium py-2 transition-colors" style="color:var(--ink-muted,#5C5A55);">配置</a>
+        </div>
     </div>
 </nav>`;
 
@@ -859,10 +888,10 @@ const FOOTER_HTML = `
             if (normalized === '/company' || normalized === '/companies' || normalized.startsWith('/companies/') || normalized === '/c' || normalized.startsWith('/c/')) return '/suite';
             if (normalized === '/submit-company' || normalized === '/company-submit') return '/suite';
             if (normalized === '/diagnostic' || normalized.startsWith('/diagnostic/')) return '/diagnostic';
-            if (normalized === '/solutions' || normalized.startsWith('/solutions/')) return '/solutions';
-            if (normalized === '/plans' || normalized.startsWith('/plans/')) return '/plans';
+            if (normalized === '/solutions' || normalized.startsWith('/solutions/') || normalized === '/qa' || normalized.startsWith('/qa/')) return '/suite';
+            if (normalized === '/plans' || normalized.startsWith('/plans/')) return '/suite';
             if (normalized === '/keywords' || normalized.startsWith('/keywords/')) return '/keywords';
-            if (normalized === '/tools' || normalized.startsWith('/tools/')) return '/tools';
+            if (normalized === '/tools' || normalized.startsWith('/tools/')) return '/suite';
             if (normalized === '/profile') return '/profile';
             return normalized;
         },
@@ -922,24 +951,8 @@ const FOOTER_HTML = `
             };
         },
 
-        buildSolutionPath({
-            conversationId = '',
-            diagnosticReportId = '',
-            companyId = '',
-            url = '',
-            prompt = '',
-            channelKey = '',
-        } = {}) {
-            const base = conversationId
-                ? `/solutions/conversations/${encodeURIComponent(conversationId)}`
-                : '/solutions';
-            return this.buildUrl(base, {
-                report: diagnosticReportId,
-                company_id: companyId,
-                url,
-                prompt,
-                channel: channelKey,
-            });
+        buildSolutionPath() {
+            return this.buildUrl('/suite');
         },
 
         readSolutionState() {
@@ -959,18 +972,8 @@ const FOOTER_HTML = `
             };
         },
 
-        buildPlanPath({
-            diagnosticReportId = '',
-            companyId = '',
-            url = '',
-            prompt = '',
-        } = {}) {
-            return this.buildUrl('/plans', {
-                report: diagnosticReportId,
-                company_id: companyId,
-                url,
-                prompt,
-            });
+        buildPlanPath() {
+            return this.buildUrl('/suite');
         },
 
         readPlanState() {
@@ -1036,35 +1039,17 @@ const FOOTER_HTML = `
                 });
             }
 
-            if (rawPath === '/solutions.html') {
-                return Routes.buildSolutionPath({
-                    conversationId: params.get('conversation') || params.get('conversation_id') || '',
-                    diagnosticReportId: params.get('report') || params.get('report_id') || params.get('diagnostic_report_id') || '',
-                    companyId: params.get('company_id') || '',
-                    url: params.get('url') || '',
-                    prompt: params.get('prompt') || '',
-                    channelKey: params.get('channel') || params.get('channel_key') || '',
-                });
-            }
-
-            if (rawPath === '/plans.html') {
-                return Routes.buildPlanPath({
-                    diagnosticReportId: params.get('report') || params.get('report_id') || params.get('diagnostic_report_id') || '',
-                    companyId: params.get('company_id') || '',
-                    url: params.get('url') || '',
-                    prompt: params.get('prompt') || '',
-                });
-            }
-
-            if (normalizedPath === '/solutions' && (params.get('conversation') || params.get('conversation_id'))) {
-                return Routes.buildSolutionPath({
-                    conversationId: params.get('conversation') || params.get('conversation_id') || '',
-                    diagnosticReportId: params.get('report') || params.get('report_id') || params.get('diagnostic_report_id') || '',
-                    companyId: params.get('company_id') || '',
-                    url: params.get('url') || '',
-                    prompt: params.get('prompt') || '',
-                    channelKey: params.get('channel') || params.get('channel_key') || '',
-                });
+            if (
+                rawPath === '/solutions.html'
+                || rawPath === '/plans.html'
+                || normalizedPath === '/solutions'
+                || normalizedPath.startsWith('/solutions/')
+                || normalizedPath === '/plans'
+                || normalizedPath.startsWith('/plans/')
+                || normalizedPath === '/qa'
+                || normalizedPath.startsWith('/qa/')
+            ) {
+                return Routes.buildUrl('/suite');
             }
 
             if (rawPath === '/keywords.html') {
@@ -1072,7 +1057,7 @@ const FOOTER_HTML = `
             }
 
             if (rawPath === '/tools.html') {
-                return Routes.buildUrl('/tools');
+                return Routes.buildUrl('/suite');
             }
 
             if (rawPath === '/profile.html') {
@@ -1081,8 +1066,6 @@ const FOOTER_HTML = `
 
             if (
                 rawPath === '/diagnostic.html' ||
-                rawPath === '/solutions.html' ||
-                rawPath === '/plans.html' ||
                 rawPath === '/tools.html' ||
                 rawPath === '/profile.html' ||
                 rawPath === '/keywords.html'
@@ -1113,10 +1096,8 @@ const FOOTER_HTML = `
             default_module: 'diagnostic',
             modules: [
                 { key: 'diagnostic', name: '诊断', path: '/diagnostic', enabled: true, protected_paths: ['/diagnostic'] },
-                { key: 'solutions', name: '问答', path: '/solutions', enabled: true, protected_paths: [] },
-                { key: 'plans', name: '方案', path: '/plans', enabled: true, protected_paths: ['/plans'] },
                 { key: 'keywords', name: '拓词', path: '/keywords', enabled: true, protected_paths: ['/keywords'] },
-                { key: 'tools', name: '工具', path: '/tools', enabled: true, protected_paths: ['/tools'] },
+                { key: 'tools', name: '工具', path: '/tools', enabled: false, protected_paths: ['/tools'] },
             ],
         },
         state: {
@@ -1125,9 +1106,7 @@ const FOOTER_HTML = `
             promise: null,
         },
         modulePathToKey: {
-                        '/diagnostic': 'diagnostic',
-            '/solutions': 'solutions',
-            '/plans': 'plans',
+            '/diagnostic': 'diagnostic',
             '/keywords': 'keywords',
             '/tools': 'tools',
         },
@@ -1139,11 +1118,11 @@ const FOOTER_HTML = `
                 const timeout = window.setTimeout(() => controller.abort(), 2500);
                 this.state.promise = Promise.all([
                     fetch(`${apiBase()}/api/settings/frontend-modules`, {
-                        cache: 'no-store',
+                        cache: 'default',
                         signal: controller.signal,
                     }).then(response => response.ok ? response.json() : null),
                     fetch(`${apiBase()}/api/settings/homepage`, {
-                        cache: 'no-store',
+                        cache: 'default',
                         signal: controller.signal,
                     }).then(response => response.ok ? response.json() : null),
                 ])
@@ -1941,7 +1920,7 @@ const FOOTER_HTML = `
                 || path === '/c'
                 || path.startsWith('/c/')
             ) return;
-            if (path === '/solutions' || path.startsWith('/solutions/')) return;
+            if (path === '/solutions' || path.startsWith('/solutions/') || path === '/plans' || path.startsWith('/plans/') || path === '/qa' || path.startsWith('/qa/')) return;
             let submitAutoOpenFlag = false;
             try {
                 submitAutoOpenFlag = sessionStorage.getItem('georank_open_submit_company') === '1';
@@ -2600,7 +2579,12 @@ const FOOTER_HTML = `
 
         // 初始化认证
         Auth.init();
-        void APIKeyStore.loadPolicy().catch(() => {});
+        const scheduleIdle = window.requestIdleCallback
+            ? (fn) => window.requestIdleCallback(fn, { timeout: 2500 })
+            : (fn) => window.setTimeout(fn, 1);
+        scheduleIdle(() => {
+            void APIKeyStore.loadPolicy().catch(() => {});
+        });
     }
 
     if (document.body) {

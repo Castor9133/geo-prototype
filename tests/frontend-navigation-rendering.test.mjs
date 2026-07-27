@@ -10,7 +10,6 @@ const sharedFrontendScriptPath = path.join(projectRoot, 'dist', 'js', 'common.js
 const sharedFrontendCssPath = path.join(projectRoot, 'dist', 'css', 'common.css');
 const sharedHeaderPath = path.join(projectRoot, 'dist', 'components', 'header.html');
 const companiesDocumentPath = path.join(projectRoot, 'dist', 'index.html');
-const solutionsDocumentPath = path.join(projectRoot, 'dist', 'solutions.html');
 const sharedTailwindPath = path.join(projectRoot, 'dist', 'css', 'public-tailwind.css');
 const navigationPaintAssetVersion = '20260724-demo-no-auth';
 const moduleControllerAssetVersion = navigationPaintAssetVersion;
@@ -19,18 +18,14 @@ const publicStaticFrontendFiles = [
   'index.html',
   'keywords.html',
   'login.html',
-  'plans.html',
   'profile.html',
   'register.html',
-  'solutions.html',
   'tools.html'
 ];
 const moduleControllerPaths = [
   'diagnostic.js',
   'index.js',
   'keywords.js',
-  'plans.js',
-  'solutions.js',
   'tools.js'
 ].map((file) => path.join(projectRoot, 'dist', 'js', file));
 const serverRenderedFrontendPaths = [];
@@ -39,18 +34,25 @@ const removedProductFrontendFiles = [
   'tutorial.html',
   'company.html',
   'company-submit.html',
+  'solutions.html',
+  'plans.html',
   'js/experts.js',
   'js/tutorial.js',
   'js/company.js',
   'js/submit-company.js',
   'js/company-submit-page.js',
+  'js/solutions.js',
+  'js/plans.js',
   'css/experts.css',
   'css/tutorial.css',
   'css/company.css',
+  'css/solutions.css',
+  'css/plans.css',
   'admin/experts.html',
   'admin/tutorials.html',
   'admin/tutorials-edit.html',
-  'admin/companies.html'
+  'admin/companies.html',
+  'admin/solutions.html'
 ];
 
 test('removed product modules no longer ship static frontend assets', async () => {
@@ -67,7 +69,7 @@ test('removed product modules no longer ship static frontend assets', async () =
 test('every static frontend page paints without a whole-document opacity gate', async () => {
   const htmlFiles = publicStaticFrontendFiles;
 
-  assert.equal(htmlFiles.length, 9);
+  assert.equal(htmlFiles.length, 7);
   for (const file of htmlFiles) {
     const html = await readFile(path.join(frontendHtmlDir, file), 'utf8');
     assert.doesNotMatch(
@@ -158,15 +160,6 @@ test('frontend documents ship Tailwind styles locally before first paint', async
   }
 });
 
-test('external font styles avoid a late glyph swap on the solutions workspace', async () => {
-  const solutionsDocument = await readFile(solutionsDocumentPath, 'utf8');
-  const fontStyles = [...solutionsDocument.matchAll(/<link\b[^>]*\bhref=["']https:\/\/fonts\.googleapis\.com\/css2[^"']*["'][^>]*>/gi)];
-  for (const [tag] of fontStyles) {
-    assert.doesNotMatch(tag, /\bmedia=["']print["']/i, `solutions: ${tag}`);
-    assert.doesNotMatch(tag, /\bonload=/i, `solutions: ${tag}`);
-  }
-});
-
 test('module controller documents request a cache-busted lifecycle asset', async () => {
   const htmlFiles = publicStaticFrontendFiles;
   const documentPaths = [
@@ -238,12 +231,20 @@ test('the immediate header is complete before asynchronous configuration loads',
   assert.doesNotMatch(inlineHeader, /href="\/experts"/);
   assert.doesNotMatch(inlineHeader, /href="\/tutorial"/);
   assert.doesNotMatch(inlineHeader, /href="\/companies"/);
+  assert.doesNotMatch(inlineHeader, /href="\/solutions"/);
+  assert.doesNotMatch(inlineHeader, /href="\/plans"/);
   assert.doesNotMatch(inlineHeader, /nav\.companies/);
+  assert.doesNotMatch(inlineHeader, /nav\.solutions/);
+  assert.doesNotMatch(inlineHeader, /nav\.plans/);
   assert.doesNotMatch(header, /data-navigation-item="github"/);
   assert.doesNotMatch(header, /href="\/experts"/);
   assert.doesNotMatch(header, /href="\/tutorial"/);
   assert.doesNotMatch(header, /href="\/companies"/);
+  assert.doesNotMatch(header, /href="\/solutions"/);
+  assert.doesNotMatch(header, /href="\/plans"/);
   assert.doesNotMatch(header, /nav\.companies/);
+  assert.doesNotMatch(header, /nav\.solutions/);
+  assert.doesNotMatch(header, /nav\.plans/);
   assert.doesNotMatch(source, /HEADER_SHELL_HTML/);
   assert.match(
     source,
@@ -256,20 +257,15 @@ test('the immediate header is complete before asynchronous configuration loads',
 });
 
 test('first-frame header controls render without external icon fonts', async () => {
-  const [source, sharedHeader, solutionsDocument] = await Promise.all([
+  const [source, sharedHeader] = await Promise.all([
     readFile(sharedFrontendScriptPath, 'utf8'),
-    readFile(sharedHeaderPath, 'utf8'),
-    readFile(solutionsDocumentPath, 'utf8')
+    readFile(sharedHeaderPath, 'utf8')
   ]);
   const inlineHeader = source.match(/const HEADER_HTML = `([\s\S]*?)`;/)?.[1] || '';
-  const solutionsHeader = solutionsDocument.match(
-    /<div id="header-container"[^>]*>([\s\S]*?)<\/div>\s*\n\s*<!-- Main Container -->/
-  )?.[1] || '';
 
   for (const [label, header] of [
     ['inline header', inlineHeader],
-    ['shared header', sharedHeader],
-    ['solutions header', solutionsHeader]
+    ['shared header', sharedHeader]
   ]) {
     assert.equal([...header.matchAll(/<svg\b/g)].length, 2, label);
     assert.doesNotMatch(

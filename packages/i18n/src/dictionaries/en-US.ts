@@ -1,8 +1,7 @@
 export default {
   nav: {
     diagnostic: 'Diagnostics',
-    solutions: 'Solutions',
-    plans: 'Plans',
+
     keywords: 'Keywords',
     tools: 'Tools'
   },

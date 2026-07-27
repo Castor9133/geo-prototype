@@ -31,7 +31,7 @@ test('retired company product URLs permanently redirect to GEO Suite', async () 
   assert.doesNotMatch(runtime, /nav\.companies/);
   assert.doesNotMatch(header, /nav\.companies/);
   assert.doesNotMatch(header, /href="\/companies"/);
-  assert.match(navigation, /REMOVED_NAVIGATION_IDS = frozenset\(\{"companies", "experts", "tutorial", "github"\}\)/);
+  assert.match(navigation, /REMOVED_NAVIGATION_IDS = frozenset\(\{"companies", "experts", "tutorial", "github", "solutions", "plans"\}\)/);
   assert.doesNotMatch(navigation, /\{"id": "companies"/);
 });
 

@@ -49,7 +49,7 @@
                     handoff: true,
                 });
                 if (result.source === 'keywords') state.completed.keywords = true;
-                if (result.source === 'solutions') state.completed.solutions = true;
+                if (result.source === 'solutions' || result.source === 'plans') state.completed.keywords = true;
                 state.currentStep = 'review';
                 state.lastHandoff = {
                     mode: result.mode || 'preview',

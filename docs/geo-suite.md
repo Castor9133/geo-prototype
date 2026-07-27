@@ -1,6 +1,6 @@
 # GEO Suite：GEORank × GEOFlow 加深融合（Phase 1/2）
 
-把 **GEORank（诊断 / 问答 / 拓词）** 与 **GEOFlow（内容生产 / 分发）** 连成可运营闭环。  
+把 **GEORank（诊断 / 拓词）** 与 **GEOFlow（内容生产 / 分发）** 连成可运营闭环。  
 两边保持独立进程与数据库；Suite 做导航、SSO、handoff、回写。
 
 设计全文：[superpowers/specs/2026-07-22-geo-suite-option-b-fusion-design.md](./superpowers/specs/2026-07-22-geo-suite-option-b-fusion-design.md)
@@ -9,7 +9,9 @@
 
 入口：`/suite`
 
-1. 诊断 → 2. 问答/方案 → 3. 拓词 → 4. 发送到 GEOFlow（live）→ 5. 回看 → 6. 事实卡看板 → 7. L3 信任素材 → 8. 可信观测（`/admin/trust-obs`）
+**演示主路径（6 点）**：1. 诊断（SEO 排查）→ 2. 知识库（推荐 **DJI Mini 5 Pro / GEOFlow KB #9**，`docs/pilot-demo/cn-product-demo-v2/`）→ 3. 拓词 → 4. 分发（任务中心新建：中国生态提示词 + **绑定 KB #9** → 答案优先正文 → 渠道/模板）→ 5. 观测 → 6. 配置（`/admin/settings`）。其余入口默认隐藏。旧飞书/示范栏目包仅作对照，不作主演示。
+
+旧长故事线（回看 / L3 样板等）已软隐藏，可通过步骤别名回落到新路径。
 
 ## 本地启动
 

@@ -25,6 +25,7 @@ from app.core.logging_utils import configure_logging, log_event
 from app.api import router as api_router
 from app.web.company_pages import router as company_pages_router
 from app.web.retired_pages import router as retired_pages_router
+from app.web.solution_pages import router as solution_pages_router
 from app.web.tutorial_pages import router as tutorial_pages_router
 from app.version import PRODUCT_VERSION
 
@@ -304,6 +305,7 @@ async def request_logging_middleware(request: Request, call_next):
 app.include_router(api_router, prefix="/api")
 app.include_router(company_pages_router)
 app.include_router(tutorial_pages_router)
+app.include_router(solution_pages_router)
 app.include_router(retired_pages_router)
 
 

@@ -1,15 +1,20 @@
 # GEOrank 文档入口
 
+> **演示主路径（6 点）**：网站 SEO 排查测试 → 知识库（切片/向量化）→ 拓词 → 分发（渠道/模板/提示词）→ 观测结果 → 配置。其余入口默认隐藏，可恢复。
+
 | 文档 | 说明 |
 |---|---|
 | [GEO-Suite-leadership-demo-guide.md](./GEO-Suite-leadership-demo-guide.md) | **领导汇报 / 演示剧本 / live 验收清单（推荐先看）** |
+| [content-engineering-sop.md](./content-engineering-sop.md) | **内容工程 SOP / 清单（双层方法 → Suite 6 能力；演示走查）** |
 | [pilot-demo/geo-demo-column/README.md](./pilot-demo/geo-demo-column/README.md) | **合成栏目演示资产（事实卡 / L3 样板 / 导入 Flow）** |
+| [pilot-demo/cn-product-demo-v2/README.md](./pilot-demo/cn-product-demo-v2/README.md) | **推荐：中文真实产品演示包 v2（DJI Mini 5 Pro 事实卡 / 提示词 / Flow KB）** |
+| [pilot-demo/cn-product-demo/README.md](./pilot-demo/cn-product-demo/README.md) | ~~飞书多维表格演示包~~（**已不推荐**，仅对照） |
 | [GEO-gap-vs-strategy-brief.md](./GEO-gap-vs-strategy-brief.md) | **现状距离与补齐清单（一页纸：L1近 / L2半程 / L3远）** |
 | [superpowers/specs/2026-07-24-guangdian-ai-content-engineering-strategy.md](./superpowers/specs/2026-07-24-guangdian-ai-content-engineering-strategy.md) | **广电数智化内容工程战略整合（含附录 A 差距评估）** |
 | [superpowers/specs/2026-07-24-l2-pilot-factcard-measurement.md](./superpowers/specs/2026-07-24-l2-pilot-factcard-measurement.md) | **L2 试点工程计划（栏目事实卡 + 手工答案抽样 SOP）** |
 | [superpowers/specs/2026-07-22-geo-trust-dashboard-product.md](./superpowers/specs/2026-07-22-geo-trust-dashboard-product.md) | **GEO 可信仪表盘产品文档（测量层 / 引用率可审计观测，待评审）** |
 | [superpowers/specs/2026-07-22-geo-suite-option-b-fusion-design.md](./superpowers/specs/2026-07-22-geo-suite-option-b-fusion-design.md) | **Option B 加深融合设计与实施计划（待批准）** |
-| [geo-suite.md](./geo-suite.md) | GEO Suite 全套工作流（诊断→问答→拓词→GEOFlow→回看） |
+| [geo-suite.md](./geo-suite.md) | GEO Suite 全套工作流（诊断→问答→拓词→live移交→回看→事实卡→L3→可信观测） |
 | [本地部署操作手册.md](./本地部署操作手册.md) | Windows 本机演示模式与 Docker 完整部署（逐步操作） |
 | [database-migrations.md](./database-migrations.md) | 数据库迁移与启动链路 |
 | [public-content-boundary.md](./public-content-boundary.md) | 开源公开内容边界 |

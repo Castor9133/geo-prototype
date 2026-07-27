@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 
 from app.core.deps import AdminUser, DbSession, OptionalUser
-from app.models.trust_obs import TrustObsProbe, TrustObsSample
+from app.models.trust_obs import TrustObsProbe, TrustObsRun, TrustObsSample
 from app.services import trust_obs as service
 
 router = APIRouter()

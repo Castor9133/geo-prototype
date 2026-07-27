@@ -8,10 +8,9 @@
     const DEFAULT_MENU_ITEMS = [
         { id: 'suite', label: 'GEO Suite', url: '/suite', target: '_self', enabled: true },
         { id: 'diagnostic', label: '诊断', url: '/diagnostic', target: '_blank', enabled: true },
-        { id: 'solutions', label: '问答', url: '/solutions', target: '_blank', enabled: true },
-        { id: 'plans', label: '方案', url: '/plans', target: '_blank', enabled: true },
         { id: 'keywords', label: '拓词', url: '/keywords', target: '_blank', enabled: true },
-        { id: 'tools', label: '工具', url: '/tools', target: '_blank', enabled: true },
+        { id: 'measure', label: '观测', url: '/suite?step=measure', target: '_self', enabled: true },
+        { id: 'config', label: '配置', url: '/admin/settings', target: '_blank', enabled: true },
     ];
 
     function apiBase() {
@@ -55,11 +54,13 @@
             .filter(item => {
                 const id = String(item.id || '').toLowerCase();
                 const url = String(item.url || '').toLowerCase();
-                if (id === 'companies' || id === 'experts' || id === 'tutorial' || id === 'github') return false;
+                if (id === 'companies' || id === 'experts' || id === 'tutorial' || id === 'github' || id === 'solutions' || id === 'plans' || id === 'tools') return false;
                 if (url === '/companies' || url.startsWith('/companies/') || url === '/company' || url.startsWith('/company/')) return false;
                 if (url === '/submit-company' || url === '/company-submit' || url.startsWith('/c/')) return false;
                 if (url === '/experts' || url.startsWith('/experts/')) return false;
                 if (url === '/tutorial' || url.startsWith('/tutorial/')) return false;
+                if (url === '/solutions' || url.startsWith('/solutions/') || url === '/plans' || url.startsWith('/plans/') || url === '/qa' || url.startsWith('/qa/')) return false;
+                if (url === '/tools' || url.startsWith('/tools/')) return false;
                 if (url.includes('github.com/yaojingang/georank')) return false;
                 return true;
             });
@@ -103,8 +104,31 @@
         renderMenu(normalizeMenu(null));
     }
 
-    fetch(`${apiBase()}/api/settings/public`, {cache: 'no-store'})
+    fetch(`${apiBase()}/api/settings/public`, {cache: 'default'})
         .then(response => response.ok ? response.json() : null)
         .then(settings => renderMenu(normalizeMenu(settings?.navigation_menu)))
         .catch(applyFallback);
+
+    function initReveal() {
+        const nodes = document.querySelectorAll('.reveal');
+        if (!nodes.length) return;
+        if (!('IntersectionObserver' in window)) {
+            nodes.forEach(node => node.classList.add('visible'));
+            return;
+        }
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) return;
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+            });
+        }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+        nodes.forEach(node => observer.observe(node));
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initReveal, { once: true });
+    } else {
+        initReveal();
+    }
 })();
