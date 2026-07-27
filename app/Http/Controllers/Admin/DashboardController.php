@@ -54,7 +54,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * @return array{id: int, name: string, exists: bool, detail_url: string, list_url: string, import_docs_url: string}
+     * @return array{id: int, name: string, short_name: string, exists: bool, detail_url: string, list_url: string, import_docs_url: string}
      */
     private function resolveRecommendedDemoKnowledgeBase(): array
     {
@@ -62,6 +62,10 @@ class DashboardController extends Controller
         $preferredName = trim((string) config('geoflow.recommended_demo_knowledge_base_name', '中文产品演示包·DJI Mini 5 Pro'));
         if ($preferredName === '') {
             $preferredName = '中文产品演示包·DJI Mini 5 Pro';
+        }
+        $preferredShortName = trim((string) config('geoflow.recommended_demo_knowledge_base_short_name', 'DJI Mini 5 Pro'));
+        if ($preferredShortName === '') {
+            $preferredShortName = 'DJI Mini 5 Pro';
         }
 
         $suitePublicUrl = rtrim((string) env('GEOSUITE_PUBLIC_URL', 'http://localhost:3009'), '/');
@@ -95,6 +99,7 @@ class DashboardController extends Controller
         return [
             'id' => $id,
             'name' => $name,
+            'short_name' => $preferredShortName,
             'exists' => $exists,
             'detail_url' => route('admin.knowledge-bases.detail', ['knowledgeBaseId' => $id]),
             'list_url' => route('admin.knowledge-bases.index'),

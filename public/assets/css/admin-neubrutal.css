@@ -1,4 +1,6 @@
-/* GEOFlow Admin — Soft Neubrutalism shell (aligned with GEORank hub) */
+/* GEOFlow Admin — Soft Neubrutalism shell (aligned with GEORank hub)
+ * 立体规格：border 2px #1A1A1A + box-shadow 4px 4px 0 #1A1A1A（无 blur）
+ */
 :root {
   --gf-bg: #F9F7F2;
   --gf-paper: #FFFFFF;
@@ -11,7 +13,8 @@
   --gf-border: #1A1A1A;
   --gf-bw: 2px;
   --gf-radius: 12px;
-  --gf-shadow: 4px 4px 0 var(--gf-border);
+  --gf-shadow: 4px 4px 0 #1A1A1A;
+  --gf-shadow-press: 2px 2px 0 #1A1A1A;
   --gf-font-display: "Noto Serif SC", "Songti SC", "SimSun", Georgia, serif;
   --gf-font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
 }
@@ -46,7 +49,8 @@ nav.bg-white a.text-blue-600 {
   background: color-mix(in srgb, var(--gf-blue) 35%, white);
   padding: 0.25rem 0.55rem;
   border-radius: 6px;
-  border: 1.5px solid var(--gf-border);
+  border: var(--gf-bw) solid var(--gf-border);
+  box-shadow: var(--gf-shadow);
 }
 
 nav.bg-white a.text-gray-500 {
@@ -65,7 +69,7 @@ nav.bg-white a.text-emerald-800 {
   border: var(--gf-bw) solid var(--gf-border) !important;
   color: var(--gf-ink) !important;
   border-radius: 8px !important;
-  box-shadow: none !important;
+  box-shadow: var(--gf-shadow) !important;
 }
 
 /* Page title hierarchy */
@@ -93,16 +97,38 @@ main .text-gray-900 {
   color: var(--gf-ink) !important;
 }
 
-/* Cards / panels */
+/* Cards / panels — 快速开始 / 主链路 / 通用白底卡 */
 main .bg-white.shadow,
 main .bg-white.shadow-sm,
 main .bg-white.rounded-lg.shadow,
 main .bg-white.rounded-lg,
-main .shadow.rounded-lg {
+main .shadow.rounded-lg,
+main .rounded-lg.border.border-gray-200.bg-white,
+main .rounded-lg.border.bg-white.shadow-sm,
+main .rounded-xl.border.border-gray-200.bg-white,
+main .rounded-xl.border.bg-white.shadow-sm,
+main section.bg-white.shadow-sm,
+main section.rounded-lg.bg-white,
+main article.rounded-lg.border.bg-white,
+main a.rounded-lg.bg-white.shadow-sm,
+main a.rounded-lg.border.bg-white,
+main .ring-1.ring-gray-200.bg-white {
   background: var(--gf-paper) !important;
   border: var(--gf-bw) solid var(--gf-border) !important;
   border-radius: var(--gf-radius) !important;
   box-shadow: var(--gf-shadow) !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+  --tw-ring-color: transparent !important;
+  outline: none;
+}
+
+main .bg-white.shadow-sm:hover,
+main .rounded-lg.border.border-gray-200.bg-white:hover,
+main article.rounded-lg.border.bg-white:hover,
+main a.rounded-lg.bg-white.shadow-sm:hover,
+main a.rounded-lg.border.bg-white:hover {
+  transform: translate(1px, 1px);
+  box-shadow: var(--gf-shadow-press) !important;
 }
 
 main .border-b.border-gray-200,
@@ -126,6 +152,7 @@ nav .bg-blue-600 {
   border-radius: 8px !important;
   box-shadow: var(--gf-shadow);
   font-weight: 700 !important;
+  transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
 }
 
 main .bg-blue-600:hover,
@@ -133,6 +160,8 @@ main button.bg-blue-600:hover,
 main a.bg-blue-600:hover,
 nav .bg-blue-600:hover {
   background: color-mix(in srgb, var(--gf-blue) 82%, white) !important;
+  transform: translate(1px, 1px);
+  box-shadow: var(--gf-shadow-press);
 }
 
 main .bg-slate-800,
@@ -145,34 +174,63 @@ main button.bg-slate-900 {
   border-radius: 8px !important;
   box-shadow: var(--gf-shadow);
   font-weight: 700 !important;
+  transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
 }
 
 main .bg-slate-800:hover,
 main .bg-slate-900:hover {
   background: color-mix(in srgb, var(--gf-orange) 85%, white) !important;
+  transform: translate(1px, 1px);
+  box-shadow: var(--gf-shadow-press);
 }
 
-/* Inputs / selects */
+/* Ghost / outline buttons (刷新、次要 CTA) */
+main a.border.border-gray-300.bg-white,
+main button.border.border-gray-300.bg-white,
+main a.border-gray-300.bg-white.shadow-sm,
+main button.border-gray-300.bg-white.shadow-sm {
+  border: var(--gf-bw) solid var(--gf-border) !important;
+  border-radius: 8px !important;
+  background: var(--gf-paper) !important;
+  color: var(--gf-ink) !important;
+  box-shadow: var(--gf-shadow) !important;
+  font-weight: 700 !important;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+main a.border.border-gray-300.bg-white:hover,
+main button.border.border-gray-300.bg-white:hover {
+  transform: translate(1px, 1px);
+  box-shadow: var(--gf-shadow-press) !important;
+  background: color-mix(in srgb, var(--gf-blue) 12%, white) !important;
+}
+
+/* Inputs / selects — 默认也鼓起来 */
 main select,
 main input[type="text"],
 main input[type="url"],
 main input[type="password"],
 main input[type="number"],
+main input[type="email"],
+main input[type="search"],
 main textarea {
   border: var(--gf-bw) solid var(--gf-border) !important;
   border-radius: 8px !important;
   background: var(--gf-paper) !important;
-  box-shadow: none !important;
+  box-shadow: var(--gf-shadow) !important;
   color: var(--gf-ink) !important;
+  transition: transform 150ms ease, box-shadow 150ms ease;
 }
 
 main select:focus,
 main input:focus,
 main textarea:focus {
   outline: none !important;
-  box-shadow: 3px 3px 0 var(--gf-border) !important;
+  transform: translate(1px, 1px);
+  box-shadow: var(--gf-shadow-press) !important;
   border-color: var(--gf-border) !important;
   --tw-ring-color: transparent !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
 }
 
 /* Status pills */
@@ -180,21 +238,21 @@ main .rounded-full.bg-green-100,
 main .bg-green-100 {
   background: var(--gf-green) !important;
   color: var(--gf-ink) !important;
-  border: 1.5px solid var(--gf-border);
+  border: var(--gf-bw) solid var(--gf-border);
 }
 
 main .rounded-full.bg-yellow-100,
 main .bg-yellow-100 {
   background: var(--gf-orange) !important;
   color: var(--gf-ink) !important;
-  border: 1.5px solid var(--gf-border);
+  border: var(--gf-bw) solid var(--gf-border);
 }
 
 main .bg-blue-100,
 nav .bg-blue-100 {
   background: var(--gf-blue) !important;
   color: var(--gf-ink) !important;
-  border: 1.5px solid var(--gf-border);
+  border: var(--gf-bw) solid var(--gf-border);
 }
 
 main .text-blue-600,
@@ -206,6 +264,7 @@ nav .w-8.h-8.bg-blue-100,
 nav .bg-blue-100.rounded-full {
   border-radius: 8px !important;
   border: var(--gf-bw) solid var(--gf-border);
+  box-shadow: var(--gf-shadow);
 }
 
 nav .text-blue-600 i,
@@ -248,7 +307,7 @@ main table td {
 nav .border-gray-200.bg-white {
   border: var(--gf-bw) solid var(--gf-border) !important;
   border-radius: 8px !important;
-  box-shadow: none !important;
+  box-shadow: var(--gf-shadow) !important;
   background: var(--gf-paper) !important;
 }
 
@@ -259,4 +318,11 @@ nav .border-gray-200.bg-white {
   border-radius: var(--gf-radius) !important;
   box-shadow: var(--gf-shadow) !important;
   background: var(--gf-paper) !important;
+}
+
+/* 取消 Tailwind 软抬升 hover，改硬按压 */
+main .hover\:-translate-y-0\.5:hover,
+main .hover\:shadow-md:hover {
+  transform: translate(1px, 1px) !important;
+  box-shadow: var(--gf-shadow-press) !important;
 }

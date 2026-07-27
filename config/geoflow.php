@@ -54,6 +54,7 @@ return [
     // 首页快速开始第 2 步推荐演示知识库（DJI Mini 5 Pro / cn-product-demo-v2）
     'recommended_demo_knowledge_base_id' => max(1, (int) env('GEOFLOW_RECOMMENDED_DEMO_KB_ID', 9)),
     'recommended_demo_knowledge_base_name' => trim((string) env('GEOFLOW_RECOMMENDED_DEMO_KB_NAME', '中文产品演示包·DJI Mini 5 Pro')) ?: '中文产品演示包·DJI Mini 5 Pro',
+    'recommended_demo_knowledge_base_short_name' => trim((string) env('GEOFLOW_RECOMMENDED_DEMO_KB_SHORT_NAME', 'DJI Mini 5 Pro')) ?: 'DJI Mini 5 Pro',
     'recommended_demo_import_docs_path' => trim((string) env('GEOFLOW_RECOMMENDED_DEMO_IMPORT_DOCS_PATH', '/pilot-demo/cn-product-demo-v2/import-to-geoflow.md'), '/') ?: 'pilot-demo/cn-product-demo-v2/import-to-geoflow.md',
     // GitHub version.json 地址；默认每天检查一次，可通过 GEOFLOW_UPDATE_CHECK_ENABLED=false 关闭
     'update_check_enabled' => filter_var(env('GEOFLOW_UPDATE_CHECK_ENABLED', env('APP_ENV') !== 'testing'), FILTER_VALIDATE_BOOLEAN),

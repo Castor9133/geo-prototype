@@ -33,6 +33,11 @@ class AdminDashboardQuickStartTest extends TestCase
             ->assertSee(__('admin.dashboard.automation.flow_title'))
             ->assertSee(__('admin.dashboard.automation.recommendations_title'))
             ->assertSee(__('admin.dashboard.automation.recommendations_empty'))
+            ->assertSee(__('admin.dashboard.automation.recommendations_next'))
+            ->assertSee(__('admin.dashboard.automation.rec_next_demo_kb'))
+            ->assertSee(__('admin.dashboard.automation.rec_next_task'))
+            ->assertSee(__('admin.dashboard.automation.rec_next_observe'))
+            ->assertDontSee('2xl:grid-cols-[minmax(0,1fr)_360px]', false)
             ->assertDontSee('内容工程演示层')
             ->assertDontSee('工程')
             ->assertDontSee('�')
@@ -40,20 +45,20 @@ class AdminDashboardQuickStartTest extends TestCase
             ->assertSee(__('admin.dashboard.demo_journey.assets_title'))
             ->assertSee(__('admin.dashboard.demo_journey.quality_title'))
             ->assertSee(__('admin.dashboard.demo_journey.observation_title'))
-            ->assertSee(__('admin.dashboard.automation.node_prompt_graph_title'))
-            ->assertSee(__('admin.dashboard.automation.node_content_title'))
+            ->assertSee(__('admin.dashboard.automation.node_models_title'))
+            ->assertSee(__('admin.dashboard.automation.node_knowledge_merged_title'))
+            ->assertSee(__('admin.dashboard.automation.node_expand_task_title'))
+            ->assertSee(__('admin.dashboard.automation.node_content_gate_title'))
             ->assertSee(__('admin.dashboard.automation.node_authority_distribution_title'))
-            ->assertSee(__('admin.dashboard.automation.step_label', ['step' => '01']))
-            ->assertSee(__('admin.dashboard.automation.step_label', ['step' => '08']))
+            ->assertSee(__('admin.dashboard.automation.node_measurement_title'))
             ->assertSee('id="content-engineering-step-01"', false)
-            ->assertSee('id="content-engineering-step-08"', false)
+            ->assertSee('id="content-engineering-step-06"', false)
+            ->assertDontSee('id="content-engineering-step-08"', false)
             ->assertSeeInOrder([
-                __('admin.dashboard.automation.node_prompt_graph_title'),
-                __('admin.dashboard.automation.node_knowledge_assets_title'),
-                __('admin.dashboard.automation.node_evidence_structure_title'),
-                __('admin.dashboard.automation.node_engineering_task_title'),
-                __('admin.dashboard.automation.node_content_title'),
-                __('admin.dashboard.automation.node_quality_gate_title'),
+                __('admin.dashboard.automation.node_models_title'),
+                __('admin.dashboard.automation.node_knowledge_merged_title'),
+                __('admin.dashboard.automation.node_expand_task_title'),
+                __('admin.dashboard.automation.node_content_gate_title'),
                 __('admin.dashboard.automation.node_authority_distribution_title'),
                 __('admin.dashboard.automation.node_measurement_title'),
             ])
@@ -68,7 +73,6 @@ class AdminDashboardQuickStartTest extends TestCase
             ->assertSee(__('admin.dashboard.navigation.articles_title'))
             ->assertSee(__('admin.dashboard.navigation.prompt_config_title'))
             ->assertSee(__('admin.dashboard.navigation.body_prompt_label'))
-            ->assertSee(__('admin.dashboard.navigation.special_prompt_label'))
             ->assertSee(__('admin.dashboard.navigation.admin_users_title'))
             ->assertSee(__('admin.dashboard.navigation.distribution_channels_title'))
             ->assertSee(__('admin.dashboard.navigation.distribution_jobs_title'))
@@ -80,12 +84,12 @@ class AdminDashboardQuickStartTest extends TestCase
             ->assertSee(__('admin.dashboard.quick_start.api_title'))
             ->assertSee(__('admin.dashboard.quick_start.material_title'))
             ->assertSee(__('admin.dashboard.quick_start.task_title'))
-            ->assertSee(__('admin.dashboard.quick_start.recommended_badge'))
-            ->assertSee(__('admin.dashboard.quick_start.recommended_title'))
-            ->assertSee(__('admin.dashboard.quick_start.recommended_desc'))
+            ->assertSee(__('admin.dashboard.quick_start.recommended_compact', ['name' => 'DJI Mini 5 Pro', 'id' => 9]))
             ->assertSee(__('admin.dashboard.quick_start.recommended_open'))
             ->assertSee(__('admin.dashboard.quick_start.recommended_list'))
-            ->assertSee(__('admin.dashboard.quick_start.recommended_import'))
+            ->assertSee(__('admin.dashboard.quick_start.recommended_import_hint'))
+            ->assertDontSee('打开知识库详情')
+            ->assertDontSee('bg-emerald-600 px-3 py-2')
             ->assertSee('cn-product-demo-v2')
             ->assertDontSee(__('admin.dashboard.analytics_card_title'))
             ->assertDontSee(__('admin.dashboard.analytics_card_button'))
@@ -111,7 +115,6 @@ class AdminDashboardQuickStartTest extends TestCase
             ->assertSee(route('admin.dashboard'), false)
             ->assertSee(route('admin.analytics'), false)
             ->assertSee(route('admin.ai-prompts'), false)
-            ->assertSee(route('admin.ai-special-prompts'), false)
             ->assertSee(route('admin.admin-users.index'), false)
             ->assertSee(route('admin.distribution.index'), false)
             ->assertSee(route('admin.distribution.create'), false)
@@ -130,14 +133,15 @@ class AdminDashboardQuickStartTest extends TestCase
         $this->assertStringNotContainsString(route('admin.authors.index'), $html);
         $this->assertStringContainsString(__('admin.dashboard.automation.metric_materials', ['count' => 0]), $html);
         $this->assertStringContainsString(__('admin.dashboard.automation.metric_vectorized', ['done' => 0, 'total' => 0]), $html);
-        $this->assertStringContainsString(__('admin.dashboard.automation.metric_ai_today', ['count' => 0]), $html);
+        $this->assertStringContainsString(__('admin.dashboard.automation.metric_chat_models', ['count' => 0]), $html);
+        $this->assertStringContainsString(__('admin.dashboard.automation.metric_today_visits', ['count' => 0]), $html);
         $this->assertStringContainsString(__('admin.dashboard.automation.running_badge', ['count' => 0]), $html);
         $this->assertStringContainsString(__('admin.dashboard.automation.attention_badge', ['count' => 0]), $html);
         $this->assertStringContainsString(__('admin.dashboard.automation.health_task_meta', ['running' => 0, 'queued' => 0, 'failed' => 0]), $html);
         $this->assertStringContainsString(__('admin.dashboard.automation.health_content_meta', ['published' => 0, 'drafts' => 0, 'pending' => 0]), $html);
         $this->assertStringNotContainsString(__('admin.dashboard.automation.metric_materials', ['count' => 449]), $html);
         $this->assertStringNotContainsString(__('admin.dashboard.automation.metric_vectorized', ['done' => 584, 'total' => 612]), $html);
-        $this->assertStringNotContainsString(__('admin.dashboard.automation.metric_ai_today', ['count' => 74]), $html);
+        $this->assertStringNotContainsString(__('admin.dashboard.automation.metric_chat_models', ['count' => 74]), $html);
     }
 
     public function test_dashboard_description_copy_does_not_end_with_sentence_periods(): void

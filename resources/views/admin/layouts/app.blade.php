@@ -1,4 +1,4 @@
-@php
+﻿@php
     $adminBrandName = \App\Support\AdminWeb::siteName();
 @endphp
 <!DOCTYPE html>
@@ -13,7 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet">
     <script src="{{ asset('js/tailwindcss.play-cdn.js') }}"></script>
     <script src="{{ asset('js/lucide.min.js') }}"></script>
-    <link rel="stylesheet" href="{{ asset('assets/css/admin-neubrutal.css') }}?v=20260727-neubrutal">
+    <link rel="stylesheet" href="{{ asset('assets/css/admin-neubrutal.css') }}?v=20260727-hard-shadow">
     @stack('styles')
 </head>
 <body class="bg-gray-50">

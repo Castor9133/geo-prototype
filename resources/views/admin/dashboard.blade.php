@@ -38,6 +38,7 @@
             : [
                 'id' => (int) config('geoflow.recommended_demo_knowledge_base_id', 9),
                 'name' => (string) config('geoflow.recommended_demo_knowledge_base_name', '中文产品演示包·DJI Mini 5 Pro'),
+                'short_name' => (string) config('geoflow.recommended_demo_knowledge_base_short_name', 'DJI Mini 5 Pro'),
                 'exists' => false,
                 'detail_url' => route('admin.knowledge-bases.detail', ['knowledgeBaseId' => (int) config('geoflow.recommended_demo_knowledge_base_id', 9)]),
                 'list_url' => route('admin.knowledge-bases.index'),
@@ -54,7 +55,7 @@
             ? (string) $recommendedDemoKnowledgeBase['short_name']
             : __('admin.dashboard.quick_start.recommended_short_title');
         $recommendedDemoTooltip = trim($recommendedDemoTitle.' · '.__('admin.dashboard.quick_start.recommended_desc'));
-        $recommendedDemoImportLabel = __('admin.dashboard.quick_start.recommended_import').' · cn-product-demo-v2';
+        $recommendedDemoImportLabel = __('admin.dashboard.quick_start.recommended_import_hint');
 
         $demoJourney = [
             [
@@ -158,25 +159,32 @@
             + (int) ($distributionFailed > 0)
             + (int) ($urlImportFailed > 0);
 
+        $aiStatus = ($chatModels + $embeddingModels) > 0 ? 'ready' : 'warning';
+        $contentGateStatus = $pendingReview > 0 ? 'warning' : ($totalArticles > 0 ? 'ready' : 'available');
+        $expandTaskStatus = $failedJobs > 0
+            ? 'error'
+            : (($runningJobs + $pendingJobs) > 0 ? 'running' : ($activeTasks > 0 || $totalPrompts > 0 ? 'ready' : 'warning'));
+
         $flowNodes = [
             [
-                'title' => __('admin.dashboard.automation.node_prompt_graph_title'),
-                'desc' => __('admin.dashboard.automation.node_prompt_graph_desc'),
-                'icon' => 'map',
+                'key' => 'models',
+                'title' => __('admin.dashboard.automation.node_models_title'),
+                'desc' => __('admin.dashboard.automation.node_models_desc'),
+                'icon' => 'cpu',
                 'tone' => 'blue',
-                'status' => $promptStatus,
+                'status' => $aiStatus,
                 'metrics' => [
-                    __('admin.dashboard.automation.metric_body_prompts', ['count' => $bodyPrompts]),
-                    __('admin.dashboard.automation.metric_special_prompts', ['count' => $specialPrompts]),
+                    __('admin.dashboard.automation.metric_chat_models', ['count' => $chatModels]),
+                    __('admin.dashboard.automation.metric_embedding_models', ['count' => $embeddingModels]),
                 ],
                 'actions' => [
-                    ['label' => __('admin.dashboard.navigation.body_prompt_label'), 'href' => route('admin.ai-prompts'), 'primary' => false],
-                    ['label' => __('admin.dashboard.navigation.special_prompt_label'), 'href' => route('admin.ai-special-prompts'), 'primary' => false],
+                    ['label' => __('admin.dashboard.automation.action_config'), 'href' => route('admin.ai-models.index'), 'primary' => true],
                 ],
             ],
             [
-                'title' => __('admin.dashboard.automation.node_knowledge_assets_title'),
-                'desc' => __('admin.dashboard.automation.node_knowledge_assets_desc'),
+                'key' => 'knowledge',
+                'title' => __('admin.dashboard.automation.node_knowledge_merged_title'),
+                'desc' => __('admin.dashboard.automation.node_knowledge_merged_desc'),
                 'icon' => 'database',
                 'tone' => 'green',
                 'status' => $materialsStatus,
@@ -185,73 +193,46 @@
                     __('admin.dashboard.automation.metric_vectorized', ['done' => $vectorizedChunks, 'total' => $knowledgeChunks]),
                 ],
                 'actions' => [
-                    ['label' => __('admin.dashboard.automation.action_refresh_chunks'), 'href' => route('admin.knowledge-bases.index'), 'primary' => false, 'warning' => true],
-                    ['label' => __('admin.dashboard.automation.action_view'), 'href' => route('admin.materials.index'), 'primary' => false],
+                    ['label' => __('admin.dashboard.automation.action_refresh_chunks'), 'href' => route('admin.knowledge-bases.index'), 'primary' => $unvectorizedChunks > 0, 'warning' => $unvectorizedChunks > 0],
+                    ['label' => __('admin.dashboard.automation.action_view'), 'href' => route('admin.materials.index'), 'primary' => $unvectorizedChunks === 0],
                 ],
             ],
             [
-                'title' => __('admin.dashboard.automation.node_evidence_structure_title'),
-                'desc' => __('admin.dashboard.automation.node_evidence_structure_desc'),
-                'icon' => 'blocks',
-                'tone' => 'amber',
-                'status' => $materialsStatus,
-                'metrics' => [
-                    __('admin.dashboard.automation.metric_vectorized', ['done' => $vectorizedChunks, 'total' => $knowledgeChunks]),
-                    __('admin.dashboard.automation.metric_unvectorized', ['count' => $unvectorizedChunks]),
-                ],
-                'actions' => [
-                    ['label' => __('admin.dashboard.automation.action_refresh_chunks'), 'href' => route('admin.knowledge-bases.index'), 'primary' => false, 'warning' => true],
-                    ['label' => __('admin.dashboard.automation.action_view'), 'href' => route('admin.materials.index'), 'primary' => false],
-                ],
-            ],
-            [
-                'title' => __('admin.dashboard.automation.node_engineering_task_title'),
-                'desc' => __('admin.dashboard.automation.node_engineering_task_desc'),
+                'key' => 'expand_task',
+                'title' => __('admin.dashboard.automation.node_expand_task_title'),
+                'desc' => __('admin.dashboard.automation.node_expand_task_desc'),
                 'icon' => 'workflow',
-                'tone' => 'blue',
-                'status' => $taskStatus,
+                'tone' => 'amber',
+                'status' => $expandTaskStatus,
                 'metrics' => [
+                    __('admin.dashboard.automation.metric_body_prompts', ['count' => $bodyPrompts]),
                     __('admin.dashboard.automation.metric_enabled', ['count' => $activeTasks]),
                     __('admin.dashboard.automation.metric_queued', ['count' => $pendingJobs]),
-                    __('admin.dashboard.automation.metric_failed', ['count' => $failedJobs]),
                 ],
                 'actions' => [
                     ['label' => __('admin.dashboard.quick_start.task_button'), 'href' => route('admin.tasks.create'), 'primary' => true],
-                    ['label' => __('admin.dashboard.automation.action_queue'), 'href' => route('admin.tasks.index'), 'primary' => false],
+                    ['label' => __('admin.dashboard.navigation.body_prompt_label'), 'href' => route('admin.ai-prompts'), 'primary' => false],
                 ],
             ],
             [
-                'title' => __('admin.dashboard.automation.node_content_title'),
-                'desc' => __('admin.dashboard.automation.node_content_desc'),
-                'icon' => 'file-pen-line',
+                'key' => 'content_gate',
+                'title' => __('admin.dashboard.automation.node_content_gate_title'),
+                'desc' => __('admin.dashboard.automation.node_content_gate_desc'),
+                'icon' => 'badge-check',
                 'tone' => 'violet',
-                'status' => $contentLibraryStatus,
+                'status' => $contentGateStatus,
                 'metrics' => [
                     __('admin.dashboard.automation.metric_drafts', ['count' => $draftArticles]),
-                    __('admin.dashboard.automation.metric_today_new', ['count' => $todayArticles]),
-                    __('admin.dashboard.automation.metric_published', ['count' => $publishedArticles]),
-                ],
-                'actions' => [
-                    ['label' => __('admin.dashboard.automation.action_articles'), 'href' => route('admin.articles.index'), 'primary' => true],
-                    ['label' => __('admin.dashboard.automation.action_review'), 'href' => route('admin.articles.index', ['review_status' => 'pending']), 'primary' => false, 'warning' => true],
-                ],
-            ],
-            [
-                'title' => __('admin.dashboard.automation.node_quality_gate_title'),
-                'desc' => __('admin.dashboard.automation.node_quality_gate_desc'),
-                'icon' => 'badge-check',
-                'tone' => 'amber',
-                'status' => $reviewStatus,
-                'metrics' => [
                     __('admin.dashboard.automation.metric_review_pending', ['count' => $pendingReview]),
                     __('admin.dashboard.automation.metric_published', ['count' => $publishedArticles]),
                 ],
                 'actions' => [
-                    ['label' => __('admin.dashboard.automation.action_review'), 'href' => route('admin.articles.index'), 'primary' => false, 'warning' => true],
-                    ['label' => __('admin.dashboard.automation.action_publish'), 'href' => route('admin.articles.index'), 'primary' => false],
+                    ['label' => __('admin.dashboard.automation.action_articles'), 'href' => route('admin.articles.index'), 'primary' => $pendingReview === 0],
+                    ['label' => __('admin.dashboard.automation.action_review'), 'href' => route('admin.articles.index', ['review_status' => 'pending']), 'primary' => $pendingReview > 0, 'warning' => $pendingReview > 0],
                 ],
             ],
             [
+                'key' => 'distribution',
                 'title' => __('admin.dashboard.automation.node_authority_distribution_title'),
                 'desc' => __('admin.dashboard.automation.node_authority_distribution_desc'),
                 'icon' => 'radio-tower',
@@ -259,27 +240,26 @@
                 'status' => $distributionStatus,
                 'metrics' => [
                     __('admin.dashboard.automation.metric_channels', ['count' => $channelsTotal]),
-                    __('admin.dashboard.automation.metric_failed', ['count' => $distributionFailed]),
                     __('admin.dashboard.automation.metric_pending_distribution', ['count' => $distributionPending]),
+                    __('admin.dashboard.automation.metric_failed', ['count' => $distributionFailed]),
                 ],
                 'actions' => [
-                    ['label' => __('admin.dashboard.automation.action_handle_failed'), 'href' => route('admin.distribution.jobs'), 'primary' => false, 'warning' => true],
-                    ['label' => __('admin.dashboard.automation.action_channels'), 'href' => route('admin.distribution.index'), 'primary' => false],
+                    ['label' => $distributionFailed > 0 ? __('admin.dashboard.automation.action_handle_failed') : __('admin.dashboard.automation.action_channels'), 'href' => $distributionFailed > 0 ? route('admin.distribution.jobs') : route('admin.distribution.index'), 'primary' => true, 'warning' => $distributionFailed > 0],
                 ],
             ],
             [
+                'key' => 'measurement',
                 'title' => __('admin.dashboard.automation.node_measurement_title'),
                 'desc' => __('admin.dashboard.automation.node_measurement_desc'),
                 'icon' => 'chart-no-axes-combined',
-                'tone' => 'violet',
+                'tone' => 'slate',
                 'status' => $feedbackStatus,
                 'metrics' => [
                     __('admin.dashboard.automation.metric_today_visits', ['count' => $todayVisits]),
                     __('admin.dashboard.automation.metric_ai_bots', ['count' => $aiBotCount]),
-                    __('admin.dashboard.automation.metric_ai_today', ['count' => $aiUsedToday]),
                 ],
                 'actions' => [
-                    ['label' => __('admin.dashboard.navigation.analytics_title'), 'href' => route('admin.analytics'), 'primary' => true],
+                    ['label' => __('admin.dashboard.automation.rec_next_observe'), 'href' => route('admin.analytics'), 'primary' => true],
                 ],
             ],
         ];
@@ -397,7 +377,7 @@
             ));
             $flowNodes = array_values(array_filter(
                 $flowNodes,
-                static fn (array $item): bool => $item['title'] !== __('admin.dashboard.automation.node_authority_distribution_title'),
+                static fn (array $item): bool => ($item['key'] ?? '') !== 'distribution',
             ));
             $recommendations = array_values(array_filter(
                 $recommendations,
@@ -591,89 +571,107 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-5 p-5 2xl:grid-cols-[minmax(0,1fr)_360px]">
-                <div class="min-w-0">
-                    <div class="mb-5 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                        <div>
-                            <h3 class="text-base font-semibold text-gray-900">{{ __('admin.dashboard.automation.flow_title') }}</h3>
-                            <p class="mt-1 text-sm leading-6 text-gray-500">{{ __('admin.dashboard.automation.flow_desc') }}</p>
-                        </div>
-                        <a href="{{ route('admin.site-settings.index') }}" class="inline-flex h-9 w-fit items-center rounded-lg border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-                            <i data-lucide="settings-2" class="mr-2 h-4 w-4"></i>
-                            {{ __('admin.dashboard.automation.automation_settings') }}
-                        </a>
+            <div class="p-5">
+                <div class="mb-5 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900">{{ __('admin.dashboard.automation.flow_title') }}</h3>
+                        <p class="mt-1 text-sm leading-6 text-gray-500">{{ __('admin.dashboard.automation.flow_desc') }}</p>
                     </div>
-
-                    <div class="relative grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-                        <div class="pointer-events-none absolute left-[8%] right-[8%] top-[42px] hidden h-0.5 bg-gradient-to-r from-blue-200 via-emerald-200 to-red-200 xl:block"></div>
-                        @foreach ($flowNodes as $node)
-                            @php($stepNumber = str_pad((string) $loop->iteration, 2, '0', STR_PAD_LEFT))
-                            @php($statusClass = $statusStyles[$node['status']] ?? $statusStyles['ready'])
-                            @php($toneClass = $toneStyles[$node['tone']] ?? $toneStyles['slate'])
-                            @php($stepNumberClass = $stepNumberStyles[$node['tone']] ?? $stepNumberStyles['slate'])
-                            <article id="content-engineering-step-{{ $stepNumber }}" class="relative z-10 flex min-h-[178px] scroll-mt-24 flex-col rounded-lg border border-gray-200 bg-white p-4 shadow-sm" aria-label="{{ __('admin.dashboard.automation.step_anchor', ['step' => $stepNumber, 'title' => $node['title']]) }}">
-                                <div class="flex items-start justify-between gap-3">
-                                    <div class="flex items-center gap-3">
-                                        <span class="shrink-0 text-2xl font-semibold leading-10 tracking-wide tabular-nums {{ $stepNumberClass }}">{{ $stepNumber }}</span>
-                                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg {{ $toneClass }}">
-                                            <i data-lucide="{{ $node['icon'] }}" class="h-5 w-5"></i>
-                                        </div>
-                                    </div>
-                                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold {{ $statusClass }}">
-                                        <span class="mr-1.5 h-1.5 w-1.5 rounded-full bg-current"></span>
-                                        {{ __('admin.dashboard.automation.status_'.$node['status']) }}
-                                    </span>
-                                </div>
-                                <p class="mt-4 text-xs font-semibold uppercase tracking-wide text-gray-400">{{ __('admin.dashboard.automation.step_label', ['step' => $stepNumber]) }}</p>
-                                <h3 class="mt-1 text-base font-semibold text-gray-900">{{ $node['title'] }}</h3>
-                                <p class="mt-2 text-sm leading-6 text-gray-500">{{ $node['desc'] }}</p>
-                                <div class="mt-auto flex flex-wrap gap-2 pt-4">
-                                    @foreach ($node['metrics'] as $metric)
-                                        <span class="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-semibold text-gray-600">{{ $metric }}</span>
-                                    @endforeach
-                                </div>
-                                <div class="mt-3 flex flex-wrap gap-2">
-                                    @foreach ($node['actions'] as $action)
-                                        <a href="{{ $action['href'] }}" class="inline-flex h-8 items-center rounded-lg px-3 text-xs font-semibold {{ ! empty($action['primary']) ? 'bg-blue-600 text-white hover:bg-blue-700' : (! empty($action['warning']) ? 'border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100' : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50') }}">
-                                            {{ $action['label'] }}
-                                        </a>
-                                    @endforeach
-                                </div>
-                            </article>
-                        @endforeach
-                    </div>
+                    <a href="{{ route('admin.site-settings.index') }}" class="inline-flex h-9 w-fit items-center rounded-lg border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                        <i data-lucide="settings-2" class="mr-2 h-4 w-4"></i>
+                        {{ __('admin.dashboard.automation.automation_settings') }}
+                    </a>
                 </div>
 
-                <aside class="flex flex-col gap-3">
-                    <div>
-                        <h3 class="text-base font-semibold text-gray-900">{{ __('admin.dashboard.automation.recommendations_title') }}</h3>
-                        <p class="mt-1 text-sm leading-6 text-gray-500">{{ __('admin.dashboard.automation.recommendations_desc') }}</p>
+                <div class="mb-5 rounded-lg border border-gray-200 bg-gray-50/80 p-3 sm:p-4">
+                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div class="min-w-0">
+                            <h3 class="text-sm font-semibold text-gray-900">{{ __('admin.dashboard.automation.recommendations_title') }}</h3>
+                            <p class="mt-0.5 text-xs leading-5 text-gray-500">{{ __('admin.dashboard.automation.recommendations_desc') }}</p>
+                        </div>
+                        @if (count($activeRecommendations) === 0)
+                            <span class="inline-flex w-fit items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                                <i data-lucide="circle-check" class="mr-1.5 h-3.5 w-3.5"></i>
+                                {{ __('admin.dashboard.automation.basic_ready') }}
+                            </span>
+                        @endif
                     </div>
-                    @forelse ($activeRecommendations as $recommendation)
-                        @php($badgeClass = $statusStyles[$recommendation['badge']] ?? $statusStyles['warning'])
-                        <div class="rounded-lg border p-4 {{ $recommendation['style'] }}">
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="flex min-w-0 items-center gap-2">
+
+                    @if (count($activeRecommendations) > 0)
+                        <div class="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
+                            @foreach ($activeRecommendations as $recommendation)
+                                @php($badgeClass = $statusStyles[$recommendation['badge']] ?? $statusStyles['warning'])
+                                <div class="flex min-w-0 items-center gap-3 rounded-lg border p-3 {{ $recommendation['style'] }}">
                                     <i data-lucide="{{ $recommendation['icon'] }}" class="h-4 w-4 shrink-0 text-gray-700"></i>
-                                    <h3 class="truncate text-sm font-semibold text-gray-900">{{ $recommendation['title'] }}</h3>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex items-center gap-2">
+                                            <h4 class="truncate text-sm font-semibold text-gray-900">{{ $recommendation['title'] }}</h4>
+                                            <span class="inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-semibold {{ $badgeClass }}">{{ $recommendation['count'] }}</span>
+                                        </div>
+                                        <p class="mt-0.5 truncate text-xs text-gray-600">{{ $recommendation['desc'] }}</p>
+                                    </div>
+                                    <a href="{{ $recommendation['href'] }}" class="inline-flex h-8 shrink-0 items-center rounded-lg border px-2.5 text-xs font-semibold {{ $recommendation['buttonStyle'] }}">
+                                        {{ $recommendation['button'] }}
+                                    </a>
                                 </div>
-                                <span class="inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-semibold {{ $badgeClass }}">{{ $recommendation['count'] }}</span>
-                            </div>
-                            <p class="mt-2 text-sm leading-6 text-gray-600">{{ $recommendation['desc'] }}</p>
-                            <a href="{{ $recommendation['href'] }}" class="mt-3 inline-flex h-9 items-center rounded-lg border px-3 text-sm font-semibold {{ $recommendation['buttonStyle'] }}">
-                                {{ $recommendation['button'] }}
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="mt-3 flex flex-wrap items-center gap-2">
+                            <span class="mr-1 text-xs font-medium text-gray-500">{{ __('admin.dashboard.automation.recommendations_next') }}</span>
+                            <a href="{{ $recommendedDemoDetailUrl }}" class="inline-flex h-8 items-center rounded-lg border border-emerald-200 bg-white px-2.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-50" title="{{ $recommendedDemoTooltip }}">
+                                <i data-lucide="database" class="mr-1.5 h-3.5 w-3.5"></i>
+                                {{ __('admin.dashboard.automation.rec_next_demo_kb') }} · KB#{{ $recommendedDemoKbId }}
                             </a>
+                            <a href="{{ route('admin.tasks.create') }}" class="inline-flex h-8 items-center rounded-lg bg-blue-600 px-2.5 text-xs font-semibold text-white hover:bg-blue-700">
+                                <i data-lucide="plus" class="mr-1.5 h-3.5 w-3.5"></i>
+                                {{ __('admin.dashboard.automation.rec_next_task') }}
+                            </a>
+                            <a href="{{ route('admin.analytics') }}" class="inline-flex h-8 items-center rounded-lg border border-gray-300 bg-white px-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-50">
+                                <i data-lucide="chart-no-axes-combined" class="mr-1.5 h-3.5 w-3.5"></i>
+                                {{ __('admin.dashboard.automation.rec_next_observe') }}
+                            </a>
+                            <span class="text-xs text-gray-400">{{ __('admin.dashboard.automation.recommendations_empty') }}</span>
                         </div>
-                    @empty
-                        <div class="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-                            <div class="flex items-center gap-2">
-                                <i data-lucide="circle-check" class="h-4 w-4 text-emerald-700"></i>
-                                <h3 class="text-sm font-semibold text-emerald-900">{{ __('admin.dashboard.automation.basic_ready') }}</h3>
+                    @endif
+                </div>
+
+                <div class="relative grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    @foreach ($flowNodes as $node)
+                        @php($stepNumber = str_pad((string) $loop->iteration, 2, '0', STR_PAD_LEFT))
+                        @php($statusClass = $statusStyles[$node['status']] ?? $statusStyles['ready'])
+                        @php($toneClass = $toneStyles[$node['tone']] ?? $toneStyles['slate'])
+                        @php($stepNumberClass = $stepNumberStyles[$node['tone']] ?? $stepNumberStyles['slate'])
+                        <article id="content-engineering-step-{{ $stepNumber }}" class="relative z-10 flex h-full min-h-[168px] scroll-mt-24 flex-col rounded-lg border border-gray-200 bg-white p-4 shadow-sm" aria-label="{{ __('admin.dashboard.automation.step_anchor', ['step' => $stepNumber, 'title' => $node['title']]) }}">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex items-center gap-3">
+                                    <span class="shrink-0 text-xl font-semibold leading-9 tracking-wide tabular-nums {{ $stepNumberClass }}">{{ $stepNumber }}</span>
+                                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg {{ $toneClass }}">
+                                        <i data-lucide="{{ $node['icon'] }}" class="h-4 w-4"></i>
+                                    </div>
+                                </div>
+                                <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold {{ $statusClass }}">
+                                    <span class="mr-1.5 h-1.5 w-1.5 rounded-full bg-current"></span>
+                                    {{ __('admin.dashboard.automation.status_'.$node['status']) }}
+                                </span>
                             </div>
-                            <p class="mt-2 text-sm leading-6 text-emerald-800">{{ __('admin.dashboard.automation.recommendations_empty') }}</p>
-                        </div>
-                    @endforelse
-                </aside>
+                            <h3 class="mt-3 text-base font-semibold text-gray-900">{{ $node['title'] }}</h3>
+                            <p class="mt-1 line-clamp-2 text-sm leading-5 text-gray-500">{{ $node['desc'] }}</p>
+                            <div class="mt-auto flex flex-wrap gap-1.5 pt-3">
+                                @foreach ($node['metrics'] as $metric)
+                                    <span class="rounded border border-gray-200 bg-gray-50 px-2 py-0.5 text-xs font-medium text-gray-600">{{ $metric }}</span>
+                                @endforeach
+                            </div>
+                            <div class="mt-2 flex flex-wrap gap-1.5">
+                                @foreach ($node['actions'] as $action)
+                                    <a href="{{ $action['href'] }}" class="inline-flex h-8 items-center rounded-lg px-2.5 text-xs font-semibold {{ ! empty($action['primary']) ? 'bg-blue-600 text-white hover:bg-blue-700' : (! empty($action['warning']) ? 'border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100' : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50') }}">
+                                        {{ $action['label'] }}
+                                    </a>
+                                @endforeach
+                            </div>
+                        </article>
+                    @endforeach
+                </div>
             </div>
         </section>
 
