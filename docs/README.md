@@ -1,6 +1,6 @@
 # GEOrank 文档入口
 
-> **演示主路径（6 点）**：网站 SEO 排查测试 → 知识库（切片/向量化）→ 拓词 → 分发（渠道/模板/提示词）→ 观测结果 → 配置。其余入口默认隐藏，可恢复。
+> **产品主路径（GEO Suite · 六大能力）**：网站 SEO/GEO 诊断 → 知识库（切片/向量化）→ 拓词 → 分发（GEOFlow：渠道/模板/提示词）→ 可信观测（API 采样）→ 配置。公司/专家/教程/方案等产品面已下线。根说明见仓库 [README.md](../README.md)。
 
 | 文档 | 说明 |
 |---|---|
@@ -14,7 +14,7 @@
 | [superpowers/specs/2026-07-24-l2-pilot-factcard-measurement.md](./superpowers/specs/2026-07-24-l2-pilot-factcard-measurement.md) | **L2 试点工程计划（栏目事实卡 + 手工答案抽样 SOP）** |
 | [superpowers/specs/2026-07-22-geo-trust-dashboard-product.md](./superpowers/specs/2026-07-22-geo-trust-dashboard-product.md) | **GEO 可信仪表盘产品文档（测量层 / 引用率可审计观测，待评审）** |
 | [superpowers/specs/2026-07-22-geo-suite-option-b-fusion-design.md](./superpowers/specs/2026-07-22-geo-suite-option-b-fusion-design.md) | **Option B 加深融合设计与实施计划（待批准）** |
-| [geo-suite.md](./geo-suite.md) | GEO Suite 全套工作流（诊断→问答→拓词→live移交→回看→事实卡→L3→可信观测） |
+| [geo-suite.md](./geo-suite.md) | GEO Suite 联调（诊断→知识库→拓词→分发→观测；端口与环境变量） |
 | [本地部署操作手册.md](./本地部署操作手册.md) | Windows 本机演示模式与 Docker 完整部署（逐步操作） |
 | [database-migrations.md](./database-migrations.md) | 数据库迁移与启动链路 |
 | [public-content-boundary.md](./public-content-boundary.md) | 开源公开内容边界 |

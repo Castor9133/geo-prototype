@@ -1,218 +1,96 @@
 # GEOrank
 
-简体中文 | [English](README.en.md)
+**GEOrank** 是面向 **GEO / 内容工程** 的开源工作台（**GEO Suite**）：把「诊断 → 知识库 → 拓词 → 分发 → 观测 → 配置」收束到同一条主路径。  
+它不是旧版「问答 / 方案生成站」，也不是公司库或专家频道门户。
 
-**[在线体验官方演示：GEORankHub](https://www.georankhub.com/)**
+本地主入口：`http://localhost:3009/suite`
 
-[GitHub 仓库](https://github.com/yaojingang/GEORank)
+---
 
-GEOrank 是一个面向 GEO（生成式引擎优化）的开源工作台，帮助团队诊断网站和品牌在 AI 搜索中的可见性，并把诊断结果转化为问答、方案、拓词、结构化工具和可持续管理的内容资产。
+## 六大能力
 
-你可以把它作为团队内部的 GEO 工具箱，用于自己的业务诊断、问答和分析，也可以私有化部署并做二次开发，为客户提供相应的 GEO 工具与服务。它适合 GEO 研究者、SEO 与内容团队、品牌增长团队、AI 搜索产品团队和开发者。
+| # | 能力 | 说明 |
+|---|---|---|
+| 1 | **网站 SEO/GEO 诊断排查** | Schema、Meta、结构与内容就绪信号；用于发现问题，**不是** AI 答案「引用率」 |
+| 2 | **内容切片 · 向量化 · 知识库** | 事实卡 / 切片入库；演示包：**DJI Mini 5 Pro KB** |
+| 3 | **GEO 拓词 / 提示词扩词** | 从业务词扩展问题词、场景词与提示词资产 |
+| 4 | **多渠道分发（GEOFlow）** | 渠道 + 模板 + 提示词扩写；与 GEOFlow 联调移交与回看 |
+| 5 | **可信观测** | **API 采样**探针（提及/引用等可审计样本）；**≠** 网页抓取，**≠** 诊断里的 citation/背书就绪 |
+| 6 | **配置页** | Suite / API / 联调与模块开关 |
 
-## 官方演示
+**Suite 路径**：诊断 → 知识库 → 拓词 → 分发 → 观测  
 
-[GEORankHub](https://www.georankhub.com/) 是 GEOrank 的官方在线演示与 GEO 公益研究平台。你可以直接体验网站诊断、GEO 问答、行动方案、关键词拓展、结构化工具和教程等核心能力，并浏览相关开源文档与研究资源。
+**已下线产品面**：公司目录、专家频道、教程频道、方案生成等（入口默认隐藏或重定向到 Suite）。
 
-## 为什么需要 GEOrank？
+---
 
-搜索正在从传统结果页迁移到 AI 答案。用户不再只是在搜索引擎里点链接，而是直接向 ChatGPT、Claude、Perplexity、Gemini 等 AI 系统提问。
+## 本地快速启动
 
-这带来了一组新问题：
-
-- AI 是否能准确理解你的公司、产品和专业能力？
-- 官网内容是否具备被 AI 摘要、引用和推荐的结构？
-- Schema、页面结构、Meta 信息、引用信号和内容可读性，哪些应该优先优化？
-- 团队如何把一次网站诊断转化为可执行的 30/60/90 天行动方案？
-- 关键词、问答、教程、工具和专家资料如何沉淀成可复用资产？
-- 开源项目如何支持用户使用自己的 API Key，降低平台方运行成本？
-
-GEOrank 希望把这些分散动作收束到一个清晰的工作台中：先诊断，再提问，再生成方案，再沉淀关键词、结构化数据和知识库。
-
-开源版默认会在 `/` 展示内置的 GEO 工作台首页，原公司列表入口保留在 `/companies`；你也可以在后台系统设置中上传或切换自己的自定义首页。
-
-## 使用场景：你可以怎么用 GEOrank
-
-- **搭建团队内部的 GEO 工具箱**：把网站诊断、AI 问答、行动方案、关键词拓展和结构化内容工具放进同一个工作台，供增长、SEO、内容和产品团队共同使用。
-- **服务自己的业务与品牌**：分析官网、产品页和品牌内容在 AI 搜索中的可见性，持续产出诊断报告、优化建议、内容选题和 30/60/90 天行动方案。
-- **为客户提供 GEO 服务**：咨询公司、营销机构和独立顾问可以用它完成客户诊断、需求问答、方案分析、关键词规划与内容工具支持，覆盖售前评估、项目交付和长期顾问服务。
-- **私有化部署 GEO 能力**：将完整项目部署到自己的服务器，配置自有模型 API、数据库、统计代码和访问策略，让业务数据、密钥与客户记录留在自己管理的环境中。
-- **基于开源代码做二次开发**：按业务需要扩展首页、频道、诊断规则、模型服务和工具模块，做成面向内部团队、特定行业或客户群体的 GEO 产品。
-- **建设 GEO 资源与知识平台**：整理公司、工具、服务商、专家、教程和案例，形成对外开放的行业导航、工具集合，或团队内部持续更新的 GEO 知识库。
-
-## GEOrank 的工作流
-
-1. **发现**：收录和管理 GEO 相关公司、工具、专家、教程和案例。
-2. **诊断**：检查网站结构、Schema、Meta、内容可读性和引用信号。
-3. **问答**：围绕 GEO、AI 搜索和品牌可见性进行结构化问答。
-4. **规划**：把诊断结果和业务目标转化为 GEO 行动方案。
-5. **拓展**：生成关键词、问题词、场景词和内容选题资产。
-6. **结构化**：生成 JSON-LD、llms.txt、标题和知识库草稿。
-7. **管理**：通过后台管理模块、API、内容、自定义首页和统计代码。
-
-## 核心功能
-
-| 模块 | 说明 |
-|---|---|
-| 公司目录 | 收录和管理 GEO 相关公司、工具、服务商与案例，支持提交、审核、发布和分类 |
-| 网站诊断 | 检查 Schema、页面结构、Meta 信息、内容可读性、引用信号和 AI 搜索可见性 |
-| AI 问答 | 围绕 GEO、AI 搜索和品牌可见性生成结构化回答，并结合公司与诊断上下文 |
-| GEO 方案 | 根据目标、网站、资源和限制条件，生成可执行的 30/60/90 天优化计划 |
-| 拓词工作台 | 从业务词扩展问题词、场景词、商业意图词和推荐型关键词资产 |
-| GEO 工具 | 提供 JSON-LD 生成器、llms.txt 生成器、AI 友好度评分、GEO 标题生成器和知识库生成器 |
-| 专家频道 | 展示 5 位 GEO 与 AI 相关专家的公开资料、实践方向和详情介绍 |
-| 教程频道 | 沉淀 GEO 基础知识、评估治理、内容结构、技术标记和实战案例 |
-| 管理后台 | 管理公司、诊断、问答、拓词、专家、教程、用户、系统设置、API 池、模块开关和自定义首页 |
-
-## 项目亮点
-
-- **围绕 GEO 全流程设计**：覆盖诊断、问答、方案、拓词、工具和后台管理的一套工作流。
-- **自托管优先**：用户可以在自己的服务器运行系统，自己配置数据库、模型 API 和统计代码。
-- **支持自定义 API 策略**：后台支持 API 池、Provider 测试、轮询和故障转移，也支持用户自定义 Key 的产品方向。
-- **内容和代码分离**：公开仓库只保留代码、配置模板、demo 数据和专家频道内置公开资料；后台维护的私有内容、用户数据和运行时资产不随开源仓库发布。
-- **前后台一体**：前台提供频道和工具体验，后台提供内容、模块、首页、API 和用户管理能力。
-- **适合二次开发**：采用前后端分离和 monorepo 结构，方便开发者扩展频道、工具、模型和部署方式。
-
-## 技术架构
-
-GEOrank 采用 monorepo 架构，当前包含静态前台、Next.js 2.0 迁移代码、FastAPI 后端和共享包。
-
-主要技术栈：
-
-- **前台**：当前 3009 静态前台作为主要体验版本，同时保留 Next.js App Router 迁移方向。
-- **后台**：Next.js 管理台，包含公司、诊断、问答、拓词、专家、教程、用户和系统设置管理。
-- **后端**：FastAPI、SQLAlchemy、Alembic、Celery。
-- **数据服务**：PostgreSQL、Redis、Qdrant、Neo4j、MinIO。
-- **AI 层**：兼容 OpenAI 格式的 Chat 与 Embedding Provider，支持后台配置 API 池。
-- **工程化**：pnpm workspace、Turborepo、OpenAPI SDK、Docker Compose。
-
-```mermaid
-flowchart TD
-  A["用户提交公司或网站 URL"] --> B["页面抓取与内容解析"]
-  B --> C["结构化资料抽取"]
-  C --> D["公司库与内容资产"]
-  C --> E["向量检索与知识图谱"]
-  B --> F["GEO 诊断规则"]
-  F --> G["诊断报告"]
-  D --> H["AI 问答"]
-  E --> H
-  G --> I["GEO 行动方案"]
-  H --> I
-  I --> J["拓词、工具和知识库沉淀"]
-```
-
-## 目录结构
-
-```text
-GEOrank/
-  apps/
-    web/          # Next.js 前台
-    admin/        # Next.js 管理台
-  packages/
-    api-sdk/      # OpenAPI 生成的 TypeScript SDK
-    auth/         # 会话与页面守卫
-    i18n/         # 多语言路由与字典
-    ui/           # 前后台共享 UI
-  backend/        # FastAPI / Celery / SQLAlchemy
-  cli/            # 命令行工具
-  dist/           # 当前 3009 静态前台与后台页面
-  infra/          # Nginx 等基础设施配置
-  docs/           # 项目文档
-```
-
-## GEO Suite（与 GEOFlow 联调）
-
-GEORank 可与旁路的 [GEOFlow](https://github.com/yaojingang/GEOFlow) 组成 **GEO Suite**：诊断 / 问答 / 拓词完成后一键移交内容任务。详见 [docs/geo-suite.md](docs/geo-suite.md)。
+推荐一键拉起 **GEORank + GEOFlow**（Suite 联调）：
 
 ```powershell
+# 兄弟目录需存在 ..\GEOFlow（或本仓 geoflow 分支检出的 Flow 工程）
 .\scripts\start-geo-suite.ps1
-# 打开 http://localhost:3009/suite
 ```
 
-## 本地运行
+| 服务 | 常见地址 |
+|---|---|
+| GEORank 前台 | http://localhost:3009/ |
+| **GEO Suite** | http://localhost:3009/suite |
+| GEORank API | http://localhost:8000/ |
+| GEOFlow | http://localhost:18080/geo_admin |
 
-> 首次运行前，请先复制环境变量模板，并填入自己的密钥。
+请使用 `localhost`（勿混用 `127.0.0.1`，否则 GEOFlow 可能 419）。
 
-```bash
-pnpm install
-cp .env.example .env
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+仅跑 GEORank（无 Flow）时，可按 [docs/本地部署操作手册.md](docs/本地部署操作手册.md) 使用 Compose / `pnpm` 常规流程。首次请复制 `.env.example` → `.env`，自行配置模型 API，**勿提交 `.env`**。
 
-# 前台应用
-pnpm dev:web
+---
 
-# 管理后台
-pnpm dev:admin
+## 仓库结构（Rank 与 Flow）
+
+```text
+GEOrank/                 # 本仓：诊断 / Suite 前台 / 管理 / FastAPI 等
+  apps/                  # Next.js 前台与管理台（迁移中）
+  backend/               # FastAPI · Celery · SQLAlchemy
+  dist/                  # 当前主体验：3009 静态前台（含 /suite）
+  docs/                  # 文档与演示包
+  scripts/               # start-geo-suite.ps1 等
 ```
 
-Compose 会先运行一次性 `migrate` 服务。数据库到达 Alembic head 后，API 与异步任务服务才会启动；`docker compose ps` 中 `migrate` 显示 `Exited (0)` 属于正常状态。升级、旧数据库恢复与故障处理见 [数据库迁移与启动](docs/database-migrations.md)。
+- **GEORank**：诊断、知识库演示、拓词、可信观测、配置与 Suite 壳。
+- **GEOFlow**：多渠道内容生产与分发（渠道 / 模板 / 扩写）；独立工程，与 Rank SSO / 回调联调。
+- **geo-prototype**：日常推送仓。`main` 为 Rank/Suite；**GEOFlow 相关代码在 `geoflow` 分支**（勿与 `main` 产品面混淆）。
 
-涉及 AI 的功能需要配置兼容 OpenAI 格式的模型 API。你可以在 `.env` 中配置，也可以在后端运行后进入后台系统设置里配置 API 池。
+技术栈概要：静态前台（3009）+ FastAPI（8000）+ Compose（Postgres / Redis / Qdrant 等）+ 可选 GEOFlow（18080）。
 
-## 生产网关与 TLS
+---
 
-Compose 中的 Traefik 只使用只读配置目录提供的 file provider。Traefik、`frontend` 和 `api` 通过共享 Compose 网络通信，上游地址使用稳定的服务名；该容器没有 Docker socket 权限，Dashboard 也处于关闭状态。
+## 文档与演示包
 
-HTTP 和 HTTPS 入口端口可分别通过 `GEORANK_HTTP_PORT`、`GEORANK_HTTPS_PORT` 调整。前端、API、数据库、缓存、向量库、图数据库和对象存储只接入 Compose 内部网络，不发布宿主机直连端口；`docker-compose.dev.yml` 将静态前端和 API 绑定到 `127.0.0.1`，端口可用 `GEORANK_FRONTEND_PORT` 与 `GEORANK_API_PORT` 调整，供本地页面和 Next.js 开发使用。仓库模板提供 HTTP 路由，并预留 `websecure` 的 443 入口；正式启用 HTTPS 前，请配置受信任证书、证书解析器和 TLS router，或在外部负载均衡器完成 TLS termination。内置 ACME 示例把状态写入独立 volume 的 `/var/lib/traefik/acme.json`，只读配置目录保持不变。当前 API 使用普通 HTTP 与 SSE，没有 WebSocket endpoint；`/api` 与 `/api/` 路径会直接转发到 API 服务。
+总入口：**[docs/README.md](docs/README.md)**
 
-## API 与模型配置
+| 文档 | 用途 |
+|---|---|
+| [docs/content-engineering-sop.md](docs/content-engineering-sop.md) | 内容工程 SOP（双层方法 → Suite 六能力） |
+| [docs/geo-suite.md](docs/geo-suite.md) | Suite 联调、端口与环境变量 |
+| [docs/pilot-demo/cn-product-demo-v2/](docs/pilot-demo/cn-product-demo-v2/) | **推荐演示包**：DJI Mini 5 Pro 事实卡 / 提示词 / Flow KB |
 
-GEOrank 支持兼容 OpenAI 格式的模型服务。后台系统设置中可以配置多个 Provider，并支持：
+领导汇报走查见 [docs/GEO-Suite-leadership-demo-guide.md](docs/GEO-Suite-leadership-demo-guide.md)。
 
-- API Key 加密保存。
-- Base URL 和模型名称配置。
-- Provider 连通性测试。
-- API 轮询与故障转移策略。
-- 额度控制和用户自定义 Key 的产品方向。
+---
 
-公开版本不会包含任何真实 API Key。你需要使用自己的模型服务，并自行承担成本、隐私和合规责任。
+## 口径注意
 
-## 开源边界
+| 说法 | 正确理解 |
+|---|---|
+| 诊断「citation / 背书就绪」 | 页面外链与结构就绪信号，**不是** AI 答案引用率 |
+| 可信观测 | 对答案引擎做 **API 采样**，可审计；不是整站爬取 |
+| 爬虫 PV / 页面分 | 代理指标，**不得**改称为「引用率」 |
 
-本仓库只包含 GEOrank 本地运行所需的产品代码、工程结构、配置模板和 demo 数据。
+软件不保证任何模型一定提及或推荐某个品牌。
 
-详细的纳入范围、排除项、自动检查与发布清单见 [公开内容边界](docs/public-content-boundary.md)。专家 fixture、首页 canonical source 和更新流程见 [公共数据与内置首页](docs/public-data.md)。提交或发布前请运行：
-
-```bash
-pnpm public:check
-```
-
-版本策略、CI、容器镜像固定与完整发布门禁见 [发布工程](docs/release-engineering.md)。发布候选还应运行：
-
-```bash
-pnpm install --frozen-lockfile
-pnpm release:check
-```
-
-本仓库不包含：
-
-- 真实 API Key。
-- 生产数据库、向量库、图谱数据和对象存储文件。
-- 未公开授权的专家资料或后台维护的私有专家内容包。
-- 真实教程内容。
-- 用户问答历史。
-- 客户方案和诊断记录。
-- 拓词词包和商业数据。
-- 用户在后台上传的自定义首页运行时版本（仓库仅包含开源版内置默认首页）。
-
-如果你要公开部署，请先确认自己的数据、模型服务和统计代码符合当地法律法规和平台政策。
-
-## 路线图
-
-- 完成 Next.js 2.0 前台和静态前台体验对齐。
-- 持续完善 API 池、额度策略和自定义 Key 模式。
-- 将教程、公司和扩展专家数据进一步拆分为公开 demo 数据和私有内容包。
-- 增加更多 GEO 工具和知识库生成能力。
-- 补充部署文档、截图和贡献指南。
-
-## 贡献方式
-
-欢迎围绕 GEO 诊断规则、前台体验、后台管理、AI 工具、部署文档和 demo 数据提交改进。提交前请确认不包含真实 API Key、私有数据或未经授权的内容资产。
-
-## 免责声明
-
-GEOrank 是一个面向生成式引擎优化的研究与工程项目，用于帮助团队分析和改善 AI 搜索可见性。它不出售排名，不保证任何模型一定推荐某个品牌，也不代表任何 AI 搜索平台。
+---
 
 ## License
 
-软件代码采用 Apache-2.0。专家资料、姓名、肖像、品牌与内置首页内容适用额外的权利边界，详见 [DATA_LICENSE.md](DATA_LICENSE.md)。
+软件代码采用 **Apache-2.0**。内置首页等内容的额外权利边界见 [DATA_LICENSE.md](DATA_LICENSE.md)。
