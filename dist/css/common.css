@@ -4,20 +4,15 @@
  * 版本: 1.0.0
  */
 
+@import url("./design-tokens.css");
+
 /* ===== 基础重置与变量 ===== */
 :root {
-    /* Soft Neubrutalism 色板 */
-    --bg: #F9F7F2;
-    --bg-elevated: #FFFFFF;
-    --ink: #1A1A1A;
-    --ink-muted: #5C5A55;
+    /* Soft Neubrutalism 色板（token 见 design-tokens.css；此处补页面专用） */
     --accent-blue: #8FB8E8;
     --accent-orange: #E8A07A;
     --accent-green: #A8C5A0;
     --accent-lavender: #C4B0E0;
-    --border: #1A1A1A;
-    --border-width: 2px;
-    --shadow-hard: 4px 4px 0 var(--border);
     --font-display: "Noto Serif SC", "Songti SC", "SimSun", serif;
     --font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
 
@@ -57,12 +52,6 @@
     --radius-xl: 0.75rem;
     --radius-2xl: 0.75rem;
     --radius-full: 9999px;
-
-    /* 阴影变量：硬描边优先，弱化柔和阴影 */
-    --shadow-sm: none;
-    --shadow-md: 4px 4px 0 var(--border);
-    --shadow-lg: 4px 4px 0 var(--border);
-    --shadow-xl: 4px 4px 0 var(--border);
 
     /* 过渡变量 */
     --transition-fast: 150ms ease;
@@ -134,10 +123,11 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ===== 通用组件样式 ===== */
 
-/* 玻璃态效果：改为奶油实底 + 粗描边，少 blur */
+/* 玻璃态效果：改为奶油实底 + 粗描边 + 硬阴影，无 blur */
 .glass-card {
     background: var(--bg-elevated);
     border: var(--border-width) solid var(--border);
+    box-shadow: var(--shadow-hard);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
 }
@@ -203,23 +193,25 @@ h1, h2, h3, h4, h5, h6 {
 
 .btn-primary:hover {
     opacity: 1;
-    transform: translate(-2px, -2px);
-    box-shadow: 6px 6px 0 var(--border);
+    transform: translate(1px, 1px);
+    box-shadow: var(--shadow-hard-press);
 }
 
 .btn-primary:active {
-    transform: translate(0, 0);
-    box-shadow: var(--shadow-hard);
+    transform: translate(2px, 2px);
+    box-shadow: none;
 }
 
 .btn-outline {
     background-color: var(--bg-elevated);
     border: var(--border-width) solid var(--border);
     color: var(--color-on-surface);
+    box-shadow: var(--shadow-hard);
 }
 
 .btn-outline:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    transform: translate(1px, 1px);
+    box-shadow: var(--shadow-hard-press);
 }
 
 /* 标签样式 */
@@ -254,14 +246,16 @@ h1, h2, h3, h4, h5, h6 {
 
 /* 卡片样式 */
 .card {
-    background: white;
+    background: var(--bg-elevated);
     border-radius: var(--radius-xl);
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    transition: all var(--transition-normal);
+    border: var(--border-width) solid var(--border);
+    box-shadow: var(--shadow-hard);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .card:hover {
-    box-shadow: var(--shadow-lg);
+    transform: translate(1px, 1px);
+    box-shadow: var(--shadow-hard-press);
 }
 
 /* ===== 隐藏滚动条 ===== */
@@ -426,11 +420,11 @@ textarea:focus {
     right: 0;
     left: 0;
     z-index: 50;
-    border-bottom: 1px solid #f1f5f9;
-    background: rgba(255, 255, 255, 0.92);
-    box-shadow: 0 6px 20px rgba(25, 27, 35, 0.04);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    border-bottom: var(--border-width) solid var(--border);
+    background: var(--bg);
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
 }
 
 #main-nav > div:first-child {
@@ -612,8 +606,8 @@ textarea:focus {
     border-color: var(--border);
     background: var(--bg-elevated);
     color: var(--ink);
-    box-shadow: var(--shadow-hard);
-    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-hard-press);
+    transform: translate(1px, 1px);
 }
 
 .header-profile-button:active,

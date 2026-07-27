@@ -19,7 +19,8 @@
     --accent-mark: #E07070;
     --border: #1A1A1A;
     --border-width: 2px;
-    --shadow-hard: 4px 4px 0 var(--border);
+    --shadow-hard: 4px 4px 0 #1A1A1A;
+    --shadow-hard-press: 2px 2px 0 #1A1A1A;
     --radius: 12px;
     --radius-sm: 8px;
     --font-display: "Noto Serif SC", "Songti SC", "SimSun", serif;
@@ -203,7 +204,7 @@ body.bg-white {
     border: var(--border-width) solid var(--border) !important;
     border-radius: var(--radius) !important;
     background: var(--bg-elevated) !important;
-    box-shadow: none !important;
+    box-shadow: var(--shadow-hard) !important;
     backdrop-filter: none !important;
 }
 
@@ -468,7 +469,7 @@ body.bg-white {
 #recommendations-list .rounded-xl {
     border: var(--border-width) solid var(--border) !important;
     border-radius: var(--radius) !important;
-    box-shadow: none !important;
+    box-shadow: var(--shadow-hard) !important;
 }
 
 #diagnostic-module-sections section > div .rounded-full,
@@ -584,15 +585,15 @@ body.bg-white {
 
 .shadow-card:hover,
 .diag-card--interactive:hover {
-    box-shadow: var(--shadow-hard);
-    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-hard-press) !important;
+    transform: translate(1px, 1px);
 }
 
 /* Mobile search stack */
 @media (max-width: 639px) {
     .diag-search {
         flex-direction: column;
-        box-shadow: none;
+        box-shadow: var(--shadow-hard);
     }
 
     #diagnose-btn {

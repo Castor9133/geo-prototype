@@ -1,4 +1,4 @@
-/* ===== GEORank Soft Neubrutalism — 奶油底 · 粗描边 · 分区色块 ===== */
+﻿/* ===== GEORank Soft Neubrutalism — 奶油底 · 粗描边 · 分区色块 ===== */
 
 /* ---- 变量 ---- */
 :root {
@@ -44,10 +44,11 @@
   --header-h:   64px;
   --container:  1120px;
 
-  --shadow-hard:  4px 4px 0 var(--border);
+  --shadow-hard:  4px 4px 0 #1A1A1A;
+  --shadow-hard-press: 2px 2px 0 #1A1A1A;
   --shadow-nav:   none;
-  --shadow-card:  none;
-  --shadow-hover: 4px 4px 0 var(--border);
+  --shadow-card:  var(--shadow-hard);
+  --shadow-hover: var(--shadow-hard-press);
   --shadow-blue:  4px 4px 0 var(--border);
 
   --font-head: "Noto Serif SC", "Songti SC", "SimSun", serif;
@@ -105,18 +106,18 @@ ul, ol { list-style: none; }
   box-shadow: var(--shadow-hard);
 }
 .btn-primary:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0 var(--border);
+  transform: translate(1px, 1px);
+  box-shadow: var(--shadow-hard-press);
 }
 
 .btn-ghost {
   background: var(--bg-elevated);
   color: var(--ink);
-  box-shadow: none;
+  box-shadow: var(--shadow-hard);
 }
 .btn-ghost:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: var(--shadow-hard);
+  transform: translate(1px, 1px);
+  box-shadow: var(--shadow-hard-press);
 }
 
 .btn-primary-invert {
@@ -133,7 +134,7 @@ ul, ol { list-style: none; }
   border: var(--border-width) solid var(--border);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-.btn-primary-invert:hover { transform: translate(-2px, -2px); box-shadow: var(--shadow-hard); }
+.btn-primary-invert:hover { transform: translate(1px, 1px); box-shadow: var(--shadow-hard-press); }
 
 .btn-outline-invert {
   background: transparent;
@@ -516,7 +517,7 @@ ul, ol { list-style: none; }
   border-radius: var(--radius);
   background: var(--bg-elevated);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: none;
+  box-shadow: var(--shadow-hard);
 }
 .platform-card--featured {
   grid-column: auto;
@@ -526,8 +527,8 @@ ul, ol { list-style: none; }
 .platform-card--featured .platform-icon { margin-bottom: 0; }
 .platform-card--featured .platform-card-action { margin-top: 0; margin-left: 0; }
 .platform-card:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: var(--shadow-hard);
+  transform: translate(1px, 1px);
+  box-shadow: var(--shadow-hard-press);
   border-color: var(--border);
 }
 /* 六色块：整卡浅色底 + 饱和色头，一眼分区 */

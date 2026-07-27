@@ -13,7 +13,8 @@
     --accent-lavender: #C4B0E0;
     --border: #1A1A1A;
     --border-width: 2px;
-    --shadow-hard: 4px 4px 0 var(--border);
+    --shadow-hard: 4px 4px 0 #1A1A1A;
+    --shadow-hard-press: 2px 2px 0 #1A1A1A;
     --radius: 12px;
     --font-display: "Noto Serif SC", "Songti SC", "SimSun", serif;
 }
@@ -134,7 +135,7 @@ body.bg-white {
     border: var(--border-width) solid var(--border) !important;
     border-radius: var(--radius) !important;
     background: var(--bg-elevated) !important;
-    box-shadow: none;
+    box-shadow: var(--shadow-hard);
 }
 
 .kw-profile-card {
@@ -152,6 +153,7 @@ body.bg-white {
     border-radius: 8px;
     background: var(--bg);
     padding: 1rem;
+    box-shadow: var(--shadow-hard);
 }
 
 .kw-audience-chip {
@@ -199,8 +201,8 @@ body.bg-white {
 }
 
 .dim-card:hover {
-    transform: translate(-2px, -2px);
-    box-shadow: var(--shadow-hard);
+    transform: translate(1px, 1px);
+    box-shadow: var(--shadow-hard-press);
 }
 
 .dim-card-header {

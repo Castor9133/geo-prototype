@@ -6,7 +6,8 @@
   --suite-line: #1A1A1A;
   --suite-border-width: 2px;
   --suite-radius: 12px;
-  --suite-shadow: 4px 4px 0 var(--suite-line);
+  --suite-shadow: 4px 4px 0 #1A1A1A;
+  --suite-shadow-press: 2px 2px 0 #1A1A1A;
   --suite-blue: #8FB8E8;
   --suite-blue-deep: #7BA3D4;
   --suite-orange: #E8A07A;
@@ -119,8 +120,8 @@
 }
 
 .suite-btn:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: var(--suite-shadow);
+  transform: translate(1px, 1px);
+  box-shadow: var(--suite-shadow-press);
 }
 
 .suite-btn--primary {
@@ -131,6 +132,7 @@
 
 .suite-btn--ghost {
   background: var(--suite-paper);
+  box-shadow: var(--suite-shadow);
 }
 
 .suite-btn--tiny {
@@ -149,6 +151,7 @@
   font-weight: 700;
   background: var(--suite-paper);
   border: var(--suite-border-width) solid var(--suite-line);
+  box-shadow: var(--suite-shadow);
   animation: suite-rise 680ms 150ms ease both;
 }
 
@@ -212,11 +215,13 @@
   font-weight: 700;
   color: var(--suite-ink);
   cursor: pointer;
+  box-shadow: var(--suite-shadow);
+  transition: transform 150ms ease, box-shadow 150ms ease;
 }
 
 .suite-reset-btn:hover {
-  box-shadow: var(--suite-shadow);
-  transform: translate(-1px, -1px);
+  box-shadow: var(--suite-shadow-press);
+  transform: translate(1px, 1px);
 }
 
 .suite-progress {
@@ -406,6 +411,7 @@
   border-radius: 8px;
   background: var(--suite-bg);
   border: var(--suite-border-width) solid var(--suite-line);
+  box-shadow: var(--suite-shadow);
 }
 
 .suite-side-label {
@@ -555,12 +561,13 @@
   border: var(--suite-border-width) solid var(--suite-line);
   font-size: 0.875rem;
   font-weight: 700;
+  box-shadow: var(--suite-shadow);
   transition: transform 150ms ease, box-shadow 150ms ease;
 }
 
 .suite-link-list a:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: var(--suite-shadow);
+  transform: translate(1px, 1px);
+  box-shadow: var(--suite-shadow-press);
 }
 
 .suite-note {
@@ -671,7 +678,7 @@
 
 .suite-badge--accent {
   background: var(--suite-paper);
-  box-shadow: 2px 2px 0 var(--suite-line);
+  box-shadow: var(--suite-shadow);
 }
 
 .suite-extra__meta--muted {

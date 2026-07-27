@@ -1,0 +1,68 @@
+/**
+ * Soft Neubrutalism — shared design tokens (GEORank + GEOFlow)
+ * 立体 = 粗黑描边 + 硬偏移投影（无 blur）
+ *
+ * Spec:
+ *   border: 2px solid #1A1A1A
+ *   rest:   box-shadow: 4px 4px 0 #1A1A1A
+ *   press:  translate(1px,1px) + box-shadow: 2px 2px 0 #1A1A1A
+ */
+
+:root {
+  --neu-bg: #F9F7F2;
+  --neu-paper: #FFFFFF;
+  --neu-ink: #1A1A1A;
+  --neu-muted: #5C5A55;
+  --neu-blue: #8FB8E8;
+  --neu-orange: #E8A07A;
+  --neu-green: #A8C5A0;
+  --neu-lavender: #C4B0E0;
+  --neu-sand: #EDE6D9;
+
+  --neu-border: #1A1A1A;
+  --neu-border-width: 2px;
+  --neu-radius: 12px;
+  --neu-radius-sm: 8px;
+
+  /* 统一一档硬阴影 */
+  --neu-shadow: 4px 4px 0 #1A1A1A;
+  --neu-shadow-press: 2px 2px 0 #1A1A1A;
+
+  /* 兼容别名（各页已有变量名） */
+  --bg: var(--neu-bg);
+  --bg-elevated: var(--neu-paper);
+  --ink: var(--neu-ink);
+  --ink-muted: var(--neu-muted);
+  --border: var(--neu-border);
+  --border-width: var(--neu-border-width);
+  --shadow-hard: var(--neu-shadow);
+  --shadow-hard-press: var(--neu-shadow-press);
+  --shadow-card: var(--neu-shadow);
+  --shadow-hover: var(--neu-shadow-press);
+  --shadow-sm: none;
+  --shadow-md: var(--neu-shadow);
+  --shadow-lg: var(--neu-shadow);
+  --shadow-xl: var(--neu-shadow);
+}
+
+/* 可复用立体面 */
+.neu-elevated {
+  border: var(--neu-border-width) solid var(--neu-border) !important;
+  box-shadow: var(--neu-shadow) !important;
+  border-radius: var(--neu-radius);
+  background: var(--neu-paper);
+}
+
+.neu-elevated--interactive {
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.neu-elevated--interactive:hover {
+  transform: translate(1px, 1px);
+  box-shadow: var(--neu-shadow-press) !important;
+}
+
+.neu-elevated--interactive:active {
+  transform: translate(2px, 2px);
+  box-shadow: none !important;
+}
