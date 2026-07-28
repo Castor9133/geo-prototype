@@ -1,22 +1,23 @@
+@import url("./design-tokens.css");
+
 :root {
-  --suite-bg: #F9F7F2;
-  --suite-ink: #1A1A1A;
-  --suite-muted: #5C5A55;
-  --suite-paper: #FFFFFF;
-  --suite-line: #1A1A1A;
-  --suite-border-width: 2px;
-  --suite-radius: 12px;
-  --suite-shadow: 4px 4px 0 #1A1A1A;
-  --suite-shadow-press: 2px 2px 0 #1A1A1A;
-  --suite-blue: #8FB8E8;
+  --suite-bg: var(--neu-bg, #F9F7F2);
+  --suite-ink: var(--neu-ink, #1A1A1A);
+  --suite-muted: var(--neu-muted, #5C5A55);
+  --suite-paper: var(--neu-paper, #FFFFFF);
+  --suite-line: var(--neu-border, #1A1A1A);
+  --suite-border-width: var(--neu-border-width, 2px);
+  --suite-radius: var(--neu-radius, 12px);
+  --suite-shadow: var(--neu-shadow, 4px 4px 0 #1A1A1A);
+  --suite-shadow-press: var(--neu-shadow-press, 2px 2px 0 #1A1A1A);
+  --suite-blue: var(--neu-blue, #8FB8E8);
   --suite-blue-deep: #7BA3D4;
-  --suite-orange: #E8A07A;
-  --suite-green: #A8C5A0;
-  --suite-lavender: #C4B0E0;
-  --suite-sand: #EDE6D9;
+  --suite-orange: var(--neu-orange, #E8A07A);
+  --suite-green: var(--neu-green, #A8C5A0);
+  --suite-lavender: var(--neu-lavender, #C4B0E0);
+  --suite-sand: var(--neu-sand, #EDE6D9);
   --suite-moss: #1A1A1A;
   --suite-leaf: #8FB8E8;
-  --suite-sand: #F9F7F2;
   --suite-glow: #8FB8E8;
   --font-display: "Noto Serif SC", "Songti SC", "SimSun", serif;
   --font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", Manrope, sans-serif;
@@ -32,7 +33,7 @@
 .suite-hero {
   position: relative;
   overflow: hidden;
-  padding: 6.5rem 1.25rem 1.75rem;
+  padding: 6.5rem 1.5rem 1.75rem;
 }
 
 .suite-hero__grid {
@@ -41,7 +42,7 @@
 
 .suite-hero__inner {
   position: relative;
-  max-width: 72rem;
+  max-width: 70rem;
   margin: 0 auto;
 }
 
@@ -166,7 +167,7 @@
 }
 
 .suite-workflow {
-  max-width: 72rem;
+  max-width: 70rem;
   margin: 0 auto;
   padding: 0 1.25rem 3rem;
 }
@@ -492,7 +493,7 @@
 }
 
 .suite-panels {
-  max-width: 72rem;
+  max-width: 70rem;
   margin: 0 auto;
   padding: 0 1.25rem 4.5rem;
   display: grid;
@@ -762,3 +763,32 @@
   font-size: 0.78rem;
   color: var(--suite-ink);
 }
+
+@media (max-width: 960px) {
+  .suite-hero {
+    padding: 5.25rem 1rem 1.25rem;
+  }
+
+  .suite-stepper,
+  .suite-steps,
+  [data-suite-stepper] {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+  }
+
+  .suite-cta-row,
+  .suite-wf-next__actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.55rem;
+  }
+
+  .suite-cta-row .btn,
+  .suite-wf-next__actions a {
+    width: 100%;
+    justify-content: center;
+  }
+}
+

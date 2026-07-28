@@ -6,7 +6,7 @@
 /* ===== 页面导航首帧 ===== */
 html,
 body {
-    background: #f8fafc;
+    background: #F8F7F2;
 }
 
 /* 支持时保留上一页画面，直到下一页完成首次绘制。 */
@@ -45,12 +45,12 @@ body {
 
 /* JS 注入导航内容前先占住后台外壳，避免顶栏出现时推动正文。 */
 #admin-sidebar {
-    background: #fff;
+    background: #FFFFFF;
 }
 
 #admin-topbar {
     min-height: 4rem;
-    background: #fff;
+    background: #FFFFFF;
 }
 
 body.admin-preview-open {
@@ -123,14 +123,190 @@ body.admin-preview-open {
 /* ===== 统计卡片 ===== */
 .stat-card {
     background: #fff;
-    border: 1px solid #f1f5f9;
-    border-radius: 0.75rem;
-    padding: 1.5rem;
-    transition: box-shadow 0.3s ease;
+    border: 1px solid rgba(26, 26, 26, 0.14);
+    border-radius: 12px;
+    padding: 1.15rem 1.25rem;
+    box-shadow: 0 6px 22px rgba(26, 26, 26, 0.08);
+    transition: box-shadow 0.3s ease, border-color 0.2s ease;
 }
 
 .stat-card:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    box-shadow: 0 8px 26px rgba(26, 26, 26, 0.1);
+    border-color: #B7C9E8;
+}
+
+.admin-page,
+.admin-layout,
+.admin-main {
+    background: #F8F7F2 !important;
+}
+
+.admin-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    text-align: center;
+    padding: 2.5rem 1.25rem;
+    min-height: 14rem;
+}
+
+.admin-empty__icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    background: #E8F1FF;
+    color: #0052D9;
+}
+
+.admin-empty__title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 750;
+    color: #1A1A1A;
+}
+
+.admin-empty__desc {
+    margin: 0;
+    max-width: 28rem;
+    font-size: 0.85rem;
+    color: #5C677A;
+    line-height: 1.55;
+}
+
+.admin-empty__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-top: 0.35rem;
+}
+
+.trust-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.trust-kpi {
+    position: relative;
+}
+
+.trust-kpi__label {
+    margin: 0.35rem 0 0;
+    font-size: 0.75rem;
+    font-weight: 650;
+    color: #5C677A;
+}
+
+.trust-kpi__value {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+}
+
+.trust-kpi__hint {
+    margin: 0.25rem 0 0;
+    font-size: 0.68rem;
+    color: #94A3B8;
+}
+
+.trust-kpi.is-demo .trust-kpi__value {
+    color: #0052D9;
+}
+
+.trust-badge-demo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    background: #FFF1E6;
+    color: #E8641B;
+    font-size: 0.7rem;
+    font-weight: 750;
+}
+
+.trust-probe-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.45rem;
+}
+
+.trust-probe-list li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.55rem;
+    align-items: start;
+    padding: 0.7rem 0.8rem;
+    border: 1px solid rgba(26, 26, 26, 0.1);
+    border-radius: 10px;
+    background: #FAFCFF;
+}
+
+.trust-probe-list code {
+    font-size: 0.72rem;
+    font-weight: 750;
+    color: #0052D9;
+    background: #E8F1FF;
+    padding: 0.12rem 0.4rem;
+    border-radius: 6px;
+}
+
+.admin-page-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.85rem 1rem;
+}
+
+.admin-page-head__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.admin-panel {
+    background: #fff;
+    border: 1px solid rgba(26, 26, 26, 0.14);
+    border-radius: 12px;
+    box-shadow: 0 6px 22px rgba(26, 26, 26, 0.08);
+    overflow: hidden;
+}
+
+.admin-panel__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    padding: 1rem 1.15rem;
+    border-bottom: 1px solid rgba(26, 26, 26, 0.08);
+}
+
+.admin-panel__body {
+    padding: 1rem 1.15rem;
+}
+
+@media (max-width: 1100px) {
+    .trust-kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .trust-kpi-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .admin-stat-compact {
@@ -2076,6 +2252,42 @@ textarea.form-input {
 }
 
 /* ===== 后台按钮体系 ===== */
+.admin-main .btn,
+.admin-page .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-height: 2.5rem;
+    padding: 0.55rem 1.05rem;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.875rem;
+    text-decoration: none;
+    box-sizing: border-box;
+}
+
+.admin-btn-primary,
+.admin-main .btn-primary,
+.admin-main .admin-btn-primary {
+    background: #0052D9 !important;
+    border: 1px solid #0052D9 !important;
+    color: #fff !important;
+    box-shadow: 0 4px 14px rgba(0, 82, 217, 0.28) !important;
+}
+
+.admin-btn-primary:hover,
+.admin-main .admin-btn-primary:hover {
+    filter: brightness(1.05);
+}
+
+.admin-btn-primary:disabled,
+.admin-main .admin-btn-primary:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    filter: none;
+}
+
 .admin-main .btn-outline,
 .admin-btn-secondary {
     background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);

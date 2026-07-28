@@ -12,11 +12,11 @@
 | # | 能力 | 说明 |
 |---|---|---|
 | 1 | **网站 SEO/GEO 诊断排查** | Schema、Meta、结构与内容就绪信号；用于发现问题，**不是** AI 答案「引用率」 |
-| 2 | **内容切片 · 向量化 · 知识库** | 事实卡 / 切片入库；演示包：**DJI Mini 5 Pro KB** |
+| 2 | **内容切片 · 向量化 · 知识库** | Rank 原生内容引擎（JSONB embedding）；演示包：**DJI Mini 5 Pro** |
 | 3 | **GEO 拓词 / 提示词扩词** | 从业务词扩展问题词、场景词与提示词资产 |
-| 4 | **多渠道分发（GEOFlow）** | 渠道 + 模板 + 提示词扩写；与 GEOFlow 联调移交与回看 |
-| 5 | **可信观测** | **API 采样**探针（提及/引用等可审计样本）；**≠** 网页抓取，**≠** 诊断里的 citation/背书就绪 |
-| 6 | **配置页** | Suite / API / 联调与模块开关 |
+| 4 | **多渠道分发** | 任务草稿 + 渠道/模板 key（M1 薄实现）；Laravel GEOFlow 仅对照可选 |
+| 5 | **可信观测** | **API 采样**探针（提及/引用等可审计样本）；**≠** 网页抓取 |
+| 6 | **配置页** | Suite / API / 内容后端模式与模块开关 |
 
 **Suite 路径**：诊断 → 知识库 → 拓词 → 分发 → 观测  
 
@@ -24,44 +24,66 @@
 
 ---
 
-## 本地快速启动
+## 本地快速启动（默认：本机裸跑，不用 Docker）
 
-推荐一键拉起 **GEORank + GEOFlow**（Suite 联调）：
+1. 安装本机 **PostgreSQL** + **Redis**（见 [docs/本地裸跑-postgres-redis.md](docs/本地裸跑-postgres-redis.md)）
+2. 复制 `.env.example` → `.env`，确认：
+
+```env
+POSTGRES_HOST=127.0.0.1
+REDIS_HOST=127.0.0.1
+CONTENT_BACKEND_MODE=native-python
+PUBLIC_BASE_URL=http://localhost:3009
+```
+
+3. 一条脚本起 API + worker + 带 `/api` 反代的静态前台：
 
 ```powershell
-# 兄弟目录需存在 ..\GEOFlow（或本仓 geoflow 分支检出的 Flow 工程）
+.\scripts\start-local.ps1
+# 或（默认同样走裸跑）
 .\scripts\start-geo-suite.ps1
 ```
 
-| 服务 | 常见地址 |
+| 服务 | 地址 |
 |---|---|
-| GEORank 前台 | http://localhost:3009/ |
+| 前台（含 /api 反代） | http://localhost:3009/ |
 | **GEO Suite** | http://localhost:3009/suite |
-| GEORank API | http://localhost:8000/ |
-| GEOFlow | http://localhost:18080/geo_admin |
+| API | http://localhost:8000/api/health |
+| 内容引擎 Admin | http://localhost:3009/admin/content-engine |
 
-请使用 `localhost`（勿混用 `127.0.0.1`，否则 GEOFlow 可能 419）。
+内容引擎需要**管理员登录**。未登录访问会跳到 `/admin/?returnUrl=…`，登录成功后回跳。种子管理员默认邮箱 `admin@georank.com`，密码见 seed / `GEORANK_SEED_ADMIN_PASSWORD`（或本机未跟踪的 `.local-admin-password.txt`）。
 
-仅跑 GEORank（无 Flow）时，可按 [docs/本地部署操作手册.md](docs/本地部署操作手册.md) 使用 Compose / `pnpm` 常规流程。首次请复制 `.env.example` → `.env`，自行配置模型 API，**勿提交 `.env`**。
+验收清单：[docs/m1-acceptance-checklist.md](docs/m1-acceptance-checklist.md)
+
+### Legacy：Docker Compose / GEOFlow
+
+仅在需要对照 Laravel GEOFlow 时使用：
+
+```powershell
+.\scripts\start-geo-suite.ps1 -UseCompose              # 仅 Rank Compose
+.\scripts\start-geo-suite.ps1 -UseCompose -WithGeoFlow  # Rank + Flow
+```
+
+并设置 `CONTENT_BACKEND_MODE=legacy-flow`。**演示默认不再需要 GEOFlow 容器。**
+
+完整 Compose 说明仍见 [docs/本地部署操作手册.md](docs/本地部署操作手册.md)。首次请复制 `.env.example` → `.env`，自行配置模型 API，**勿提交 `.env`**。
 
 ---
 
-## 仓库结构（Rank 与 Flow）
+## 仓库结构
 
 ```text
-GEOrank/                 # 本仓：诊断 / Suite 前台 / 管理 / FastAPI 等
-  apps/                  # Next.js 前台与管理台（迁移中）
-  backend/               # FastAPI · Celery · SQLAlchemy
-  dist/                  # 当前主体验：3009 静态前台（含 /suite）
+GEOrank/
+  backend/               # FastAPI · Celery · SQLAlchemy · 内容引擎
+  dist/                  # 主体验：3009 静态前台（含 /suite）
   docs/                  # 文档与演示包
-  scripts/               # start-geo-suite.ps1 等
+  scripts/               # start-local.ps1 / serve-local-proxy.py 等
 ```
 
-- **GEORank**：诊断、知识库演示、拓词、可信观测、配置与 Suite 壳。
-- **GEOFlow**：多渠道内容生产与分发（渠道 / 模板 / 扩写）；独立工程，与 Rank SSO / 回调联调。
-- **geo-prototype**：日常推送仓。`main` 为 Rank/Suite；**GEOFlow 相关代码在 `geoflow` 分支**（勿与 `main` 产品面混淆）。
+- **GEORank（默认）**：诊断、知识库、拓词、任务草稿、薄分发、可信观测、Suite。
+- **GEOFlow（可选对照）**：Laravel 多渠道生产；独立工程，仅 `legacy-flow` 联调。
 
-技术栈概要：静态前台（3009）+ FastAPI（8000）+ Compose（Postgres / Redis / Qdrant 等）+ 可选 GEOFlow（18080）。
+技术栈：静态前台（3009）+ FastAPI（8000）+ 本机 Postgres/Redis；Compose / GEOFlow 为 legacy。
 
 ---
 
@@ -71,9 +93,11 @@ GEOrank/                 # 本仓：诊断 / Suite 前台 / 管理 / FastAPI 等
 
 | 文档 | 用途 |
 |---|---|
-| [docs/content-engineering-sop.md](docs/content-engineering-sop.md) | 内容工程 SOP（双层方法 → Suite 六能力） |
-| [docs/geo-suite.md](docs/geo-suite.md) | Suite 联调、端口与环境变量 |
-| [docs/pilot-demo/cn-product-demo-v2/](docs/pilot-demo/cn-product-demo-v2/) | **推荐演示包**：DJI Mini 5 Pro 事实卡 / 提示词 / Flow KB |
+| [docs/本地裸跑-postgres-redis.md](docs/本地裸跑-postgres-redis.md) | **默认**：本机 PG/Redis + start-local |
+| [docs/m1-acceptance-checklist.md](docs/m1-acceptance-checklist.md) | M1 验收门禁 |
+| [docs/content-engineering-sop.md](docs/content-engineering-sop.md) | 内容工程 SOP |
+| [docs/geo-suite.md](docs/geo-suite.md) | Suite 与双轨模式说明 |
+| [docs/pilot-demo/cn-product-demo-v2/](docs/pilot-demo/cn-product-demo-v2/) | **推荐演示包**：DJI Mini 5 Pro |
 
 领导汇报走查见 [docs/GEO-Suite-leadership-demo-guide.md](docs/GEO-Suite-leadership-demo-guide.md)。
 

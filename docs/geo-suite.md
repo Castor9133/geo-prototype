@@ -1,84 +1,82 @@
-# GEO Suite：GEORank × GEOFlow 加深融合（Phase 1/2）
+# GEO Suite（统一 Python / 双轨说明）
 
-把 **GEORank（诊断 / 拓词）** 与 **GEOFlow（内容生产 / 分发）** 连成可运营闭环。  
-两边保持独立进程与数据库；Suite 做导航、SSO、handoff、回写。
+把 **诊断 → 知识库 → 拓词 → 分发 → 观测 → 配置** 收成一条 Suite 主路径。  
+默认内容后端为 **GEORank Python（native-python）**；Laravel GEOFlow 仅作 F2 对照。
 
-设计全文：[superpowers/specs/2026-07-22-geo-suite-option-b-fusion-design.md](./superpowers/specs/2026-07-22-geo-suite-option-b-fusion-design.md)
+设计背景（历史 Option B）：[superpowers/specs/2026-07-22-geo-suite-option-b-fusion-design.md](./superpowers/specs/2026-07-22-geo-suite-option-b-fusion-design.md)
 
 ## 产品链路
 
 入口：`/suite`
 
-**演示主路径（6 点）**：1. 诊断（SEO 排查）→ 2. 知识库（推荐 **DJI Mini 5 Pro / GEOFlow KB #9**，`docs/pilot-demo/cn-product-demo-v2/`）→ 3. 拓词 → 4. 分发（任务中心新建：中国生态提示词 + **绑定 KB #9** → 答案优先正文 → 渠道/模板）→ 5. 观测 → 6. 配置（`/admin/settings`）。其余入口默认隐藏。旧飞书/示范栏目包仅作对照，不作主演示。
+**演示主路径**：1. 诊断 → 2. 知识库（DJI Mini 5 Pro，`docs/pilot-demo/cn-product-demo-v2/`）→ 3. 拓词 → 4. 分发（内容引擎任务 + 渠道/模板 key）→ 5. 观测 → 6. 配置。
 
-旧长故事线（回看 / L3 样板等）已软隐藏，可通过步骤别名回落到新路径。
+`CONTENT_BACKEND_MODE`：
 
-## 本地启动
+| 值 | 行为 |
+|---|---|
+| `native-python`（默认） | Suite 知识库/分发 CTA → `/admin/content-engine`；不依赖 `:18080` |
+| `legacy-flow` | Suite 仍可 handoff / 深链 GEOFlow（需 Compose + Token） |
+
+## 本地启动（默认裸跑）
 
 ```powershell
+# 先装本机 Postgres + Redis，见 本地裸跑-postgres-redis.md
+.\scripts\start-local.ps1
+# 等价默认：
 .\scripts\start-geo-suite.ps1
 ```
 
-脚本会：
-
-- 要求兄弟目录存在 `../GEOFlow`
-- 同步 `GEOSUITE_SSO_SECRET` / 回调密钥到两边 `.env`
-- 写入 `GEORANK_CALLBACK_URL`
-
-| 服务 | URL（只用 localhost，勿用 127.0.0.1） |
+| 服务 | URL |
 |------|------|
 | GEORank | http://localhost:3009/ |
 | GEO Suite | http://localhost:3009/suite |
-| GEOFlow | http://localhost:18080/geo_admin |
+| 内容引擎 | http://localhost:3009/admin/content-engine |
+| API | http://localhost:8000/api/health |
 
-## Phase 1/2 能力
+内容引擎须管理员登录；Suite CTA 会经 `/admin/?returnUrl=` 回跳。五渠道静态预览清单：`dist/data/channel-templates.json`（对照 GEOFlow theme key，无编译）。
 
-| 能力 | 说明 |
-|------|------|
-| SSO | `POST /api/integrations/geoflow/sso-ticket` → Flow `/geo_admin/sso/consume` |
-| 任务深链 | handoff 返回 `/geo_admin/tasks/{id}/edit` |
-| 任务状态 | `GET /api/integrations/geoflow/tasks/{id}` |
-| company 绑定 | 设置 `default_company_id`；handoff 可传 `company_id`，写入知识库 |
-| 发布回写 | Flow publish → `POST /api/integrations/geoflow/callback`（HMAC） |
-| 回看 | `GET /api/integrations/geoflow/review` |
+验收：[m1-acceptance-checklist.md](./m1-acceptance-checklist.md)
 
-## 配置
+## Legacy：Compose + GEOFlow
+
+```powershell
+.\scripts\start-geo-suite.ps1 -UseCompose -WithGeoFlow
+```
+
+并设置：
 
 ```env
+CONTENT_BACKEND_MODE=legacy-flow
 GEOFLOW_ENABLED=true
-GEOFLOW_BASE_URL=http://host.docker.internal:18080
 GEOFLOW_PUBLIC_BASE_URL=http://localhost:18080
 GEOFLOW_API_TOKEN=你的_sanctum_token
 GEOSUITE_SSO_SECRET=两边一致
-GEOSUITE_CALLBACK_SECRET=两边一致
 ```
 
-GEOFlow：
+**演示默认不再需要 GEOFlow 容器。**
 
-```env
-GEOSUITE_SSO_SECRET=同上
-GEOSUITE_SSO_DEFAULT_ADMIN=admin
-GEORANK_CALLBACK_URL=http://host.docker.internal:8000/api/integrations/geoflow/callback
-GEORANK_CALLBACK_SECRET=同上
-GEOSUITE_PUBLIC_URL=http://localhost:3009
-```
+## 内容引擎 API（native）
 
-后台：`系统设置 → GEO Suite`
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/settings/content-backend` | 模式开关 |
+| GET | `/api/content-engine/public/demo-summary` | DJI 摘要 + 最近任务预览 |
+| POST | `/api/content-engine/knowledge-bases/import-dji-demo` | 导入演示包（管理员） |
+| GET/POST | `/api/content-engine/tasks` | 任务列表 / 同步生成草稿 |
+| GET/POST | `/api/content-engine/channels` | 薄分发渠道 |
 
-## API
+## GEOFlow 联调 API（仅 legacy-flow）
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | `/api/integrations/geoflow/status` | 公开状态 |
-| GET | `/api/integrations/geoflow/review` | handoff + 回调事件 |
 | POST | `/api/integrations/geoflow/handoff` | 移交 |
-| POST | `/api/integrations/geoflow/sso-ticket` | 签发 SSO（需登录） |
-| GET | `/api/integrations/geoflow/tasks/{id}` | 任务状态代理 |
-| POST | `/api/integrations/geoflow/callback` | Flow 发布回调 |
-| GET/PUT | `/api/admin/integrations/geoflow` | 后台配置 |
+| POST | `/api/integrations/geoflow/sso-ticket` | SSO |
+
+后台：`系统设置 → GEO Suite`
 
 ## 非目标
 
-- 不合并 Laravel / FastAPI 代码栈  
-- 不共享同一数据库  
-- 浏览器不持有 GEOFlow API Key  
+- 不要求演示环境启动 Docker / GEOFlow
+- 不像素级复刻 Laravel 管理 UI；行为等价见 M1 清单

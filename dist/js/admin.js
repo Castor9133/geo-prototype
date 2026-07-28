@@ -24,6 +24,7 @@
         diagnostics: '诊断管理',
         keywords: '拓词管理',
         'trust-obs': '可信观测',
+        'content-engine': '内容引擎',
         users: '用户管理',
         settings: '系统设置',
     });
@@ -143,21 +144,23 @@
 
     function normalizeAdminModulePath(path) {
         const cleanPath = canonicalizeAdminPath(path);
-        if (
-            cleanPath.includes('tutorials-edit')
-            || cleanPath.includes('content-edit')
-            || cleanPath.includes('tutorials')
-            || cleanPath.includes('content')
-            || cleanPath.includes('experts')
-        ) {
-            return '/admin';
-        }
+        // content-engine 必须先于泛化 content 匹配，否则会被误归一到仪表盘
+        if (cleanPath.includes('content-engine')) return '/admin/content-engine';
         if (cleanPath.includes('trust-obs')) return '/admin/trust-obs';
         if (cleanPath.includes('keywords')) return '/admin/keywords';
         if (cleanPath.includes('diagnostics')) return '/admin/diagnostics';
         if (cleanPath.includes('solutions')) return '/admin';
         if (cleanPath.includes('users')) return '/admin/users';
         if (cleanPath.includes('settings')) return '/admin/settings';
+        if (
+            cleanPath.includes('tutorials-edit')
+            || cleanPath.includes('content-edit')
+            || cleanPath.includes('tutorials')
+            || cleanPath.includes('experts')
+            || /(^|\/)content(\/|$)/.test(cleanPath)
+        ) {
+            return '/admin';
+        }
         return '/admin';
     }
 
@@ -500,11 +503,24 @@
                     throw new Error('需要管理员权限');
                 }
                 modal.remove();
+                const returnUrl = safeAdminReturnUrl(new URLSearchParams(window.location.search).get('returnUrl'));
+                if (returnUrl) {
+                    window.location.href = returnUrl;
+                    return;
+                }
                 initPage();
             } catch (err) {
                 showLoginModal(err.message);
             }
         });
+    }
+
+    function safeAdminReturnUrl(raw) {
+        if (!raw || typeof raw !== 'string') return null;
+        const value = raw.trim();
+        if (!value.startsWith('/') || value.startsWith('//')) return null;
+        if (value.includes('://')) return null;
+        return value;
     }
 
     // ─── 侧边栏 & 顶栏 ──────────────────────────────────────────────────────
@@ -539,11 +555,14 @@
         <a href="${withAppOrigin('/admin/trust-obs')}" data-admin-link class="sidebar-link">
             <span class="material-symbols-outlined text-lg">monitoring</span><span>可信观测</span>
         </a>
+        <a href="${withAppOrigin('/admin/content-engine')}" data-admin-link class="sidebar-link">
+            <span class="material-symbols-outlined text-lg">auto_stories</span><span>内容引擎</span>
+        </a>
         <p class="px-3 mt-6 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">配置</p>
         <a href="${withAppOrigin('/admin/settings')}" data-admin-link class="sidebar-link">
             <span class="material-symbols-outlined text-lg">settings</span><span>系统设置</span>
         </a>
-        <a href="${withAppOrigin('/')}" class="sidebar-link">
+        <a href="${withAppOrigin('/')}" class="sidebar-link" target="_blank" rel="noopener noreferrer">
             <span class="material-symbols-outlined text-lg">open_in_new</span><span>访问前台</span>
         </a>
     </nav>
@@ -5861,6 +5880,7 @@ ${pages.map(p => p === '…'
 
     async function initTrustObs() {
         let latestDetail = null;
+        let showingDemo = false;
 
         function escapePre(text) {
             return String(text || '')
@@ -5869,22 +5889,93 @@ ${pages.map(p => p === '…'
                 .replace(/>/g, '&gt;');
         }
 
-        function setAgg(run) {
-            const agg = (run && run.aggregate) || {};
+        function setDemoBadge(on) {
+            showingDemo = Boolean(on);
+            const badge = document.getElementById('trust-data-badge');
+            if (badge) badge.hidden = !showingDemo;
+            document.querySelectorAll('.trust-kpi').forEach((card) => {
+                card.classList.toggle('is-demo', showingDemo);
+            });
+        }
+
+        function setAgg(run, options = {}) {
+            const agg = (run && (run.aggregate || run)) || {};
+            const empty = !run || options.empty;
             const setText = (id, value) => {
                 const el = document.getElementById(id);
                 if (el) el.textContent = value;
             };
-            setText('agg-mention', agg.mention ?? '--');
-            setText('agg-citation', agg.citation ?? '--');
-            setText('agg-absent', agg.absent ?? '--');
-            setText('agg-total', agg.total_samples ?? '--');
-            setText('agg-status', (run && run.status) || '--');
+            if (empty) {
+                setText('agg-mention', '0');
+                setText('agg-citation', '0');
+                setText('agg-absent', '0');
+                setText('agg-total', '0');
+                setText('agg-status', '未运行');
+                const statusHint = document.getElementById('agg-status-hint');
+                if (statusHint) statusHint.textContent = '点击「运行一轮采样」或加载演示 KPI';
+                setDemoBadge(false);
+            } else {
+                setText('agg-mention', agg.mention ?? 0);
+                setText('agg-citation', agg.citation ?? 0);
+                setText('agg-absent', agg.absent ?? 0);
+                setText('agg-total', agg.total_samples ?? 0);
+                setText('agg-status', (run && run.status) || (options.demo ? '演示' : '—'));
+                const statusHint = document.getElementById('agg-status-hint');
+                if (statusHint) {
+                    statusHint.textContent = options.demo
+                        ? '来自 measure-demo.json，非真实采样'
+                        : '最近一轮合计';
+                }
+                setDemoBadge(Boolean(options.demo));
+            }
             const note = document.getElementById('trust-method-note');
             if (note) {
                 note.textContent = (run && run.method_note)
-                    || 'API 自动采样（非网页抓取）；标签为启发式粗分，可人工改标。';
+                    || (options.demo
+                        ? '当前为演示 KPI 回落；真实结果以采样运行为准。'
+                        : 'API 自动采样（非网页抓取）；标签为启发式粗分，可人工改标。');
             }
+        }
+
+        function renderEmptyRuns() {
+            const tbody = document.getElementById('trust-runs-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6">
+                        <div class="admin-empty">
+                            <div class="admin-empty__icon" aria-hidden="true">
+                                <span class="material-symbols-outlined">monitoring</span>
+                            </div>
+                            <p class="admin-empty__title">尚无采样运行</p>
+                            <p class="admin-empty__desc">先运行一轮探针采样，或加载演示 KPI 预览布局。配置 LLM 后可得到真实 mention / citation / absent。</p>
+                            <div class="admin-empty__actions">
+                                <button type="button" class="btn admin-btn-primary" id="trust-empty-run">
+                                    <span class="material-symbols-outlined text-sm">play_arrow</span>
+                                    运行一轮采样
+                                </button>
+                                <button type="button" class="btn admin-btn-secondary" id="trust-empty-demo">加载演示 KPI</button>
+                                <a class="btn admin-btn-secondary" href="/suite?step=measure">打开 Suite 观测</a>
+                            </div>
+                        </div>
+                    </td>
+                </tr>`;
+            document.getElementById('trust-empty-run')?.addEventListener('click', () => {
+                document.getElementById('trust-run-btn')?.click();
+            });
+            document.getElementById('trust-empty-demo')?.addEventListener('click', () => {
+                loadDemoKpi().catch((error) => toast(error.message || '演示加载失败', 'error'));
+            });
+        }
+
+        async function loadDemoKpi() {
+            const res = await fetch('/pilot-demo/geo-demo-column/measure-demo.json', { credentials: 'same-origin' });
+            if (!res.ok) throw new Error(`演示数据 ${res.status}`);
+            const payload = await res.json();
+            const run = payload.run || {};
+            setAgg({ ...run, method_note: payload.method_note || run.method_note }, { demo: true });
+            latestDetail = { demo_data: true, ...payload };
+            toast('已加载演示 KPI（非真实采样）', 'success');
         }
 
         async function loadProbes() {
@@ -5892,9 +5983,23 @@ ${pages.map(p => p === '…'
             const list = document.getElementById('trust-probe-list');
             if (!list) return;
             const items = data.items || [];
-            list.innerHTML = items.length
-                ? items.map((p) => `<li><code class="text-primary">${escapeHtml(p.probe_key)}</code> ${escapeHtml(p.question)}</li>`).join('')
-                : '<li>暂无探针</li>';
+            if (!items.length) {
+                list.innerHTML = `
+                    <li>
+                        <div class="admin-empty" style="min-height:8rem;padding:1.25rem">
+                            <p class="admin-empty__title">暂无探针</p>
+                            <p class="admin-empty__desc">请确认后端已初始化 probe-v1，或点击刷新重试。</p>
+                            <button type="button" class="btn admin-btn-secondary" id="trust-probe-retry">刷新探针</button>
+                        </div>
+                    </li>`;
+                document.getElementById('trust-probe-retry')?.addEventListener('click', () => {
+                    loadProbes().catch((error) => toast(error.message || '刷新失败', 'error'));
+                });
+                return;
+            }
+            list.innerHTML = items.map((p) => (
+                `<li><code>${escapeHtml(p.probe_key)}</code><span>${escapeHtml(p.question)}</span></li>`
+            )).join('');
         }
 
         async function openRun(runId) {
@@ -5908,7 +6013,7 @@ ${pages.map(p => p === '…'
             const samples = detail.samples || [];
             const labels = ['mention', 'citation', 'recommendation', 'co_mention', 'absent', 'error'];
             box.innerHTML = samples.map((s) => `
-                <div class="rounded-lg border border-slate-100 p-3">
+                <div class="rounded-lg border border-slate-100 p-3 shadow-sm bg-white">
                     <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
                         <strong>${escapeHtml(s.probe_key)} #${s.sample_index}</strong>
                         <select data-relabel="${s.id}" class="form-input text-xs py-1 w-40">
@@ -5918,7 +6023,7 @@ ${pages.map(p => p === '…'
                     <p class="text-xs text-slate-500 mb-1">${escapeHtml(s.question)}</p>
                     <pre class="whitespace-pre-wrap text-xs bg-slate-50 rounded p-2 max-h-48 overflow-auto">${escapePre(s.raw_answer)}</pre>
                 </div>
-            `).join('') || '<p class="text-slate-400">无样本</p>';
+            `).join('') || '<div class="admin-empty" style="min-height:8rem"><p class="admin-empty__title">本轮无样本</p></div>';
             box.querySelectorAll('[data-relabel]').forEach((select) => {
                 select.addEventListener('change', async () => {
                     await api('PATCH', `/api/admin/trust-obs/samples/${select.getAttribute('data-relabel')}`, {
@@ -5935,22 +6040,22 @@ ${pages.map(p => p === '…'
             if (!tbody) return;
             const items = data.items || [];
             if (!items.length) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-12 text-slate-400 text-sm">尚无运行，请点击「运行一轮采样」</td></tr>';
-                setAgg(null);
+                renderEmptyRuns();
+                if (!showingDemo) setAgg(null, { empty: true });
                 return;
             }
             setAgg(items[0]);
             tbody.innerHTML = items.map((run) => {
                 const agg = run.aggregate || {};
-                const created = run.created_at ? new Date(run.created_at).toLocaleString('zh-CN', { hour12: false }) : '--';
+                const created = run.created_at ? new Date(run.created_at).toLocaleString('zh-CN', { hour12: false }) : '—';
                 const badge = run.status === 'completed' ? 'badge-success' : (run.status === 'failed' ? 'badge-warning' : 'badge-info');
                 return `<tr>
                     <td>${escapeHtml(created)}</td>
                     <td><span class="badge ${badge}">${escapeHtml(run.status)}</span></td>
-                    <td>${escapeHtml(run.model_name || '--')}</td>
-                    <td>${agg.total_samples ?? '--'}</td>
+                    <td>${escapeHtml(run.model_name || '—')}</td>
+                    <td>${agg.total_samples ?? 0}</td>
                     <td>${agg.mention ?? 0} / ${agg.citation ?? 0} / ${agg.absent ?? 0}</td>
-                    <td class="text-right"><button type="button" class="text-primary text-xs font-semibold" data-run="${run.id}">查看样本</button></td>
+                    <td class="text-right"><button type="button" class="btn admin-btn-secondary" style="min-height:2rem;padding:0.3rem 0.7rem;font-size:0.75rem" data-run="${run.id}">查看样本</button></td>
                 </tr>`;
             }).join('');
             tbody.querySelectorAll('[data-run]').forEach((btn) => {
@@ -5982,8 +6087,11 @@ ${pages.map(p => p === '…'
         document.getElementById('trust-refresh-probes')?.addEventListener('click', () => {
             loadProbes().catch((error) => toast(error.message || '刷新失败', 'error'));
         });
+        document.getElementById('trust-load-demo')?.addEventListener('click', () => {
+            loadDemoKpi().catch((error) => toast(error.message || '演示加载失败', 'error'));
+        });
         document.getElementById('trust-export-btn')?.addEventListener('click', () => {
-            const blob = new Blob([JSON.stringify(latestDetail || { message: '请先查看某一轮运行' }, null, 2)], { type: 'application/json' });
+            const blob = new Blob([JSON.stringify(latestDetail || { message: '请先查看某一轮运行或加载演示' }, null, 2)], { type: 'application/json' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
             a.download = `trust-obs-run-${Date.now()}.json`;
@@ -5997,14 +6105,19 @@ ${pages.map(p => p === '…'
         } catch (error) {
             const tbody = document.getElementById('trust-runs-tbody');
             if (tbody) {
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-12 text-red-500 text-sm">${escapeHtml(error.message || '加载失败（可能尚未迁移表）')}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6"><div class="admin-empty"><p class="admin-empty__title">加载失败</p><p class="admin-empty__desc">${escapeHtml(error.message || '可能尚未迁移表')}</p><div class="admin-empty__actions"><button type="button" class="btn admin-btn-secondary" onclick="location.reload()">重试</button><button type="button" class="btn admin-btn-primary" id="trust-err-demo">加载演示 KPI</button></div></div></td></tr>`;
+                document.getElementById('trust-err-demo')?.addEventListener('click', () => {
+                    loadDemoKpi().catch((e) => toast(e.message || '演示加载失败', 'error'));
+                });
             }
+            setAgg(null, { empty: true });
         }
     }
 
     // ─── 页面入口检测 ────────────────────────────────────────────────────────
     function detectPage() {
         const path = window.location.pathname;
+        if (path.includes('content-engine')) return 'content-engine';
         if (path.includes('trust-obs')) return 'trust-obs';
         if (path.includes('diagnostics')) return 'diagnostics';
         if (path.includes('solutions')) return 'solutions';
@@ -6014,7 +6127,7 @@ ${pages.map(p => p === '…'
             || path.includes('experts')
             || path.includes('tutorials')
             || path.includes('content-edit')
-            || path.includes('content')
+            || /(^|\/)content(\.html)?(\/|$)/.test(path)
         ) {
             return 'removed';
         }
@@ -6047,6 +6160,9 @@ ${pages.map(p => p === '…'
             else if (page === 'solutions') await initSolutions();
             else if (page === 'keywords') await initKeywords();
             else if (page === 'trust-obs') await initTrustObs();
+            else if (page === 'content-engine') {
+                /* 页面逻辑由 content-engine-admin.js 负责；此处只挂统一侧栏/顶栏 */
+            }
             else if (page === 'users') await initUsers();
             else if (page === 'settings') await initSettings();
 

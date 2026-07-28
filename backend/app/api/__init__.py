@@ -16,6 +16,7 @@ from app.api.routes import (
     usage,
     integrations,
     trust_obs,
+    content_engine,
 )
 
 router = APIRouter()
@@ -30,5 +31,6 @@ router.include_router(experts.router,      prefix="/experts",     tags=["专家"
 router.include_router(usage.router,        prefix="/usage",       tags=["AI 用量"])
 router.include_router(integrations.router, prefix="/integrations", tags=["集成"])
 router.include_router(trust_obs.router,   prefix="/admin/trust-obs", tags=["可信观测"])
+router.include_router(content_engine.router, prefix="/content-engine", tags=["内容引擎"])
 router.include_router(admin.router,        prefix="/admin",       tags=["后台管理"])
 router.include_router(settings.router,     prefix="/settings",    tags=["站点配置"])

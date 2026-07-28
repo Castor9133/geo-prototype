@@ -1,0 +1,41 @@
+{
+  "source": "GEOFlow resources/views/theme + public/themes（静态对照，无编译管线）",
+  "updated": "2026-07-28",
+  "items": [
+    {
+      "key": "wechat-article",
+      "name": "公众号文章",
+      "channel_type": "wechat",
+      "flow_theme_keys": ["geoflow-template-01-ink-editorial", "geoflow-template-16-newsletter-letter"],
+      "shell": "wechat"
+    },
+    {
+      "key": "zhihu-answer",
+      "name": "知乎回答",
+      "channel_type": "zhihu",
+      "flow_theme_keys": ["geoflow-template-14-knowledge-paper", "geoflow-template-18-consulting-insight"],
+      "shell": "zhihu"
+    },
+    {
+      "key": "xiaohongshu-note",
+      "name": "小红书笔记",
+      "channel_type": "xiaohongshu",
+      "flow_theme_keys": ["geoflow-template-03-salmon-insight", "geoflow-template-12-saas-gradient"],
+      "shell": "xiaohongshu"
+    },
+    {
+      "key": "site-faq",
+      "name": "官网 FAQ",
+      "channel_type": "faq",
+      "flow_theme_keys": ["apple_support_clone", "geoflow-template-05-wire-clean"],
+      "shell": "faq"
+    },
+    {
+      "key": "douyin-script",
+      "name": "抖音口播提纲",
+      "channel_type": "douyin",
+      "flow_theme_keys": ["geoflow-template-06-public-broadcast", "geoflow-template-07-breaking-red"],
+      "shell": "douyin"
+    }
+  ]
+}

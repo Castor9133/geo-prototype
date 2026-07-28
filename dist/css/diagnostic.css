@@ -4,26 +4,26 @@
    ======================================== */
 
 :root {
-    --bg: #F9F7F2;
-    --bg-elevated: #FFFFFF;
-    --bg-soft: #F3F0E8;
-    --ink: #1A1A1A;
-    --ink-muted: #5C5A55;
-    --accent-blue: #8FB8E8;
-    --accent-blue-deep: #6A9FD4;
-    --accent-orange: #E8A07A;
-    --accent-orange-deep: #D4845C;
-    --accent-green: #A8C5A0;
-    --accent-green-deep: #7FA876;
-    --accent-lavender: #C4B0E0;
-    --accent-mark: #E07070;
-    --border: #1A1A1A;
-    --border-width: 2px;
-    --shadow-hard: 4px 4px 0 #1A1A1A;
-    --shadow-hard-press: 2px 2px 0 #1A1A1A;
-    --radius: 12px;
-    --radius-sm: 8px;
-    --font-display: "Noto Serif SC", "Songti SC", "SimSun", serif;
+    --bg: var(--geo-bg, #F8F7F2);
+    --bg-elevated: var(--geo-paper, #FFFFFF);
+    --bg-soft: var(--geo-sand, #F3F0E8);
+    --ink: var(--geo-ink, #1A1A1A);
+    --ink-muted: var(--geo-muted, #5C677A);
+    --accent-blue: var(--geo-accent, #0052D9);
+    --accent-blue-deep: #003EB3;
+    --accent-orange: var(--geo-orange, #E8641B);
+    --accent-orange-deep: #C45214;
+    --accent-green: var(--geo-green, #2BA471);
+    --accent-green-deep: #1B7A4A;
+    --accent-lavender: var(--geo-lavender, #C4B0E0);
+    --accent-mark: var(--geo-orange, #E8641B);
+    --border: rgba(26, 26, 26, 0.14);
+    --border-width: 1px;
+    --shadow-hard: var(--geo-shadow, 0 4px 18px rgba(26, 26, 26, 0.06));
+    --shadow-hard-press: var(--geo-shadow-press, 0 1px 4px rgba(26, 26, 26, 0.08));
+    --radius: var(--geo-radius-sm, 12px);
+    --radius-sm: var(--geo-radius-xs, 10px);
+    --font-display: var(--geo-font-display, "Noto Serif SC", "Songti SC", serif);
 }
 
 body.diagnostic-page,
@@ -124,9 +124,9 @@ body.bg-white {
     border-radius: 0 !important;
     border: none !important;
     border-left: var(--border-width) solid var(--border) !important;
-    box-shadow: none !important;
+    box-shadow: 0 4px 14px rgba(0, 82, 217, 0.28) !important;
     background: var(--accent-blue) !important;
-    color: var(--ink) !important;
+    color: #fff !important;
     min-width: 7.5rem;
     display: inline-flex;
     align-items: center;

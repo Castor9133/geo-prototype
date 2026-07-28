@@ -186,6 +186,26 @@
     const downloadBtn = document.getElementById('download-csv-btn');
     const refineBtn = document.getElementById('refine-btn');
     const sendGeoflowBtn = document.getElementById('send-geoflow-btn');
+    const openContentEngineBtn = document.getElementById('open-content-engine-btn');
+    const backSuiteDistributeBtn = document.getElementById('back-suite-distribute-btn');
+    let contentBackendNative = true;
+
+    async function resolveContentBackendMode() {
+        try {
+            const res = await fetch('/api/settings/content-backend');
+            if (!res.ok) return;
+            const data = await res.json();
+            contentBackendNative = data.mode !== 'legacy-flow' && data.native !== false;
+        } catch (_) {
+            contentBackendNative = true;
+        }
+        document.querySelectorAll('[data-mode-native]').forEach((el) => {
+            el.style.display = contentBackendNative ? '' : 'none';
+        });
+        document.querySelectorAll('[data-mode-legacy]').forEach((el) => {
+            el.style.display = contentBackendNative ? 'none' : '';
+        });
+    }
     const feedbackEl = document.getElementById('keyword-feedback');
     const totalCountEl = document.getElementById('total-kw-count');
     const seedDisplayEl = document.getElementById('seed-kw-display');
@@ -420,7 +440,28 @@
             seed: seedLabel || '',
             count: flatList.length,
         });
-        Workflow.setCurrent('handoff');
+        Workflow.setCurrent(contentBackendNative ? 'distribute' : 'handoff');
+        if (contentBackendNative) {
+            Workflow.mountBar({
+                stepId: 'keywords',
+                force: true,
+                hint: '拓词已完成：可打开内容引擎生成正文，或回 Suite 分发步。',
+                nextHref: '/suite?step=distribute',
+                nextLabel: '回 Suite · 分发',
+            });
+            Workflow.mountNextCard(resultsPanel, {
+                id: 'suite-wf-next-keywords',
+                prepend: true,
+                stepId: 'keywords',
+                title: '拓词完成 · 写入内容引擎',
+                copy: '词包已记入 GEO Suite。下一步在内容引擎绑定知识库与提示词生成草稿，再用五渠道壳预览。',
+                primaryHref: '/admin/content-engine?tab=tasks',
+                primaryLabel: '打开内容引擎',
+                secondaryHref: '/suite?step=distribute',
+                secondaryLabel: '返回 Suite · 分发',
+            });
+            return;
+        }
         Workflow.mountBar({
             stepId: 'keywords',
             force: true,
@@ -500,6 +541,10 @@
     }
 
     async function sendToGeoflow() {
+        if (contentBackendNative) {
+            window.location.href = '/admin/content-engine?tab=tasks';
+            return;
+        }
         if (!flatList.length) {
             setFeedback('请先生成词包，再发送到 GEOFlow。');
             return;
@@ -585,11 +630,15 @@
     refineBtn.addEventListener('click', generate);
     sendGeoflowBtn?.addEventListener('click', () => { void sendToGeoflow(); });
 
-    Workflow?.mountBar({
-        stepId: 'keywords',
-        nextHref: '/suite?step=handoff',
-        nextLabel: '下一步：移交 Flow',
-        hint: '全套工作流第 3 步：生成词包后发送到 GEOFlow。',
+    void resolveContentBackendMode().then(() => {
+        Workflow?.mountBar({
+            stepId: 'keywords',
+            nextHref: contentBackendNative ? '/suite?step=distribute' : '/suite?step=handoff',
+            nextLabel: contentBackendNative ? '下一步：分发' : '下一步：移交 Flow',
+            hint: contentBackendNative
+                ? '全套工作流第 3 步：生成词包后进入内容引擎 / Suite 分发。'
+                : '全套工作流第 3 步：生成词包后发送到 GEOFlow。',
+        });
     });
 
     renderResults(clonePayload(SAMPLE_PAYLOAD), {

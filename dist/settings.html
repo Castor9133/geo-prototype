@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <title>配置 · GEOrank</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script src="/js/tailwind.config.js"></script>
+    <link rel="stylesheet" href="/css/common.css?v=20260728-admin1">
+    <link rel="stylesheet" href="/css/admin.css?v=20260728-admin1">
+    <link rel="stylesheet" href="/css/inner-shell.css?v=20260728-admin1">
+<style>
+.settings-public-layout { display:block; min-height:100vh; }
+.settings-public-main { margin:0 auto; max-width:1100px; padding-top:4.5rem; }
+.settings-page--public .admin-main { background: transparent !important; }
+</style>
+</head>
+<body class="admin-page settings-page--public bg-slate-50 text-on-surface antialiased inner-page">
+        <div id="header-container"></div>
+    <div class="admin-layout settings-public-layout">
+        <div class="admin-main settings-public-main">
+            <script src="/js/admin.js?v=20260728-admin1"></script>
+
+            <main class="p-6 lg:p-8 space-y-8 max-w-6xl">
+                <!-- Header -->
+                <div>
+                    <h1 class="text-2xl font-extrabold font-headline tracking-tight">系统设置</h1>
+                    <p class="text-sm text-on-surface-variant mt-1">配置平台基础信息、API 密钥和通知规则</p>
+                </div>
+
+                <!-- Tabs -->
+                <div class="flex items-center gap-6 border-b border-slate-200 text-sm font-semibold" id="settings-tabs">
+                    <button class="settings-tab pb-3 border-b-2 border-primary text-primary" data-tab="basic">基础设置</button>
+                    <button class="settings-tab pb-3 border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors" data-tab="api">API 配置</button>
+                    <button class="settings-tab pb-3 border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors" data-tab="usage">成本控制</button>
+                    <button class="settings-tab pb-3 border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors" data-tab="frontend">前台模块</button>
+                    <button class="settings-tab pb-3 border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors" data-tab="homepage">首页设置</button>
+                    <button class="settings-tab pb-3 border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors" data-tab="suite">GEO Suite</button>
+                    <button class="settings-tab pb-3 border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors" data-tab="geo">GEO 引擎</button>
+                </div>
+
+                <!-- Basic Settings Panel -->
+                <div id="panel-basic" class="settings-panel bg-white rounded-xl border border-slate-100 divide-y divide-slate-50">
+                    <!-- Site Info -->
+                    <div class="p-6">
+                        <h3 class="text-sm font-bold mb-1">平台信息</h3>
+                        <p class="text-xs text-on-surface-variant mb-6">配置平台名称、描述和基础参数</p>
+                        <div class="space-y-5">
+                            <div>
+                                <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">平台名称</label>
+                                <input id="setting-site_name" type="text" class="form-input" placeholder="GEOrank">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">平台描述</label>
+                                <textarea id="setting-site_description" rows="3" class="form-input" placeholder="描述平台的用途和定位..."></textarea>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div>
+                                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">默认语言</label>
+                                    <select id="setting-default_language" class="form-input">
+                                        <option value="zh-CN">简体中文</option>
+                                        <option value="en">English</option>
+                                        <option value="ja">日本語</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">时区</label>
+                                    <select id="setting-timezone" class="form-input">
+                                        <option value="Asia/Shanghai">UTC+8 (北京时间)</option>
+                                        <option value="UTC">UTC+0 (伦敦时间)</option>
+                                        <option value="America/New_York">UTC-5 (纽约时间)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
+                                <div class="flex flex-col lg:flex-row lg:items-end gap-3">
+                                    <div class="flex-1">
+                                        <label class="block text-xs font-semibold text-blue-800 mb-1.5">后台入口路径</label>
+                                        <input id="setting-admin_entry_path" type="text" class="form-input bg-white" placeholder="/admin">
+                                    </div>
+                                    <a id="admin-entry-open-link" href="/admin" target="_blank" rel="noreferrer" class="btn admin-btn-secondary px-4 py-2.5 rounded-lg text-sm inline-flex items-center justify-center gap-2">
+                                        <span class="material-symbols-outlined text-sm">open_in_new</span>
+                                        打开入口
+                                    </a>
+                                </div>
+                                <p class="mt-3 text-xs leading-5 text-blue-800">
+                                    支持 /admin、/manage、/console、/backend、/control、/dashboard 或 /admin-xxx。旧 /admin 会保留为兜底入口，避免误配置后无法进入后台。
+                                </p>
+                            </div>
+                            <div class="admin-analytics-card">
+                                <div class="admin-section-head">
+                                    <div>
+                                        <h3 class="text-sm font-bold mb-1">网站统计代码</h3>
+                                        <p class="text-xs text-on-surface-variant">粘贴 Google Analytics、百度统计、Umami、Matomo 等监测代码，会注入到所有前台页面和当前自定义首页。</p>
+                                    </div>
+                                    <span class="admin-analytics-badge">
+                                        <span class="material-symbols-outlined" aria-hidden="true">monitoring</span>
+                                        全站注入
+                                    </span>
+                                </div>
+                                <textarea id="setting-analytics_tracking_code" rows="8" class="form-input admin-code-textarea" spellcheck="false" placeholder="例如：<script async src=&quot;https://www.googletagmanager.com/gtag/js?id=G-XXXX&quot;></script>"></textarea>
+                                <p class="mt-3 text-xs leading-5 text-slate-500">
+                                    该代码属于管理员可信配置。普通前台页面通过公共脚本动态注入；自定义首页启用后会写入 active HTML，便于无公共脚本的首页也能统计。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- API Config Panel -->
+                <div id="panel-api" class="settings-panel hidden bg-white rounded-xl border border-slate-100 divide-y divide-slate-50">
+                    <div class="p-6">
+                        <div class="admin-section-head">
+                            <div>
+                                <h3 class="text-sm font-bold mb-1">LLM API 池</h3>
+                                <p class="text-xs text-on-surface-variant">配置多个 OpenAI 兼容接口，支持逐个测试和请求轮询。</p>
+                            </div>
+                            <div class="admin-llm-provider-actions">
+                                <select id="llm-provider-strategy" class="form-input admin-compact-select" aria-label="API 选择策略">
+                                    <option value="failover">故障回退</option>
+                                    <option value="round_robin">轮询分发</option>
+                                </select>
+                                <button type="button" id="llm-provider-add" class="btn admin-btn-secondary px-4 py-2.5 rounded-lg text-sm inline-flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-sm">add</span>
+                                    添加 API
+                                </button>
+                            </div>
+                        </div>
+                        <div class="admin-llm-provider-hint">
+                            <span class="material-symbols-outlined" aria-hidden="true">route</span>
+                            <p>故障回退会按优先级依次尝试；轮询分发会在多个启用 API 之间按请求轮转，某个接口失败时自动尝试下一个。</p>
+                        </div>
+                        <div id="llm-provider-summary-list" class="admin-llm-provider-summary"></div>
+                        <div id="llm-provider-list" class="admin-llm-provider-list"></div>
+                        <div class="admin-llm-provider-footer">
+                            <p id="llm-provider-status" class="text-xs text-on-surface-variant">API Key 只加密保存在服务器，后台列表不返回明文。</p>
+                            <button type="button" id="llm-provider-save" class="btn btn-primary px-5 py-2.5 rounded-lg text-sm">保存 API 池</button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-sm font-bold mb-1">其他 API 密钥</h3>
+                        <p class="text-xs text-on-surface-variant mb-6">第三方服务集成密钥</p>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">OpenAI API Key（Embedding 专用）</label>
+                                <div class="flex gap-2">
+                                    <input id="setting-openai_api_key" type="text" autocomplete="off" spellcheck="false" data-secret-input="true" data-secret-masked="true" class="form-input admin-secret-input flex-1" placeholder="sk-...">
+                                    <button type="button" class="btn-toggle-key btn admin-btn-secondary px-3 py-2 rounded-lg text-xs">显示</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">Google Search API Key</label>
+                                <div class="flex gap-2">
+                                    <input id="setting-google_search_api_key" type="text" autocomplete="off" spellcheck="false" data-secret-input="true" data-secret-masked="true" class="form-input admin-secret-input flex-1" placeholder="AIzaSy...">
+                                    <button type="button" class="btn-toggle-key btn admin-btn-secondary px-3 py-2 rounded-lg text-xs">显示</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- API Usage Panel -->
+                <div id="panel-usage" class="settings-panel hidden bg-white rounded-xl border border-slate-100 divide-y divide-slate-50">
+                    <div class="p-6">
+                        <h3 class="text-sm font-bold mb-1">API 成本控制</h3>
+                        <p class="text-xs text-on-surface-variant mb-6">控制前台诊断与拓词的 Token 使用方式</p>
+
+                        <div class="admin-api-policy-summary">
+                            <div>
+                                <span>累计 Token</span>
+                                <strong data-api-policy-total-tokens>--</strong>
+                            </div>
+                            <div>
+                                <span>调用次数</span>
+                                <strong data-api-policy-total-requests>--</strong>
+                            </div>
+                            <div>
+                                <span>BYOK 请求</span>
+                                <strong data-api-policy-byok-requests>--</strong>
+                            </div>
+                            <div>
+                                <span>今日全站已用</span>
+                                <strong data-api-policy-global-used>--</strong>
+                            </div>
+                            <div>
+                                <span>今日全站预占</span>
+                                <strong data-api-policy-global-reserved>--</strong>
+                            </div>
+                            <div>
+                                <span>今日全站剩余</span>
+                                <strong data-api-policy-global-remaining>--</strong>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-6">
+                            <div>
+                                <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">访问模式</label>
+                                <select id="api-policy-access-mode" class="form-input">
+                                    <option value="lifetime_quota_with_byok">终身赠送额度 + 用户自备 API</option>
+                                    <option value="platform_unlimited">平台无限模式</option>
+                                    <option value="byok_required">强制用户自定义 Key</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">普通用户终身赠送 Token</label>
+                                <input id="api-policy-lifetime-grant" type="number" min="0" step="100" class="form-input" placeholder="10000">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">全站每日 Token 阈值</label>
+                                <input id="api-policy-global-limit" type="number" min="0" step="10000" class="form-input" placeholder="1000000">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">额度重置时区</label>
+                                <input id="api-policy-timezone" type="text" class="form-input" placeholder="Asia/Shanghai">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">BYOK 传输模式</label>
+                                <select id="api-policy-byok-mode" class="form-input">
+                                    <option value="proxy_transient">临时代理模式</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="admin-api-policy-toggles">
+                            <label>
+                                <input id="api-policy-allow-anonymous" type="checkbox">
+                                <span>允许匿名用户使用平台 AI</span>
+                            </label>
+                            <label>
+                                <input id="api-policy-allow-byok" type="checkbox">
+                                <span>允许用户自定义 API Key</span>
+                            </label>
+                            <label>
+                                <input id="api-policy-global-enabled" type="checkbox">
+                                <span>启用全站每日预算限制</span>
+                            </label>
+                            <label>
+                                <input id="api-policy-emergency-byok" type="checkbox">
+                                <span>应急切换为全站自备 API</span>
+                            </label>
+                        </div>
+
+                        <div class="mt-6">
+                            <p class="text-xs font-semibold text-on-surface-variant mb-2">用户自备 API 引导</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div>
+                                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">引导标题</label>
+                                    <input id="api-policy-guidance-title" type="text" class="form-input" placeholder="使用自己的 DeepSeek API 继续">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">按钮文案</label>
+                                    <input id="api-policy-guidance-cta" type="text" class="form-input" placeholder="前往 DeepSeek 获取 API Key">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">引导说明</label>
+                                    <textarea id="api-policy-guidance-message" class="form-input min-h-20" placeholder="平台赠送额度已用完，请绑定自己的 API Key。"></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">DeepSeek 官网</label>
+                                    <input id="api-policy-guidance-official-url" type="url" class="form-input" placeholder="https://platform.deepseek.com/api_keys">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">推荐 API Base URL</label>
+                                    <input id="api-policy-guidance-base-url" type="url" class="form-input" placeholder="https://api.deepseek.com">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">推荐模型</label>
+                                    <input id="api-policy-guidance-model" type="text" class="form-input" placeholder="deepseek-chat">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6">
+                            <p class="text-xs font-semibold text-on-surface-variant mb-2">纳入额度限制的 AI 模块（全量固定）</p>
+                            <div class="admin-api-policy-modules">
+                                                                <label><input type="checkbox" value="keywords" data-api-policy-module checked disabled>拓词</label>
+                                <label><input type="checkbox" value="diagnostics" data-api-policy-module checked disabled>诊断</label>
+                                <label><input type="checkbox" value="companies" data-api-policy-module checked disabled>公司提交</label>
+                                <label><input type="checkbox" value="tools" data-api-policy-module checked disabled>工具</label>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end mt-6">
+                            <button id="api-policy-save" class="btn btn-primary px-5 py-2.5 rounded-lg text-sm">保存成本策略</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Frontend Modules Panel -->
+                <div id="panel-frontend" class="settings-panel hidden bg-white rounded-xl border border-slate-100 divide-y divide-slate-50">
+                    <div class="p-6">
+                        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between mb-6">
+                            <div>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <h3 class="text-sm font-bold">菜单栏设置</h3>
+                                    <span class="admin-pill bg-blue-50 text-blue-700">全站同步</span>
+                                </div>
+                                <p class="mt-1 text-xs leading-5 text-on-surface-variant">自定义前台顶部菜单的文案、URL、显示顺序和打开方式。新菜单项默认在新标签页打开。</p>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <button id="navigation-menu-reset" type="button" class="btn admin-btn-secondary px-4 py-2 rounded-lg text-xs">恢复默认</button>
+                                <button id="navigation-menu-add" type="button" class="btn admin-btn-secondary px-4 py-2 rounded-lg text-xs inline-flex items-center gap-1.5">
+                                    <span class="material-symbols-outlined text-sm" aria-hidden="true">add</span>
+                                    新增菜单项
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+                            <p class="text-xs leading-5 text-slate-500">最多 12 项。支持站内路径、锚点以及 HTTP/HTTPS 外链。</p>
+                            <div class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-500" data-navigation-menu-summary>
+                                正在读取菜单配置...
+                            </div>
+                        </div>
+
+                        <div id="navigation-menu-list" class="space-y-3"></div>
+
+                        <div class="mt-6 flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                            <p class="text-xs leading-5 text-slate-500">保存后，首页和其他前台页面会在下次打开或刷新时读取新菜单。</p>
+                            <button id="navigation-menu-save" type="button" class="btn btn-primary px-5 py-2.5 rounded-lg text-sm whitespace-nowrap">保存菜单栏</button>
+                        </div>
+                    </div>
+
+                    <div class="p-6">
+                        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
+                            <div>
+                                <h3 class="text-sm font-bold mb-1">前台模块管理</h3>
+                                <p class="text-xs text-on-surface-variant">控制前台一级频道是否展示和允许访问。至少需要保留一个模块开启。</p>
+                            </div>
+                            <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-500" data-frontend-module-summary>
+                                正在读取模块状态...
+                            </div>
+                        </div>
+
+                        <div id="frontend-module-list" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
+
+                        <div class="mt-6 rounded-xl border border-blue-100 bg-blue-50/70 p-4 text-xs leading-6 text-blue-800">
+                            关闭模块会隐藏顶部导航和页面入口；用户直接访问已关闭模块时，会看到“模块暂未开放”提示并可返回默认开启模块。登录、个人中心和后台不会被关闭。
+                        </div>
+
+                        <div class="flex justify-end mt-6">
+                            <button id="frontend-modules-save" class="btn btn-primary px-5 py-2.5 rounded-lg text-sm">保存前台模块</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Homepage Runtime Panel -->
+                <div id="panel-homepage" class="settings-panel hidden bg-white rounded-xl border border-slate-100 divide-y divide-slate-50">
+                    <div class="p-6">
+                        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
+                            <div>
+                                <h3 class="text-sm font-bold mb-1">自定义首页</h3>
+                                <p class="text-xs text-on-surface-variant">上传 HTML 包或粘贴单文件 HTML，让根路径 / 展示自定义首页。</p>
+                            </div>
+                            <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-500" data-homepage-summary>
+                                正在读取首页状态...
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
+                            <div class="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                                <p class="text-xs font-bold text-slate-400">当前模式</p>
+                                <p class="mt-2 text-lg font-extrabold text-slate-900" data-homepage-mode>--</p>
+                            </div>
+                            <div class="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                                <p class="text-xs font-bold text-slate-400">激活版本</p>
+                                <p class="mt-2 text-sm font-extrabold text-slate-900 truncate" data-homepage-active-title>--</p>
+                            </div>
+                            <div class="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                                <p class="text-xs font-bold text-slate-400">公司列表</p>
+                                <p class="mt-2 text-sm font-extrabold text-slate-900" data-homepage-company-path>/suite</p>
+                            </div>
+                            <div class="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                                <p class="text-xs font-bold text-slate-400">回退保护</p>
+                                <p class="mt-2 text-sm font-extrabold text-slate-900" data-homepage-fallback>已开启</p>
+                            </div>
+                        </div>
+
+                        <div class="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">版本名称</label>
+                                    <input id="homepage-title" type="text" class="form-input bg-white" placeholder="例如：品牌官网首页 2026-06">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">上传 HTML 包</label>
+                                    <input id="homepage-zip-file" type="file" accept=".zip" class="form-input homepage-file-input bg-white">
+                                </div>
+                                <div class="lg:col-span-2">
+                                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">或粘贴单文件 HTML</label>
+                                    <textarea id="homepage-html" rows="7" class="form-input bg-white font-mono text-xs" placeholder="粘贴完整 HTML；MVP 会移除 script 和 onclick/onload 等事件属性。"></textarea>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                                <p class="text-xs leading-5 text-slate-500">MVP 支持 HTML/CSS/图片/字体等静态资源，不执行上传包 JavaScript；生成版本后需要手动启用才会影响线上 /。</p>
+                                <button id="homepage-create-release" class="btn btn-primary px-5 py-2.5 rounded-lg text-sm whitespace-nowrap">生成预览版本</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-sm font-bold mb-1">首页版本</h3>
+                                <p class="text-xs text-on-surface-variant">预览确认后再启用；恢复默认会让 / 回到原公司列表首页。</p>
+                            </div>
+                            <button id="homepage-restore-default" class="btn admin-btn-secondary px-4 py-2 rounded-lg text-xs">恢复默认首页</button>
+                        </div>
+                        <div id="homepage-release-list" class="space-y-3"></div>
+                    </div>
+                </div>
+
+                <!-- GEO Suite / GEOFlow -->
+                <div id="panel-suite" class="settings-panel hidden bg-white rounded-xl border border-slate-100 divide-y divide-slate-50">
+                    <div class="p-6">
+                        <h3 class="text-sm font-bold mb-1">GEO Suite · GEOFlow 集成</h3>
+                        <p class="text-xs text-on-surface-variant mb-6">把 GEORank 问答/拓词结果移交到 GEOFlow，创建知识库、标题库与内容任务。未配置 Token 时前台仍可预览移交载荷。</p>
+                        <div class="rounded-xl border border-emerald-100 bg-emerald-50/70 px-4 py-3 text-xs text-emerald-900 mb-6" id="geoflow-status-banner">
+                            正在读取集成状态…
+                        </div>
+                        <div class="space-y-5">
+                            <label class="flex items-center justify-between gap-4">
+                                <span>
+                                    <span class="block text-sm font-semibold">启用集成</span>
+                                    <span class="block text-xs text-on-surface-variant mt-1">开启后，配置完整时可创建真实 GEOFlow 任务</span>
+                                </span>
+                                <input id="geoflow-enabled" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/30">
+                            </label>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div>
+                                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">GEOFlow API 地址</label>
+                                    <input id="geoflow-base-url" type="url" class="form-input" placeholder="http://host.docker.internal:18080">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">浏览器打开地址</label>
+                                    <input id="geoflow-public-base-url" type="url" class="form-input" placeholder="http://localhost:18080">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">API Token</label>
+                                <input id="geoflow-api-token" type="password" class="form-input" placeholder="在 GEOFlow /geo_admin/api-tokens 创建" autocomplete="new-password">
+                                <p class="mt-2 text-[11px] text-on-surface-variant">需要 scopes：catalog:read、materials:write、tasks:write。留空占位符表示不修改已有 Token。</p>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                <div>
+                                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">CTA 文案</label>
+                                    <input id="geoflow-cta-label" type="text" class="form-input" placeholder="发送到 GEOFlow">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">提示词 ID（可选）</label>
+                                    <input id="geoflow-prompt-id" type="number" min="1" class="form-input" placeholder="自动探测">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">模型 ID（可选）</label>
+                                    <input id="geoflow-ai-model-id" type="number" min="1" class="form-input" placeholder="自动探测">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">默认 company_id（可选）</label>
+                                    <input id="geoflow-default-company-id" type="text" class="form-input" placeholder="handoff 绑定 GEORank 公司 ID">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                <div>
+                                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">草稿上限</label>
+                                    <input id="geoflow-draft-limit" type="number" min="1" max="50" class="form-input" value="3">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">文章上限</label>
+                                    <input id="geoflow-article-limit" type="number" min="1" max="50" class="form-input" value="3">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">超时（秒）</label>
+                                    <input id="geoflow-timeout" type="number" min="5" max="120" class="form-input" value="30">
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-5">
+                                <label class="inline-flex items-center gap-2 text-sm">
+                                    <input id="geoflow-auto-start" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-primary">
+                                    创建后立即入队生成
+                                </label>
+                                <label class="inline-flex items-center gap-2 text-sm">
+                                    <input id="geoflow-need-review" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-primary" checked>
+                                    需要人工审核
+                                </label>
+                            </div>
+                            <div class="flex items-center gap-3 pt-2">
+                                <button id="geoflow-save" type="button" class="btn btn-primary px-5 py-2.5 rounded-lg text-sm">保存 GEO Suite</button>
+                                <button id="geoflow-reset" type="button" class="btn admin-btn-secondary px-5 py-2.5 rounded-lg text-sm">恢复默认</button>
+                                <a href="/suite" target="_blank" rel="noreferrer" class="text-sm font-semibold text-primary hover:underline">打开套件页</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GEO Engine Panel -->
+                <div id="panel-geo" class="settings-panel hidden bg-white rounded-xl border border-slate-100 p-6">
+                    <h3 class="text-sm font-bold mb-1">GEO 引擎配置</h3>
+                    <p class="text-xs text-on-surface-variant mb-6">诊断与评分引擎的核心参数</p>
+                    <div class="space-y-5">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-semibold">自动评分</p>
+                                <p class="text-xs text-on-surface-variant">新公司入库后自动触发 GEO 评分分析</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input id="setting-geo_auto_score" type="checkbox" class="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 peer" aria-label="开启或关闭自动评分">
+                                <div class="pointer-events-none w-10 h-5 bg-slate-200 rounded-full peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/20 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-semibold">公开评分</p>
+                                <p class="text-xs text-on-surface-variant">在前台公司详情页展示 GEO 评分</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input id="setting-geo_score_public" type="checkbox" class="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 peer" aria-label="开启或关闭公开评分">
+                                <div class="pointer-events-none w-10 h-5 bg-slate-200 rounded-full peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/20 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5"></div>
+                            </label>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-on-surface-variant mb-1.5">评分模型版本</label>
+                            <select id="setting-geo_score_version" class="form-input">
+                                <option value="v2.4">GEO Score v2.4 (推荐)</option>
+                                <option value="v2.3">GEO Score v2.3</option>
+                                <option value="v2.2">GEO Score v2.2 (Legacy)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Save -->
+                <div class="flex items-center justify-end gap-3 pt-4">
+                    <button id="settings-cancel" class="btn admin-btn-secondary px-5 py-2.5 rounded-lg text-sm">取消</button>
+                    <button id="settings-save" class="btn btn-primary px-6 py-2.5 rounded-lg text-sm">保存设置</button>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script src="/js/common.js?v=20260728-admin1"></script>
+</body>
+</html>

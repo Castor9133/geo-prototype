@@ -69,10 +69,12 @@
             navigation_menu: {
                 items: [
                     { id: 'suite', label: 'GEO Suite', url: '/suite', target: '_self', enabled: true },
-                    { id: 'diagnostic', label: '诊断', url: '/diagnostic', target: '_blank', enabled: true },
-                    { id: 'keywords', label: '拓词', url: '/keywords', target: '_blank', enabled: true },
+                    { id: 'diagnostic', label: '诊断', url: '/diagnostic', target: '_self', enabled: true },
+                    { id: 'knowledge', label: '知识库', url: '/knowledge', target: '_self', enabled: true },
+                    { id: 'keywords', label: '拓词', url: '/keywords', target: '_self', enabled: true },
+                    { id: 'distribute', label: '分发', url: '/knowledge?tab=tasks', target: '_self', enabled: true },
                     { id: 'measure', label: '观测', url: '/suite?step=measure', target: '_self', enabled: true },
-                    { id: 'config', label: '配置', url: '/admin/settings', target: '_blank', enabled: true },
+                    { id: 'config', label: '配置', url: '/settings', target: '_self', enabled: true },
                 ],
             },
         },
@@ -171,26 +173,92 @@
         },
 
         ensureSuiteNavigationItem(items) {
-            if (items.some(item => item.id === 'suite' || item.url === '/suite')) {
-                return items.slice(0, 12);
+            let next = items.map(item => {
+                const id = String(item.id || '').toLowerCase();
+                const url = String(item.url || '').toLowerCase();
+                const path = url.split('?')[0].replace(/\/$/, '');
+                const isLegacyKnowledge = id === 'knowledge'
+                    || (url.includes('/suite') && url.includes('step=knowledge'))
+                    || ((path === '/admin/content-engine' || path.endsWith('/content-engine'))
+                        && !url.includes('tab=tasks') && !url.includes('tab=channels'));
+                if (isLegacyKnowledge) {
+                    return {
+                        ...item,
+                        id: 'knowledge',
+                        label: item.label || '知识库',
+                        url: '/knowledge',
+                        target: '_self',
+                        enabled: item.enabled !== false,
+                    };
+                }
+                if (id === 'distribute'
+                    || ((path === '/admin/content-engine' || path.endsWith('/content-engine'))
+                        && (url.includes('tab=tasks') || url.includes('tab=channels')))) {
+                    return {
+                        ...item,
+                        id: 'distribute',
+                        label: item.label || '分发',
+                        url: '/knowledge?tab=tasks',
+                        target: '_self',
+                        enabled: item.enabled !== false,
+                    };
+                }
+                if (['suite', 'diagnostic', 'keywords', 'measure', 'config'].includes(id)
+                    && url.startsWith('/') && !url.startsWith('//')) {
+                    return { ...item, target: '_self' };
+                }
+                return item;
+            });
+            if (!next.some(item => item.id === 'suite' || item.url === '/suite')) {
+                next = [
+                    { id: 'suite', label: 'GEO Suite', url: '/suite', target: '_self', enabled: true },
+                    ...next,
+                ];
             }
-            return [
-                { id: 'suite', label: 'GEO Suite', url: '/suite', target: '_self', enabled: true },
-                ...items,
-            ].slice(0, 12);
+            const hasKnowledge = next.some(item => {
+                const id = String(item.id || '').toLowerCase();
+                const url = String(item.url || '').toLowerCase();
+                const path = url.split('?')[0].replace(/\/$/, '');
+                return id === 'knowledge'
+                    || url.includes('step=knowledge')
+                    || path === '/knowledge'
+                    || path.endsWith('/knowledge.html')
+                    || (url.includes('content-engine') && !url.includes('tab=tasks') && !url.includes('tab=channels'))
+                    || url.includes('/knowledge-bases');
+            });
+            if (!hasKnowledge) {
+                const knowledge = { id: 'knowledge', label: '知识库', url: '/knowledge', target: '_self', enabled: true };
+                const diagnosticIndex = next.findIndex(item => {
+                    const id = String(item.id || '').toLowerCase();
+                    const url = String(item.url || '').toLowerCase();
+                    return id === 'diagnostic' || url === '/diagnostic' || url.startsWith('/diagnostic?');
+                });
+                const insertAt = diagnosticIndex >= 0 ? diagnosticIndex + 1 : Math.min(1, next.length);
+                next = [...next.slice(0, insertAt), knowledge, ...next.slice(insertAt)];
+            }
+            return next.slice(0, 12);
         },
 
         normalizeNavigationMenu(value) {
             const source = Array.isArray(value?.items) && value.items.length
                 ? value.items
                 : this.defaults.navigation_menu.items;
-            const items = source.slice(0, 12).map((item, index) => ({
-                id: String(item?.id || `menu-${index + 1}`),
-                label: String(item?.label || '').trim().slice(0, 40),
-                url: this.normalizeNavigationUrl(item?.url),
-                target: item?.target === '_self' ? '_self' : '_blank',
-                enabled: item?.enabled !== false,
-            })).filter(item => item.enabled && item.label && item.url)
+            const items = source.slice(0, 12).map((item, index) => {
+                const url = this.normalizeNavigationUrl(item?.url);
+                const isInternal = url.startsWith('/') && !url.startsWith('//');
+                const rawTarget = item?.target;
+                let target = '_blank';
+                if (rawTarget === '_self' || rawTarget === 'same_tab') target = '_self';
+                else if (rawTarget === '_blank') target = '_blank';
+                else if (isInternal) target = '_self';
+                return {
+                    id: String(item?.id || `menu-${index + 1}`),
+                    label: String(item?.label || '').trim().slice(0, 40),
+                    url,
+                    target,
+                    enabled: item?.enabled !== false,
+                };
+            }).filter(item => item.enabled && item.label && item.url)
                 .filter(item => {
                     const id = String(item.id || '').toLowerCase();
                     const url = String(item.url || '').toLowerCase();
@@ -727,21 +795,22 @@
 
     // ===== 首屏完整导航与 file:// 协议 fallback =====
     const HEADER_HTML = `
-<nav id="main-nav" class="fixed top-0 w-full z-50 border-b shadow-none" style="background:var(--bg,#F9F7F2);border-color:var(--border,#1A1A1A);border-bottom-width:2px;">
-    <div class="flex justify-between items-center px-6 md:px-8 h-16 w-full max-w-7xl mx-auto">
-        <div class="flex items-center gap-8">
-            <a href="/" data-logo-link class="text-xl font-bold tracking-tight font-headline hover:opacity-90 transition-opacity" style="color:var(--ink,#1A1A1A);">
-                GEORank
-            </a>
-            <div class="hidden md:flex items-center gap-5" data-site-navigation data-navigation-variant="desktop">
-                <a href="/suite" data-nav-link data-navigation-item="suite" class="font-manrope font-medium tracking-tight transition-colors" style="color:var(--ink-muted,#5C5A55);">GEO Suite</a>
-                <a href="/diagnostic" data-nav-link data-i18n="nav.diagnostic" class="font-manrope font-medium tracking-tight transition-colors" style="color:var(--ink-muted,#5C5A55);">诊断</a>
-                <a href="/keywords" data-nav-link data-i18n="nav.keywords" class="font-manrope font-medium tracking-tight transition-colors" style="color:var(--ink-muted,#5C5A55);">拓词</a>
-                <a href="/suite?step=measure" data-nav-link data-navigation-item="measure" class="font-manrope font-medium tracking-tight transition-colors" style="color:var(--ink-muted,#5C5A55);">观测</a>
-                <a href="/admin/settings" data-nav-link data-navigation-item="config" class="font-manrope font-medium tracking-tight transition-colors" style="color:var(--ink-muted,#5C5A55);">配置</a>
+<nav id="main-nav" class="geo-header">
+    <div class="geo-header__inner">
+        <div class="geo-header__left">
+            <a href="/" data-logo-link class="geo-header__logo">GEORank</a>
+            <div class="geo-header__nav hidden md:flex" data-site-navigation data-navigation-variant="desktop">
+                <a href="/suite" data-nav-link data-navigation-item="suite">GEO Suite</a>
+                <a href="/diagnostic" data-nav-link data-i18n="nav.diagnostic">诊断</a>
+                <a href="/knowledge" data-nav-link data-navigation-item="knowledge">知识库</a>
+                <a href="/keywords" data-nav-link data-i18n="nav.keywords">拓词</a>
+                <a href="/knowledge?tab=tasks" data-nav-link data-navigation-item="distribute">分发</a>
+                <a href="/suite?step=measure" data-nav-link data-navigation-item="measure">观测</a>
+                <a href="/settings" data-nav-link data-navigation-item="config">配置</a>
             </div>
         </div>
-        <div class="header-actions flex items-center gap-2 md:gap-3">
+        <div class="header-actions geo-header__actions">
+            <span data-demo-mode-badge class="geo-header__badge hidden">演示模式 · 免登录</span>
             <a href="/login" data-auth-trigger data-profile-link class="auth-trigger header-profile-button" aria-label="登录 / 个人中心" data-i18n-aria-label="auth.triggerSignedOut">
                 <span class="header-profile-button__icon" aria-hidden="true">
                     <svg fill="none" height="20" viewBox="0 0 24 24" width="20">
@@ -751,20 +820,22 @@
                 </span>
                 <span class="sr-only" data-auth-trigger-label data-i18n="auth.login">登录</span>
             </a>
-            <button id="mobile-menu-toggle" class="md:hidden w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-50 dark:hover:bg-slate-800" aria-label="打开菜单" data-i18n-aria-label="header.mobileMenu">
-                <svg aria-hidden="true" class="text-slate-600 dark:text-slate-400" fill="none" height="20" viewBox="0 0 24 24" width="20">
+            <button id="mobile-menu-toggle" class="geo-header__menu-btn md:hidden" type="button" aria-label="打开菜单" data-i18n-aria-label="header.mobileMenu">
+                <svg aria-hidden="true" fill="none" height="20" viewBox="0 0 24 24" width="20">
                     <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" />
                 </svg>
             </button>
         </div>
     </div>
-    <div id="mobile-menu" class="hidden md:hidden border-t" style="background:var(--bg,#F9F7F2);border-color:var(--border,#1A1A1A);border-top-width:2px;">
-        <div class="flex flex-col px-6 py-4 space-y-3" data-site-navigation data-navigation-variant="mobile">
-            <a href="/suite" data-nav-link data-navigation-item="suite" class="font-manrope font-medium py-2 transition-colors" style="color:var(--ink-muted,#5C5A55);">GEO Suite</a>
-            <a href="/diagnostic" data-nav-link data-i18n="nav.diagnostic" class="font-manrope font-medium py-2 transition-colors" style="color:var(--ink-muted,#5C5A55);">诊断</a>
-            <a href="/keywords" data-nav-link data-i18n="nav.keywords" class="font-manrope font-medium py-2 transition-colors" style="color:var(--ink-muted,#5C5A55);">拓词</a>
-            <a href="/suite?step=measure" data-nav-link data-navigation-item="measure" class="font-manrope font-medium py-2 transition-colors" style="color:var(--ink-muted,#5C5A55);">观测</a>
-            <a href="/admin/settings" data-nav-link data-navigation-item="config" class="font-manrope font-medium py-2 transition-colors" style="color:var(--ink-muted,#5C5A55);">配置</a>
+    <div id="mobile-menu" class="geo-header__mobile hidden md:hidden">
+        <div class="geo-header__mobile-nav" data-site-navigation data-navigation-variant="mobile">
+            <a href="/suite" data-nav-link data-navigation-item="suite">GEO Suite</a>
+            <a href="/diagnostic" data-nav-link data-i18n="nav.diagnostic">诊断</a>
+            <a href="/knowledge" data-nav-link data-navigation-item="knowledge">知识库</a>
+            <a href="/keywords" data-nav-link data-i18n="nav.keywords">拓词</a>
+            <a href="/knowledge?tab=tasks" data-nav-link data-navigation-item="distribute">分发</a>
+            <a href="/suite?step=measure" data-nav-link data-navigation-item="measure">观测</a>
+            <a href="/settings" data-nav-link data-navigation-item="config">配置</a>
         </div>
     </div>
 </nav>`;
@@ -1799,11 +1870,12 @@ const FOOTER_HTML = `
             const actions = document.querySelector('.header-actions');
             if (badge) {
                 badge.classList.remove('hidden');
+                badge.classList.add('geo-header__badge');
                 badge.style.display = '';
             } else if (actions) {
                 const created = document.createElement('span');
                 created.dataset.demoModeBadge = '1';
-                created.className = 'inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100';
+                created.className = 'geo-header__badge';
                 created.textContent = '演示模式 · 免登录';
                 actions.insertBefore(created, actions.firstChild);
             }
@@ -2342,15 +2414,24 @@ const FOOTER_HTML = `
          */
         highlightCurrentPage() {
             const currentPath = Routes.getModulePath(window.location.pathname);
-            const navLinks = DOM.getAll('[data-nav-link]');
+            const currentSearch = window.location.search || '';
+            const navLinks = DOM.getAll('#main-nav [data-nav-link]');
 
             navLinks.forEach(link => {
-                const href = link.getAttribute('href');
-                const target = Routes.getModulePath(href || '/');
-                if (currentPath === target) {
-                    link.classList.add('text-blue-600', 'border-b-2', 'border-blue-600', 'font-bold');
-                    link.classList.remove('text-slate-600');
+                const href = link.getAttribute('href') || '/';
+                const url = new URL(href, window.location.origin);
+                const target = Routes.getModulePath(url.pathname);
+                const linkSearch = url.search || '';
+                let active = currentPath === target;
+                if (active && target === '/suite') {
+                    const curStep = new URLSearchParams(currentSearch).get('step');
+                    const linkStep = new URLSearchParams(linkSearch).get('step');
+                    if (linkStep) active = curStep === linkStep;
+                    else active = !curStep || curStep === 'diagnostic';
                 }
+                link.classList.toggle('is-active', !!active);
+                link.classList.toggle('text-blue-600', !!active);
+                link.classList.remove('border-b-2', 'border-blue-600', 'font-bold', 'text-slate-600');
             });
         },
 

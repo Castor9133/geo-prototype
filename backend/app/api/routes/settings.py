@@ -14,8 +14,15 @@ from app.services.navigation_settings import (
 )
 from app.services.runtime_settings import get_frontend_module_config, get_homepage_runtime_config
 from app.services.settings_security import decrypt_setting_value, is_sensitive_setting
+from app.services.content_engine import public_content_backend_status
 
 router = APIRouter()
+
+
+@router.get("/content-backend")
+async def get_content_backend_status():
+    """Suite / 前台读取：native-python | legacy-flow。"""
+    return public_content_backend_status()
 
 
 @router.get("/public")
@@ -38,6 +45,7 @@ async def get_public_settings(db: DbSession, response: Response):
     payload[NAVIGATION_MENU_SETTING_KEY] = ensure_suite_in_navigation_menu(
         payload.get(NAVIGATION_MENU_SETTING_KEY) or get_default_navigation_menu()
     )
+    payload["content_backend"] = public_content_backend_status()
     return payload
 
 

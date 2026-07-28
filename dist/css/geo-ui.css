@@ -1,0 +1,504 @@
+/**
+ * GEO UI — 全站视觉源（对齐 docs/design/ref-ui 例图系）
+ * 奶油/浅灰蓝底 · 白卡细深色描边 + 轻阴影 · 蓝/陶土橙强调 · KPI 有重量
+ * 禁止再往纯白扁平 admin 收敛；顶栏可克制，内页不可跟顶栏一样素。
+ */
+
+:root {
+  /* —— 核心 token（与 inner-shell / 例图对齐） —— */
+  --geo-bg: #F8F7F2;
+  --geo-bg-cool: #F0F2F5;
+  --geo-paper: #FFFFFF;
+  --geo-ink: #1A1A1A;
+  --geo-muted: #5C677A;
+  --geo-line: #D8D2C6;
+  --geo-line-ink: rgba(26, 26, 26, 0.16);
+  --geo-line-strong: #B7C9E8;
+
+  --geo-accent: #0052D9;
+  --geo-accent-soft: #E8F1FF;
+  --geo-accent-shadow: 0 4px 14px rgba(0, 82, 217, 0.28);
+
+  --geo-orange: #E8641B;
+  --geo-orange-soft: #FFF1E6;
+  --geo-orange-shadow: 0 4px 14px rgba(232, 100, 27, 0.28);
+  --geo-green: #2BA471;
+  --geo-green-soft: #E8F7EF;
+  --geo-teal: #0D9488;
+  --geo-lavender: #C4B0E0;
+  --geo-lavender-soft: #F3E8FF;
+  --geo-sand: #F3F0E8;
+
+  --geo-radius: 16px;
+  --geo-radius-sm: 12px;
+  --geo-radius-xs: 10px;
+  --geo-radius-pill: 999px;
+
+  /* 白卡：细深色描边 + 可感知轻阴影（例图层次） */
+  --geo-shadow: 0 6px 22px rgba(26, 26, 26, 0.08);
+  --geo-shadow-soft: 0 3px 12px rgba(26, 26, 26, 0.06);
+  --geo-shadow-press: 0 1px 4px rgba(26, 26, 26, 0.1);
+
+  --geo-font: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --geo-font-display: "Noto Serif SC", "Songti SC", Georgia, serif;
+
+  /* —— 兼容别名：旧 neu / common / 页面本地变量 → Suite 气质 —— */
+  --neu-bg: var(--geo-bg);
+  --neu-paper: var(--geo-paper);
+  --neu-ink: var(--geo-ink);
+  --neu-muted: var(--geo-muted);
+  --neu-blue: var(--geo-accent);
+  --neu-orange: var(--geo-orange);
+  --neu-green: var(--geo-green);
+  --neu-lavender: var(--geo-lavender);
+  --neu-sand: var(--geo-sand);
+  --neu-border: var(--geo-line);
+  --neu-border-width: 1px;
+  --neu-radius: var(--geo-radius-sm);
+  --neu-radius-sm: var(--geo-radius-xs);
+  --neu-shadow: var(--geo-shadow);
+  --neu-shadow-press: var(--geo-shadow-press);
+
+  --bg: var(--geo-bg);
+  --bg-elevated: var(--geo-paper);
+  --bg-soft: var(--geo-sand);
+  --ink: var(--geo-ink);
+  --ink-muted: var(--geo-muted);
+  --border: var(--geo-line);
+  --border-width: 1px;
+  --shadow-hard: var(--geo-shadow);
+  --shadow-hard-press: var(--geo-shadow-press);
+  --shadow-card: var(--geo-shadow);
+  --shadow-hover: var(--geo-shadow);
+  --shadow-sm: var(--geo-shadow-soft);
+  --shadow-md: var(--geo-shadow);
+  --shadow-lg: var(--geo-shadow);
+  --shadow-xl: var(--geo-shadow);
+
+  --accent-blue: var(--geo-accent);
+  --accent-orange: var(--geo-orange);
+  --accent-green: var(--geo-green);
+  --accent-lavender: var(--geo-lavender);
+
+  --suite-bg: var(--geo-bg-cool);
+  --suite-cream: #F8F7F2;
+  --suite-paper: var(--geo-paper);
+  --suite-ink: var(--geo-ink);
+  --suite-muted: var(--geo-muted);
+  --suite-line: var(--geo-line);
+  --suite-radius: var(--geo-radius);
+  --suite-radius-sm: var(--geo-radius-sm);
+  --suite-shadow: var(--geo-shadow);
+  --suite-shadow-soft: var(--geo-shadow-soft);
+  --suite-border-width: 1px;
+  --suite-blue: var(--geo-accent);
+  --suite-blue-deep: #1558C0;
+  --suite-orange: var(--geo-orange);
+  --suite-green: var(--geo-green);
+  --suite-lavender: var(--geo-lavender);
+  --suite-sand: var(--geo-sand);
+
+  --cockpit-accent: var(--geo-accent);
+  --cockpit-accent-soft: var(--geo-accent-soft);
+  --cockpit-orange: var(--geo-orange);
+  --cockpit-orange-soft: var(--geo-orange-soft);
+  --cockpit-green: var(--geo-green);
+  --cockpit-green-soft: var(--geo-green-soft);
+  --cockpit-teal: var(--geo-teal);
+}
+
+/* —— 共享组件 —— */
+.geo-card {
+  background: var(--geo-paper);
+  border: 1px solid var(--geo-line);
+  border-radius: var(--geo-radius);
+  box-shadow: var(--geo-shadow);
+  padding: 1.15rem 1.2rem;
+}
+
+.geo-card--soft {
+  box-shadow: var(--geo-shadow-soft);
+  border-radius: var(--geo-radius-sm);
+}
+
+.geo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.55rem 1rem;
+  border-radius: var(--geo-radius-xs);
+  border: 1px solid var(--geo-line);
+  background: var(--geo-paper);
+  color: var(--geo-ink);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-decoration: none;
+  box-shadow: var(--geo-shadow-soft);
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
+}
+
+.geo-btn:hover {
+  border-color: var(--geo-line-strong);
+  box-shadow: var(--geo-shadow);
+}
+
+.geo-btn--primary {
+  background: var(--geo-accent);
+  border-color: var(--geo-accent);
+  color: #fff;
+  box-shadow: var(--geo-accent-shadow);
+}
+
+.geo-btn--primary:hover {
+  filter: brightness(1.04);
+  border-color: var(--geo-accent);
+}
+
+.geo-btn--ghost {
+  background: var(--geo-paper);
+  box-shadow: none;
+}
+
+.geo-btn--block {
+  width: 100%;
+}
+
+.geo-kpi {
+  background: var(--geo-paper);
+  border: 1px solid var(--geo-line);
+  border-radius: var(--geo-radius-sm);
+  box-shadow: var(--geo-shadow-soft);
+  padding: 0.95rem 1rem;
+}
+
+.geo-kpi strong {
+  display: block;
+  font-size: 1.65rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--geo-ink);
+}
+
+.geo-kpi span {
+  color: var(--geo-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.geo-kpi small {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--geo-accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.geo-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+}
+
+.geo-tab {
+  border: none;
+  background: transparent;
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--geo-radius-pill);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--geo-muted);
+  text-decoration: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.geo-tab.is-active,
+.geo-tab.active,
+.geo-tab:hover {
+  color: var(--geo-accent);
+  background: var(--geo-accent-soft);
+}
+
+.geo-chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--geo-radius-pill);
+  background: var(--geo-sand);
+  color: var(--geo-muted);
+}
+
+.geo-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--geo-radius-pill);
+  background: #94A3B8;
+  display: inline-block;
+}
+
+.geo-dot--blue { background: var(--geo-accent); }
+.geo-dot--orange { background: var(--geo-orange); }
+.geo-dot--green { background: var(--geo-green); }
+
+.geo-empty {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--geo-muted);
+  font-size: 0.88rem;
+  background: var(--geo-sand);
+  border-radius: var(--geo-radius-sm);
+  border: 1px dashed var(--geo-line);
+}
+
+.geo-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--geo-line);
+  border-radius: var(--geo-radius-sm);
+  background: var(--geo-paper);
+  box-shadow: var(--geo-shadow-soft);
+}
+
+.geo-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.geo-table-wrap th,
+.geo-table-wrap td {
+  border-bottom: 1px solid var(--geo-line);
+  padding: 0.75rem 0.65rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.geo-table-wrap th {
+  color: var(--geo-muted);
+  font-weight: 700;
+  font-size: 0.75rem;
+  background: var(--geo-sand);
+}
+
+/* 降级旧硬阴影工具类（不再主导） */
+.neu-elevated {
+  border: 1px solid var(--geo-line) !important;
+  box-shadow: var(--geo-shadow) !important;
+  border-radius: var(--geo-radius-sm);
+  background: var(--geo-paper);
+}
+
+.neu-elevated--interactive {
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.neu-elevated--interactive:hover {
+  transform: none;
+  border-color: var(--geo-line-strong) !important;
+  box-shadow: var(--geo-shadow) !important;
+}
+
+.neu-elevated--interactive:active {
+  transform: none;
+  box-shadow: var(--geo-shadow-press) !important;
+}
+
+/* 无 Tailwind 页面也要认 hidden */
+.hidden {
+  display: none !important;
+}
+
+/* —— 顶栏：可保持克制（文字链）；内页卡片/KPI 不要跟顶栏一样素 —— */
+.geo-header,
+#main-nav.geo-header,
+#main-nav {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-bottom: 1px solid var(--geo-line-ink, rgba(26, 26, 26, 0.12)) !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.geo-header.shadow-nav,
+#main-nav.shadow-nav {
+  box-shadow: none !important;
+  border-bottom-color: #D8DEE8 !important;
+}
+
+.geo-header__inner,
+#main-nav > .geo-header__inner,
+#main-nav > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 80rem;
+  height: 4rem;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.geo-header__left {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  min-width: 0;
+}
+
+.geo-header__logo,
+#main-nav [data-logo-link] {
+  font-family: var(--geo-font, "Noto Sans SC", system-ui, sans-serif) !important;
+  font-size: 1.15rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  color: var(--geo-ink, #1A1A1A) !important;
+  text-decoration: none !important;
+}
+
+.geo-header__logo:hover,
+#main-nav [data-logo-link]:hover {
+  opacity: 0.85;
+  color: var(--geo-ink, #1A1A1A) !important;
+}
+
+.geo-header__nav {
+  display: none;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .geo-header__nav,
+  #main-nav .geo-header__nav {
+    display: flex !important;
+  }
+}
+
+/* 文字链：无胶囊底、无重阴影 */
+#main-nav [data-nav-link] {
+  display: inline-block !important;
+  padding: 0.15rem 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--geo-muted, #5C677A) !important;
+  font-family: var(--geo-font, "Noto Sans SC", system-ui, sans-serif) !important;
+  font-size: 0.9rem !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+  text-decoration: none !important;
+  box-shadow: none !important;
+}
+
+#main-nav [data-nav-link]:hover {
+  color: var(--geo-ink, #1A1A1A) !important;
+  background: transparent !important;
+}
+
+#main-nav [data-nav-link].is-active,
+#main-nav [data-nav-link].text-blue-600,
+#main-nav [data-nav-link].text-primary {
+  color: var(--geo-accent, #1B6EF3) !important;
+  font-weight: 650 !important;
+  background: transparent !important;
+  border-bottom: 2px solid var(--geo-accent, #1B6EF3) !important;
+  border-radius: 0 !important;
+}
+
+.geo-header__actions,
+#main-nav .header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.geo-header__badge,
+#main-nav [data-demo-mode-badge] {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  background: #F3F4F6;
+  color: var(--geo-muted, #5C677A);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.geo-header__badge.hidden,
+#main-nav [data-demo-mode-badge].hidden {
+  display: none !important;
+}
+
+#main-nav .header-profile-button,
+#main-nav .geo-header__menu-btn,
+#main-nav #mobile-menu-toggle {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border: none !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: var(--geo-muted, #5C677A) !important;
+  box-shadow: none !important;
+  cursor: pointer;
+}
+
+#main-nav .header-profile-button:hover,
+#main-nav .geo-header__menu-btn:hover,
+#main-nav #mobile-menu-toggle:hover {
+  background: #F5F7FA !important;
+  color: var(--geo-ink, #1A1A1A) !important;
+}
+
+.geo-header__mobile,
+#main-nav #mobile-menu {
+  border-top: 1px solid var(--geo-line, #E5EAF0) !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+.geo-header__mobile-nav,
+#mobile-menu > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.75rem 1.25rem 1rem;
+}
+
+#mobile-menu [data-nav-link] {
+  display: block !important;
+  padding: 0.55rem 0 !important;
+  border-bottom: none !important;
+}
+
+@media (min-width: 768px) {
+  #mobile-menu-toggle,
+  #main-nav #mobile-menu {
+    display: none !important;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .geo-header__nav,
+  #main-nav .geo-header__nav {
+    display: none !important;
+  }
+
+  #mobile-menu:not(.hidden) {
+    display: block !important;
+  }
+}
+
+/* 内页共享组件：例图系层次（描边 + 阴影 + 胶囊 tab），禁止扁平化覆盖 */

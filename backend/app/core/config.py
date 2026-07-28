@@ -30,12 +30,17 @@ class Settings(BaseSettings):
     CORS_ORIGINS: List[str] = ["http://localhost:8899", "http://localhost:80", "http://localhost", "http://127.0.0.1"]
 
     # ----- PostgreSQL -----
+    # 裸跑本机时设 POSTGRES_HOST=127.0.0.1；Compose 内默认 hostname=postgres
     POSTGRES_HOST: str = "postgres"
     POSTGRES_PORT: int = 5432
     POSTGRES_DB: str = "georank"
     POSTGRES_USER: str = "georank"
     POSTGRES_PASSWORD: str = "change-me-postgres-password"
     TEST_DATABASE_URL: str = ""
+
+    # ----- 内容后端模式（M1：统一 Python / F2 双轨）-----
+    # native-python：知识库/任务/分发走 Rank 原生；legacy-flow：Suite 仍 handoff 到 GEOFlow
+    CONTENT_BACKEND_MODE: str = "native-python"
 
     @property
     def DATABASE_URL(self) -> str:

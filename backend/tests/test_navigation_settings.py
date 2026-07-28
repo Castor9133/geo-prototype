@@ -13,20 +13,13 @@ from app.services.navigation_settings import (  # noqa: E402
 
 
 class NavigationSettingsTests(unittest.TestCase):
-    def test_default_menu_uses_new_tab(self):
+    def test_default_menu_uses_same_tab_for_internal(self):
         menu = get_default_navigation_menu()
 
         self.assertGreaterEqual(len(menu["items"]), 4)
         self.assertEqual(menu["items"][0]["id"], "suite")
         self.assertEqual(menu["items"][0]["url"], "/suite")
         self.assertEqual(menu["items"][0]["target"], "_self")
-        self.assertTrue(
-            all(
-                item["target"] == "_blank"
-                for item in menu["items"]
-                if item["id"] not in {"suite", "measure"}
-            )
-        )
         self.assertEqual(menu["items"][1]["url"], "/diagnostic")
         self.assertFalse(
             {"companies", "experts", "tutorial", "github", "solutions", "plans", "tools"}
@@ -34,8 +27,15 @@ class NavigationSettingsTests(unittest.TestCase):
         )
         self.assertEqual(
             {item["id"] for item in menu["items"]},
-            {"suite", "diagnostic", "keywords", "measure", "config"},
+            {"suite", "diagnostic", "knowledge", "keywords", "distribute", "measure", "config"},
         )
+        knowledge = next(item for item in menu["items"] if item["id"] == "knowledge")
+        self.assertEqual(knowledge["url"], "/knowledge")
+        self.assertEqual(knowledge["target"], "_self")
+        distribute = next(item for item in menu["items"] if item["id"] == "distribute")
+        self.assertEqual(distribute["url"], "/knowledge?tab=tasks")
+        self.assertEqual(distribute["target"], "_self")
+        self.assertTrue(all(item["target"] == "_self" for item in menu["items"]))
 
     def test_normalizer_preserves_order_and_supported_targets(self):
         menu = normalize_navigation_menu_payload(
@@ -52,12 +52,12 @@ class NavigationSettingsTests(unittest.TestCase):
         self.assertEqual(menu["items"][1]["target"], "_self")
         self.assertFalse(menu["items"][1]["enabled"])
 
-    def test_normalizer_defaults_missing_target_to_new_tab(self):
+    def test_normalizer_defaults_internal_paths_to_same_tab(self):
         menu = normalize_navigation_menu_payload(
             {"items": [{"label": "首页", "url": "/"}]}
         )
 
-        self.assertEqual(menu["items"][0]["target"], "_blank")
+        self.assertEqual(menu["items"][0]["target"], "_self")
 
     def test_normalizer_rejects_unsafe_urls(self):
         with self.assertRaisesRegex(NavigationMenuValidationError, "HTTP"):
@@ -79,6 +79,7 @@ class NavigationSettingsTests(unittest.TestCase):
         self.assertEqual(menu["items"][0]["id"], "suite")
         self.assertEqual(menu["items"][0]["url"], "/suite")
         self.assertEqual(menu["items"][1]["id"], "diagnostic")
+        self.assertEqual(menu["items"][1]["target"], "_self")
         self.assertFalse({"solutions", "plans"} & {item["id"] for item in menu["items"]})
 
     def test_ensure_suite_keeps_existing_suite(self):
@@ -91,7 +92,7 @@ class NavigationSettingsTests(unittest.TestCase):
             }
         )
 
-        self.assertEqual([item["id"] for item in menu["items"]], ["suite", "diagnostic"])
+        self.assertEqual([item["id"] for item in menu["items"]], ["suite", "diagnostic", "knowledge", "distribute"])
 
     def test_ensure_suite_strips_removed_product_entries(self):
         menu = ensure_suite_in_navigation_menu(
@@ -108,8 +109,40 @@ class NavigationSettingsTests(unittest.TestCase):
             }
         )
 
-        self.assertEqual([item["id"] for item in menu["items"]], ["suite", "diagnostic"])
+        self.assertEqual([item["id"] for item in menu["items"]], ["suite", "diagnostic", "knowledge", "distribute"])
         self.assertFalse({"tools", "companies"} & {item["id"] for item in menu["items"]})
+
+    def test_ensure_suite_rewrites_legacy_knowledge_url(self):
+        menu = ensure_suite_in_navigation_menu(
+            {
+                "items": [
+                    {"id": "suite", "label": "GEO Suite", "url": "/suite", "target": "_self"},
+                    {"id": "diagnostic", "label": "诊断", "url": "/diagnostic", "target": "_blank"},
+                    {"id": "knowledge", "label": "知识库", "url": "/suite?step=knowledge", "target": "_self"},
+                    {"id": "distribute", "label": "分发", "url": "/admin/content-engine?tab=tasks", "target": "_blank"},
+                ]
+            }
+        )
+
+        knowledge = next(item for item in menu["items"] if item["id"] == "knowledge")
+        self.assertEqual(knowledge["url"], "/knowledge")
+        self.assertEqual(knowledge["target"], "_self")
+        distribute = next(item for item in menu["items"] if item["id"] == "distribute")
+        self.assertEqual(distribute["url"], "/knowledge?tab=tasks")
+        self.assertEqual(distribute["target"], "_self")
+
+    def test_ensure_suite_rewrites_admin_content_engine_to_public(self):
+        menu = ensure_suite_in_navigation_menu(
+            {
+                "items": [
+                    {"id": "suite", "label": "GEO Suite", "url": "/suite", "target": "_self"},
+                    {"id": "knowledge", "label": "知识库", "url": "/admin/content-engine", "target": "_blank"},
+                ]
+            }
+        )
+        knowledge = next(item for item in menu["items"] if item["id"] == "knowledge")
+        self.assertEqual(knowledge["url"], "/knowledge")
+        self.assertEqual(knowledge["target"], "_self")
 
 
 if __name__ == "__main__":

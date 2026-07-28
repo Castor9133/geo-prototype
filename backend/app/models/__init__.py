@@ -20,6 +20,14 @@ from app.models.ai_usage import (
 )
 from app.models.homepage import HomepageRelease
 from app.models.trust_obs import TrustObsProbe, TrustObsRun, TrustObsSample
+from app.models.content_engine import (
+    KnowledgeBase,
+    KnowledgeDocument,
+    KnowledgeChunk,
+    ContentPrompt,
+    ContentTask,
+    DistributionChannel,
+)
 
 __all__ = [
     "Company",
@@ -46,4 +54,10 @@ __all__ = [
     "TrustObsProbe",
     "TrustObsRun",
     "TrustObsSample",
+    "KnowledgeBase",
+    "KnowledgeDocument",
+    "KnowledgeChunk",
+    "ContentPrompt",
+    "ContentTask",
+    "DistributionChannel",
 ]

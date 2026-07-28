@@ -1,136 +1,172 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-    <title>GEO Suite - 全套工作流</title>
-    <meta name="description" content="GEO Suite：诊断 → 知识库（DJI Mini 5 Pro / KB #9）→ 拓词 → 分发（绑定 KB）→ 观测 → 配置。">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet">
+    <title>GEO Suite · 内容增长工厂</title>
+    <meta name="description" content="GEO Suite：诊断 → 知识库 → 拓词 → 分发 → 观测。对照内容增长工厂信息架构。">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/public-tailwind.css?v=20260727-hard-shadow">
-    <link rel="stylesheet" href="/css/common.css?v=20260727-hard-shadow">
-    <link rel="stylesheet" href="/css/suite.css?v=20260727-hard-shadow">
+    <link rel="stylesheet" href="/css/geo-ui.css?v=20260728-ux1">
+    <link rel="stylesheet" href="/css/common.css?v=20260728-ux1">
+    <link rel="stylesheet" href="/css/suite.css?v=20260728-ux1">
+    <link rel="stylesheet" href="/css/suite-cockpit.css?v=20260728-ux1">
+    <link rel="stylesheet" href="/css/inner-shell.css?v=20260728-ux1">
 </head>
-<body class="suite-page text-on-surface antialiased">
+<body class="suite-page suite-page--cockpit text-on-surface antialiased inner-page">
     <div id="header-container"></div>
 
-    <section class="suite-hero">
-        <div class="suite-hero__grid" aria-hidden="true"></div>
-        <div class="suite-hero__inner">
-            <div class="suite-brand">
-                <span class="suite-brand__mark" aria-hidden="true"></span>
-                <span class="suite-brand__name">GEO Suite</span>
+    <main class="cockpit">
+        <header class="cockpit-top">
+            <div class="cockpit-top__left">
+                <h1 id="suite-cockpit-title">内容增长工厂</h1>
+                <p class="cockpit-top__sub" id="suite-cockpit-sub">GEO Suite · DJI Mini 5 Pro 演示主路径</p>
             </div>
-            <h1>演示主路径：六大能力</h1>
-            <p class="suite-hero__lead">
-                诊断 → 知识库（DJI Mini 5 Pro / KB #9）→ 拓词 → 分发（任务绑定 KB）→ 观测；配置走后台。
-            </p>
-            <div class="suite-cta-row">
-                <a class="suite-btn suite-btn--primary" id="suite-start-cta" href="/diagnostic?from=suite&amp;workflow=1&amp;step=diagnostic">
-                    <span class="material-symbols-outlined text-sm">play_arrow</span>
-                    从第 1 步开始
-                </a>
-                <a class="suite-btn suite-btn--ghost" id="suite-continue-cta" href="/suite?step=diagnostic">
-                    <span class="material-symbols-outlined text-sm">route</span>
-                    继续当前步骤
-                </a>
-                <a class="suite-btn suite-btn--ghost" id="suite-open-geoflow" href="http://localhost:18080/geo_admin" target="_blank" rel="noreferrer">
-                    <span class="material-symbols-outlined text-sm">open_in_new</span>
-                    打开 GEOFlow
-                </a>
+            <div class="cockpit-top__tabs" role="tablist" aria-label="Suite 视图">
+                <a class="cockpit-tab is-active" href="/suite" data-suite-tab="factory">概览</a>
+                <a class="cockpit-tab" href="/suite?step=measure" data-suite-tab="measure">观测</a>
+                <a class="cockpit-tab" href="/knowledge">知识中枢</a>
+                <a class="cockpit-tab" href="/settings">配置</a>
             </div>
-            <div class="suite-status" id="suite-status" data-mode="preview">
-                <span class="material-symbols-outlined text-sm">hub</span>
-                <span id="suite-status-text">正在检查 GEOFlow 连接…</span>
+            <div class="cockpit-top__actions">
+                <span class="cockpit-chip" id="suite-status-text">读取模式…</span>
+                <a class="cockpit-btn cockpit-btn--primary" id="suite-start-cta" href="/diagnostic?from=suite&amp;workflow=1&amp;step=diagnostic">从第 1 步开始</a>
+                <a class="cockpit-btn" id="suite-open-content-engine" href="/knowledge" hidden>打开知识库</a>
+                <a class="cockpit-btn" id="suite-open-geoflow" href="/knowledge" hidden>GEOFlow</a>
             </div>
+        </header>
+
+        <!-- 图1：顶部 5 步流水线指标卡 -->
+        <section class="pipe-row" id="suite-pipeline" aria-label="五步工作流指标"></section>
+
+        <div class="cockpit-grid">
+            <div class="cockpit-main">
+                <!-- 当前步骤详情 -->
+                <article class="cockpit-card suite-step-panel" id="suite-step-panel">
+                    <div class="suite-step-panel__icon" id="suite-step-icon" aria-hidden="true">
+                        <span class="material-symbols-outlined">monitoring</span>
+                    </div>
+                    <div class="suite-step-panel__body">
+                        <p class="suite-eyebrow" id="suite-step-eyebrow">步骤 1 / 5</p>
+                        <h3 id="suite-step-title">网站 SEO 排查测试</h3>
+                        <p id="suite-step-desc">检查 Schema、内容结构、Meta 与外链背书就绪信号。</p>
+                        <div class="suite-step-panel__actions" id="suite-step-actions"></div>
+                    </div>
+                    <div class="suite-step-panel__side">
+                        <p class="suite-side-label">本步状态</p>
+                        <p class="suite-side-value" id="suite-step-state">未开始</p>
+                        <p class="suite-side-note" id="suite-step-note">完成后可标记完成并进入下一步。</p>
+                        <div class="cockpit-progress-mini">
+                            <span id="suite-progress-label">进度 0%</span>
+                            <div class="suite-progress"><div class="suite-progress__bar" id="suite-progress-bar"></div></div>
+                            <button type="button" class="cockpit-link-btn" id="suite-reset-workflow">重置进度</button>
+                        </div>
+                    </div>
+                </article>
+
+                <div class="suite-extra-panel" id="suite-extra-panel" hidden></div>
+
+                <!-- 图1：本周任务三栏看板 -->
+                <section class="cockpit-card board-section" id="suite-board-section">
+                    <div class="board-section__head">
+                        <h2>本周任务</h2>
+                        <span class="cockpit-muted" id="board-demo-note">演示看板 · 结合本机进度与内容引擎任务</span>
+                    </div>
+                    <div class="task-board" id="suite-task-board">
+                        <div class="task-col" data-col="running">
+                            <div class="task-col__head"><span class="dot dot--blue"></span>进行中 <strong id="col-running-count">0</strong></div>
+                            <div class="task-col__list" id="col-running"></div>
+                        </div>
+                        <div class="task-col" data-col="review">
+                            <div class="task-col__head"><span class="dot dot--orange"></span>待处理 <strong id="col-review-count">0</strong></div>
+                            <div class="task-col__list" id="col-review"></div>
+                        </div>
+                        <div class="task-col" data-col="done">
+                            <div class="task-col__head"><span class="dot dot--green"></span>已完成 <strong id="col-done-count">0</strong></div>
+                            <div class="task-col__list" id="col-done"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="suite-handoff-card" id="suite-last-handoff" hidden>
+                    <div class="suite-handoff-card__head">
+                        <span class="material-symbols-outlined">outbox</span>
+                        <h3>最近一次移交</h3>
+                        <span class="suite-handoff-card__mode" id="suite-handoff-mode">preview</span>
+                    </div>
+                    <p id="suite-handoff-message">暂无移交记录。</p>
+                    <div class="suite-handoff-card__meta" id="suite-handoff-meta"></div>
+                    <div class="suite-cta-row suite-cta-row--compact" id="suite-handoff-actions"></div>
+                </div>
+            </div>
+
+            <!-- 图1：右侧质量门禁 / 渠道就绪 -->
+            <aside class="cockpit-side">
+                <section class="cockpit-card side-gauge">
+                    <h3>质量门禁</h3>
+                    <p class="cockpit-muted">演示样例指标 · 可接观测/知识库 API</p>
+                    <div class="gauge-row">
+                        <div class="gauge" id="quality-gauge" style="--p: 72">
+                            <span id="quality-score">72</span>
+                            <small>综合</small>
+                        </div>
+                        <ul class="gauge-list" id="quality-list">
+                            <li><span>知识库就绪</span><b id="q-kb">—</b></li>
+                            <li><span>切片向量化</span><b id="q-vec">—</b></li>
+                            <li><span>任务有草稿</span><b id="q-draft">—</b></li>
+                            <li><span>工作流进度</span><b id="q-wf">—</b></li>
+                        </ul>
+                    </div>
+                    <a class="cockpit-btn cockpit-btn--block" href="/knowledge">查看知识中枢</a>
+                </section>
+                <section class="cockpit-card side-gauge">
+                    <h3>渠道就绪</h3>
+                    <p class="cockpit-muted">五渠道静态壳 · Rank 原生</p>
+                    <div class="gauge-row">
+                        <div class="gauge gauge--green" id="channel-gauge" style="--p: 60">
+                            <span id="channel-score">60</span>
+                            <small>就绪度</small>
+                        </div>
+                        <ul class="channel-bars" id="channel-bars">
+                            <li><span>公众号</span><div class="bar"><i style="width:80%"></i></div><b>80%</b></li>
+                            <li><span>知乎</span><div class="bar"><i style="width:70%"></i></div><b>70%</b></li>
+                            <li><span>小红书</span><div class="bar"><i style="width:65%"></i></div><b>65%</b></li>
+                            <li><span>官网 FAQ</span><div class="bar"><i style="width:55%"></i></div><b>55%</b></li>
+                            <li><span>抖音口播</span><div class="bar"><i style="width:50%"></i></div><b>50%</b></li>
+                        </ul>
+                    </div>
+                    <a class="cockpit-btn cockpit-btn--block" href="/knowledge?tab=channels">查看渠道矩阵</a>
+                </section>
+                <section class="cockpit-card" id="suite-side-shortcuts">
+                    <h3>快捷入口</h3>
+                    <div class="suite-link-list">
+                        <a href="/diagnostic?from=suite&amp;workflow=1"><span>① 诊断</span><span class="material-symbols-outlined text-sm">analytics</span></a>
+                        <a href="/knowledge"><span>② 知识库</span><span class="material-symbols-outlined text-sm">auto_stories</span></a>
+                        <a href="/keywords?from=suite&amp;workflow=1"><span>③ 拓词</span><span class="material-symbols-outlined text-sm">manage_search</span></a>
+                        <a href="/knowledge?tab=tasks"><span>④ 分发</span><span class="material-symbols-outlined text-sm">send</span></a>
+                    </div>
+                    <p class="suite-note" id="suite-next-steps">本地：scripts/start-local.ps1</p>
+                    <p class="suite-note" id="suite-integration-copy" hidden></p>
+                    <div id="suite-status" data-mode="native-python" hidden></div>
+                    <a id="suite-continue-cta" href="/suite?step=diagnostic" hidden>继续</a>
+                    <a id="suite-admin-content" href="/admin/content-engine" hidden></a>
+                    <a id="suite-kb9-link" href="/knowledge" hidden></a>
+                    <a id="suite-docs-link" href="/suite" hidden></a>
+                </section>
+            </aside>
         </div>
-    </section>
 
-    <section class="suite-workflow" id="suite-workflow" aria-label="GEO Suite 分步工作流">
-        <div class="suite-workflow__head">
-            <div>
-                <p class="suite-eyebrow">工作流中枢</p>
-                <h2 class="suite-workflow__title">按步骤走通全套体验</h2>
-            </div>
-            <div class="suite-workflow__meta">
-                <span id="suite-progress-label">进度 0%</span>
-                <button type="button" class="suite-reset-btn" id="suite-reset-workflow">重置进度</button>
-            </div>
-        </div>
-
-        <div class="suite-progress" aria-hidden="true">
-            <div class="suite-progress__bar" id="suite-progress-bar"></div>
-        </div>
-
-        <ol class="suite-stepper" id="suite-stepper"></ol>
-
-        <article class="suite-step-panel" id="suite-step-panel">
-            <div class="suite-step-panel__icon" id="suite-step-icon" aria-hidden="true">
-                <span class="material-symbols-outlined">monitoring</span>
-            </div>
-            <div class="suite-step-panel__body">
-                <p class="suite-eyebrow" id="suite-step-eyebrow">步骤 1 / 5</p>
-                <h3 id="suite-step-title">网站 SEO 排查测试</h3>
-                <p id="suite-step-desc">检查 Schema、内容结构、Meta 与外链背书就绪信号，拿到优先修复清单。</p>
-                <div class="suite-step-panel__actions" id="suite-step-actions"></div>
-            </div>
-            <div class="suite-step-panel__side">
-                <p class="suite-side-label">本步状态</p>
-                <p class="suite-side-value" id="suite-step-state">未开始</p>
-                <p class="suite-side-note" id="suite-step-note">完成后可点「进入下一步」，进度会记在本机浏览器。</p>
-            </div>
-        </article>
-
-        <div class="suite-extra-panel" id="suite-extra-panel" hidden></div>
-
-        <div class="suite-handoff-card" id="suite-last-handoff" hidden>
-            <div class="suite-handoff-card__head">
-                <span class="material-symbols-outlined">outbox</span>
-                <h3>最近一次移交</h3>
-                <span class="suite-handoff-card__mode" id="suite-handoff-mode">preview</span>
-            </div>
-            <p id="suite-handoff-message">暂无移交记录。</p>
-            <div class="suite-handoff-card__meta" id="suite-handoff-meta"></div>
-            <div class="suite-handoff-card__meta" id="suite-callback-events" hidden></div>
-            <div class="suite-cta-row suite-cta-row--compact" id="suite-handoff-actions"></div>
-        </div>
-    </section>
-
-    <section class="suite-panels">
-        <div class="suite-panel">
-            <h2>演示路径（URL）</h2>
-            <p>主演示包：<code>docs/pilot-demo/cn-product-demo-v2/</code>（DJI Mini 5 Pro · Flow KB #9）。刷新即可看进度。</p>
-            <ol class="suite-demo-list">
-                <li><code>/suite</code> → 工作流中枢</li>
-                <li><code>/diagnostic?from=suite&amp;workflow=1</code> → ① 诊断</li>
-                <li><code>/suite?step=knowledge</code> → ② 知识库看板；深链 <code>…/knowledge-bases/9/detail</code></li>
-                <li><code>/keywords?from=suite&amp;workflow=1</code> → ③ 拓词（对齐 Mini 5 Pro 探针）</li>
-                <li><code>/suite?step=distribute</code> → ④ 分发指引；任务中心新建并绑定 KB #9</li>
-                <li><code>/suite?step=measure</code> → ⑤ 观测结果</li>
-                <li><code>/admin/settings</code> → ⑥ 配置（GEO Suite / Token）</li>
-                <li><code>/admin/trust-obs</code> → 可信观测后台</li>
-            </ol>
-        </div>
-        <div class="suite-panel">
-            <h2>集成状态</h2>
-            <p id="suite-integration-copy">未连接时仍可预览移交载荷；配置 Token 后可创建真实任务。演示请绑定 KB #9（DJI Mini 5 Pro），勿沿用旧 GEO 公司词包移交。</p>
-            <div class="suite-link-list">
-                <a href="/admin/settings" id="suite-admin-settings"><span>后台配置 GEO Suite</span><span class="material-symbols-outlined text-sm">settings</span></a>
-                <a href="http://localhost:18080/geo_admin/knowledge-bases/9/detail" id="suite-kb9-link" target="_blank" rel="noreferrer"><span>打开推荐 KB #9</span><span class="material-symbols-outlined text-sm">database</span></a>
-                <a href="/suite" id="suite-docs-link"><span>回到 Suite 工作流</span><span class="material-symbols-outlined text-sm">route</span></a>
-            </div>
-            <p class="suite-note mt-4" id="suite-next-steps">本地可用 scripts/start-geo-suite.ps1；导入 DJI 包：scripts/import-cn-product-demo-v2-kb.ps1。</p>
-        </div>
-    </section>
+        <!-- 兼容旧 stepper（隐藏，供脚本复用结构时可忽略） -->
+        <ol class="suite-stepper" id="suite-stepper" hidden></ol>
+        <div class="suite-workflow" id="suite-workflow" hidden aria-hidden="true"></div>
+    </main>
 
     <div id="footer-container"></div>
-    <script src="/js/common.js?v=20260727-hard-shadow" defer></script>
-    <script src="/js/geoflow-handoff.js?v=20260727-hard-shadow" defer></script>
-    <script src="/js/suite-workflow.js?v=20260727-hard-shadow" defer></script>
-    <script src="/js/suite-extra.js?v=20260727-hard-shadow" defer></script>
-    <script src="/js/suite.js?v=20260727-hard-shadow" defer></script>
+    <script src="/js/common.js?v=20260728-ux1" defer></script>
+    <script src="/js/geoflow-handoff.js?v=20260728-ux1" defer></script>
+    <script src="/js/suite-workflow.js?v=20260728-ux1" defer></script>
+    <script src="/js/suite-extra.js?v=20260728-ux1" defer></script>
+    <script src="/js/suite.js?v=20260728-ux1" defer></script>
 </body>
 </html>

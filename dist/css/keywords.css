@@ -1,22 +1,22 @@
 /* ========================================
-   Keywords Page — Soft Neubrutalism
+   Keywords Page — Suite geo-ui
    ======================================== */
 
 :root {
-    --bg: #F9F7F2;
-    --bg-elevated: #FFFFFF;
-    --ink: #1A1A1A;
-    --ink-muted: #5C5A55;
-    --accent-blue: #8FB8E8;
-    --accent-orange: #E8A07A;
-    --accent-green: #A8C5A0;
-    --accent-lavender: #C4B0E0;
-    --border: #1A1A1A;
-    --border-width: 2px;
-    --shadow-hard: 4px 4px 0 #1A1A1A;
-    --shadow-hard-press: 2px 2px 0 #1A1A1A;
-    --radius: 12px;
-    --font-display: "Noto Serif SC", "Songti SC", "SimSun", serif;
+    --bg: var(--geo-bg, #F8F7F2);
+    --bg-elevated: var(--geo-paper, #FFFFFF);
+    --ink: var(--geo-ink, #1A1A1A);
+    --ink-muted: var(--geo-muted, #5C677A);
+    --accent-blue: var(--geo-accent, #0052D9);
+    --accent-orange: var(--geo-orange, #E8641B);
+    --accent-green: var(--geo-green, #2BA471);
+    --accent-lavender: var(--geo-lavender, #C4B0E0);
+    --border: rgba(26, 26, 26, 0.16);
+    --border-width: 1px;
+    --shadow-hard: var(--geo-shadow, 0 6px 22px rgba(26, 26, 26, 0.08));
+    --shadow-hard-press: var(--geo-shadow-press, 0 1px 4px rgba(26, 26, 26, 0.1));
+    --radius: var(--geo-radius, 12px);
+    --font-display: var(--geo-font-display, "Noto Serif SC", "Songti SC", Georgia, serif);
 }
 
 body.keywords-page,
@@ -75,18 +75,18 @@ body.bg-white {
 }
 
 #generate-btn {
-    border-radius: 0 !important;
+    border-radius: 0 12px 12px 0 !important;
     border: none !important;
-    border-left: var(--border-width) solid var(--border) !important;
-    box-shadow: none !important;
-    background: var(--accent-orange) !important;
-    color: var(--ink) !important;
+    border-left: 1px solid var(--border) !important;
+    box-shadow: 0 4px 14px rgba(0, 82, 217, 0.22) !important;
+    background: var(--geo-accent, #0052D9) !important;
+    color: #fff !important;
     min-width: 7.5rem;
 }
 
 #generate-btn:hover {
     transform: none !important;
-    background: color-mix(in srgb, var(--accent-orange) 85%, white) !important;
+    filter: brightness(1.04);
 }
 
 .keyword-tag {
@@ -94,12 +94,12 @@ body.bg-white {
     align-items: center;
     gap: 4px;
     padding: 2px 8px 2px 10px;
-    background: color-mix(in srgb, var(--accent-blue) 35%, white);
-    color: var(--ink);
-    border: 1.5px solid var(--border);
-    border-radius: 6px;
+    background: var(--geo-accent-soft, #E8F1FF);
+    color: var(--geo-accent, #1B6EF3);
+    border: 1px solid transparent;
+    border-radius: 999px;
     font-size: 13px;
-    font-weight: 500;
+    font-weight: 600;
     line-height: 1.6;
     white-space: nowrap;
 }

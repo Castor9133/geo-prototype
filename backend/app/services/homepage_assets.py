@@ -5,10 +5,15 @@ MVP 只发布静态 HTML/CSS/图片/字体等公开资源，并阻断上传包�
 """
 from __future__ import annotations
 
+import sys
+
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
-import fcntl
+if sys.platform == "win32":
+    import msvcrt
+else:
+    import fcntl
 import hashlib
 import html as html_module
 import io
@@ -357,17 +362,29 @@ def inject_analytics_code(html: str, analytics_code: str | None) -> str:
 def _active_homepage_lock(root: Path):
     public_root = Path(root) / "public"
     if public_root.is_symlink():
-        raise HomepageAssetError("首页 public 根目录不能是符号链接")
+        raise HomepageAssetError("首页 public 根目录存在非法符号链接")
     public_root.mkdir(parents=True, exist_ok=True)
     if not public_root.is_dir():
         raise HomepageAssetError("首页 public 根目录不可用")
     lock_path = public_root / ".active.lock"
     with lock_path.open("a+b") as lock_file:
-        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
-        try:
-            yield
-        finally:
-            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+        if sys.platform == "win32":
+            if lock_file.seek(0, os.SEEK_END) == 0:
+                lock_file.write(b"0")
+                lock_file.flush()
+            lock_file.seek(0)
+            msvcrt.locking(lock_file.fileno(), msvcrt.LK_LOCK, 1)
+            try:
+                yield
+            finally:
+                lock_file.seek(0)
+                msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
+        else:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
 
 def _validated_public_directory(root: Path, name: str, *, create: bool = False) -> Path:

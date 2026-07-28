@@ -1,0 +1,62 @@
+/* 五渠道静态预览壳（对照 GEOFlow 中国站主题清单，无编译） */
+.shell-preview {
+  margin-top: 12px;
+  border: 2px solid #1A1A1A;
+  border-radius: 12px;
+  box-shadow: 4px 4px 0 #1A1A1A;
+  overflow: hidden;
+  background: #fff;
+}
+.shell-preview__chrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 2px solid #1A1A1A;
+  font-size: 12px;
+  font-weight: 700;
+}
+.shell-preview__body {
+  padding: 16px 18px 20px;
+  font-size: 14px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  max-height: 420px;
+  overflow: auto;
+}
+.shell-preview__meta {
+  font-size: 11px;
+  color: #666;
+  margin-top: 8px;
+}
+
+.shell--wechat .shell-preview__chrome { background: #A8C5A0; }
+.shell--wechat .shell-preview__body { font-family: "Noto Serif SC", Georgia, serif; }
+
+.shell--zhihu .shell-preview__chrome { background: #8FB8E8; }
+.shell--zhihu .shell-preview__title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin: 0 0 10px;
+}
+
+.shell--xiaohongshu .shell-preview__chrome { background: #E8A07A; }
+.shell--xiaohongshu .shell-preview__body {
+  background: linear-gradient(180deg, #FFF8F2 0%, #fff 40%);
+}
+
+.shell--faq .shell-preview__chrome { background: #EDE6D9; }
+.shell--faq .shell-preview__body { font-family: ui-sans-serif, system-ui, sans-serif; }
+
+.shell--douyin .shell-preview__chrome { background: #C4B0E0; color: #1A1A1A; }
+.shell--douyin .shell-preview__body {
+  background: #111;
+  color: #f5f5f5;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 13px;
+}
+
+@media (max-width: 640px) {
+  .shell-preview__body { max-height: 280px; padding: 12px; }
+}

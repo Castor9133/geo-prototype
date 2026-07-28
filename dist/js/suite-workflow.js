@@ -22,12 +22,12 @@
             id: 'knowledge',
             label: '知识库',
             title: '事实卡 → 切片向量化',
-            desc: '内容工程 L2：推荐演示包 DJI Mini 5 Pro（GEOFlow KB #9，docs/pilot-demo/cn-product-demo-v2/）。已导入 12 条事实卡并向量化；打开详情核对切片，再进拓词/分发。',
-            href: 'http://localhost:18080/geo_admin/knowledge-bases/9/detail',
-            cta: '打开 DJI Mini 5 Pro KB',
+            desc: '内容工程 L2：推荐演示包 DJI Mini 5 Pro（docs/pilot-demo/cn-product-demo-v2/）。native-python 下走 Rank 内容引擎；导入事实卡并向量化后进拓词/分发。',
+            href: '/knowledge',
+            cta: '打开知识库',
             icon: 'database',
             next: 'keywords',
-            external: true,
+            external: false,
             suitePanel: true,
         },
         {
@@ -43,13 +43,13 @@
         {
             id: 'distribute',
             label: '分发',
-            title: '任务中心 · 绑定 KB · 答案优先',
-            desc: '在 GEOFlow 任务中心新建任务 → 选中国生态提示词 → 绑定 KB #9（DJI Mini 5 Pro）→ 生成答案优先正文 → 再选渠道/模板。勿把旧拓词移交当成已生成 DJI 文。',
-            href: 'http://localhost:18080/geo_admin/tasks',
-            cta: '打开任务中心新建',
+            title: '任务 · 绑定 KB · 答案优先',
+            desc: 'native-python：在 Rank 内容引擎新建任务 → 中国生态提示词 → 绑定 DJI 演示知识库 → 生成草稿 → 登记渠道/模板 key。legacy-flow 才走 GEOFlow。',
+            href: '/knowledge?tab=tasks',
+            cta: '打开分发任务',
             icon: 'sync_alt',
             next: 'measure',
-            external: true,
+            external: false,
             suitePanel: true,
         },
         {
@@ -412,6 +412,36 @@
         }
     }
 
+    /** 按 CONTENT_BACKEND_MODE 切换知识库/分发步 CTA（native-python | legacy-flow） */
+    function applyContentBackendMode(mode, options) {
+        var native = String(mode || 'native-python').toLowerCase() !== 'legacy-flow';
+        var publicPath = (options && options.public_path) || '/knowledge';
+        var adminPath = (options && options.admin_path) || '/admin/content-engine';
+        var flowBase = ((options && options.flow_base) || 'http://localhost:18080').replace(/\/$/, '');
+        var knowledge = getStep('knowledge');
+        var distribute = getStep('distribute');
+        if (native) {
+            knowledge.desc = '内容工程 L2：DJI Mini 5 Pro 演示包走 Rank 内容引擎（切片/向量/RAG）。打开前台知识库导入或核对，再进拓词/分发。';
+            knowledge.href = publicPath;
+            knowledge.cta = '打开知识库';
+            knowledge.external = false;
+            distribute.desc = '在前台知识/分发页新建任务 → 中国生态提示词 → 绑定 DJI 知识库 → 生成草稿 → 渠道/模板 key。不经 Laravel。';
+            distribute.href = publicPath.includes('?') ? `${publicPath}&tab=tasks` : `${publicPath}?tab=tasks`;
+            distribute.cta = '打开分发任务';
+            distribute.external = false;
+        } else {
+            knowledge.desc = '内容工程 L2：推荐演示包 DJI Mini 5 Pro（GEOFlow KB #9）。打开 Flow 详情核对切片，再进拓词/分发。';
+            knowledge.href = flowBase + '/geo_admin/knowledge-bases/9/detail';
+            knowledge.cta = '打开 DJI Mini 5 Pro KB';
+            knowledge.external = true;
+            distribute.desc = '在 GEOFlow 任务中心新建任务 → 中国生态提示词 → 绑定 KB #9 → 答案优先正文 → 渠道/模板。';
+            distribute.href = flowBase + '/geo_admin/tasks';
+            distribute.cta = '打开任务中心新建';
+            distribute.external = true;
+        }
+        return native;
+    }
+
     global.GEOrank = global.GEOrank || {};
     global.GEOrank.SuiteWorkflow = {
         STORAGE_KEY: STORAGE_KEY,
@@ -432,5 +462,6 @@
         mountNextCard: mountNextCard,
         syncFromQuery: syncFromQuery,
         shouldShowBar: shouldShowBar,
+        applyContentBackendMode: applyContentBackendMode,
     };
 })(window);

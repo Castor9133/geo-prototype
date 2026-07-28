@@ -1,0 +1,365 @@
+/**
+ * inner-shell — 全站内页统一视觉壳
+ * 气质取自 docs/design/ref-ui 三张例图（非一图一页复刻）：
+ * 暖白/奶油底 · 白卡细深色描边 + 轻阴影 · 蓝主橙辅 · 衬线大标题 · KPI/看板有重量
+ *
+ * 禁止再往纯白扁平 admin / 顶栏文字链风格收敛。
+ * Header 可克制；内页内容区必须比 header 更有层次与强调色。
+ */
+@import url("./geo-ui.css");
+
+:root {
+  --inner-bg: #F8F7F2;
+  --inner-bg-alt: #F0F2F5;
+  --inner-paper: #FFFFFF;
+  --inner-ink: #1A1A1A;
+  --inner-muted: #5C677A;
+  --inner-line: #D8D2C6;
+  --inner-line-ink: rgba(26, 26, 26, 0.16);
+  --inner-primary: #0052D9;
+  --inner-primary-soft: #E8F1FF;
+  --inner-primary-mid: #4A90E2;
+  --inner-accent: #E8641B;
+  --inner-accent-soft: #FFF1E6;
+  --inner-green: #2BA471;
+  --inner-green-soft: #E8F7EF;
+  --inner-radius: 16px;
+  --inner-radius-sm: 12px;
+  --inner-radius-xs: 10px;
+  --inner-shadow: 0 6px 22px rgba(26, 26, 26, 0.08);
+  --inner-shadow-soft: 0 3px 12px rgba(26, 26, 26, 0.06);
+  --inner-font: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --inner-font-display: "Noto Serif SC", "Songti SC", Georgia, serif;
+
+  /* 同步覆盖 geo / suite / neu 别名，避免内页割裂 */
+  --geo-bg: var(--inner-bg);
+  --geo-bg-cool: var(--inner-bg-alt);
+  --geo-paper: var(--inner-paper);
+  --geo-ink: var(--inner-ink);
+  --geo-muted: var(--inner-muted);
+  --geo-line: var(--inner-line);
+  --geo-line-ink: var(--inner-line-ink);
+  --geo-accent: var(--inner-primary);
+  --geo-accent-soft: var(--inner-primary-soft);
+  --geo-accent-shadow: 0 4px 14px rgba(0, 82, 217, 0.28);
+  --geo-orange: var(--inner-accent);
+  --geo-orange-soft: var(--inner-accent-soft);
+  --geo-green: var(--inner-green);
+  --geo-green-soft: var(--inner-green-soft);
+  --geo-radius: var(--inner-radius);
+  --geo-radius-sm: var(--inner-radius-sm);
+  --geo-radius-xs: var(--inner-radius-xs);
+  --geo-shadow: var(--inner-shadow);
+  --geo-shadow-soft: var(--inner-shadow-soft);
+  --geo-shadow-press: 0 1px 4px rgba(26, 26, 26, 0.1);
+  --geo-font: var(--inner-font);
+  --geo-font-display: var(--inner-font-display);
+
+  --suite-bg: var(--inner-bg-alt);
+  --suite-cream: var(--inner-bg);
+  --cockpit-accent: var(--inner-primary);
+  --cockpit-accent-soft: var(--inner-primary-soft);
+  --cockpit-orange: var(--inner-accent);
+  --cockpit-orange-soft: var(--inner-accent-soft);
+
+  --bg: var(--inner-bg);
+  --bg-elevated: var(--inner-paper);
+  --bg-soft: #F3F0E8;
+  --ink: var(--inner-ink);
+  --ink-muted: var(--inner-muted);
+  --border: var(--inner-line-ink);
+  --border-width: 1px;
+  --shadow-hard: var(--inner-shadow);
+  --shadow-hard-press: var(--geo-shadow-press);
+  --shadow-card: var(--inner-shadow);
+  --accent-blue: var(--inner-primary);
+  --accent-orange: var(--inner-accent);
+  --accent-green: var(--inner-green);
+  --radius: var(--inner-radius);
+}
+
+/* —— 内页底色与字体 —— */
+body.inner-page,
+body.suite-page,
+body.ce-page,
+body.diagnostic-page,
+body.keywords-page,
+body.tools-page,
+body.profile-page,
+body.auth-page,
+body.bg-slate-50,
+body.bg-white {
+  background: var(--inner-bg) !important;
+  color: var(--inner-ink);
+  font-family: var(--inner-font);
+}
+
+body.suite-page--cockpit {
+  background: var(--inner-bg-alt) !important;
+}
+
+/* Admin 内容区也用暖底，避免纯白仪表盘 */
+body.admin-page,
+.admin-layout,
+.admin-main {
+  background: var(--inner-bg) !important;
+}
+
+/* 大标题：衬线（例图知识资产/监测气质） */
+.inner-page h1,
+.suite-page h1,
+.ce-page h1,
+.diagnostic-page h1,
+.keywords-page h1,
+.tools-page h1,
+.profile-page h1,
+.auth-page h1,
+.admin-main h1,
+.font-headline {
+  font-family: var(--inner-font-display);
+  letter-spacing: -0.02em;
+  color: var(--inner-ink);
+}
+
+.suite-page--cockpit h1 {
+  font-family: var(--inner-font-display);
+  font-weight: 700;
+}
+
+/* —— 共享卡片：描边 + 阴影（禁止 shadow:none） —— */
+.inner-card,
+.geo-card,
+.cockpit-card,
+.ce-page .panel,
+.ce-page .kpi,
+.stat-card,
+.admin-main .bg-white.rounded-xl,
+.admin-main .bg-white.rounded-2xl,
+.admin-main .bg-white.rounded-lg,
+.diag-card,
+.kw-card,
+.kw-stat,
+.kw-profile-card,
+.dim-card,
+.tools-card {
+  background: var(--inner-paper) !important;
+  border: 1px solid var(--inner-line-ink) !important;
+  border-radius: var(--inner-radius-sm) !important;
+  box-shadow: var(--inner-shadow) !important;
+}
+
+/* —— 主按钮：蓝主色；内容引擎橙主 CTA —— */
+.inner-page .btn-primary,
+.inner-page .btn.primary,
+.inner-page .admin-btn-primary,
+.suite-page .cockpit-btn--primary,
+.suite-page .suite-btn--primary,
+.suite-page .geo-btn--primary,
+.ce-page .btn.primary,
+.diagnostic-page .btn-primary,
+.keywords-page .btn-primary,
+.tools-page .btn-primary,
+.auth-page .btn-primary,
+.admin-main .btn-primary,
+.admin-main .admin-btn-primary {
+  background: var(--inner-primary) !important;
+  border-color: var(--inner-primary) !important;
+  color: #fff !important;
+  border-radius: var(--inner-radius-xs) !important;
+  box-shadow: var(--geo-accent-shadow) !important;
+  font-weight: 700;
+}
+
+.inner-page .btn-primary:hover,
+.suite-page .cockpit-btn--primary:hover,
+.ce-page .btn.primary:hover,
+.admin-main .admin-btn-primary:hover {
+  filter: brightness(1.05);
+}
+
+/* 内容引擎主 CTA：陶土橙（知识资产例图） */
+.ce-page .btn.primary,
+.ce-page .btn--accent {
+  background: var(--inner-accent) !important;
+  border-color: var(--inner-accent) !important;
+  box-shadow: 0 4px 14px rgba(232, 100, 27, 0.28) !important;
+}
+
+/* 次要强调：刷新摘要等；须压过下方 .ce-page .btn 白底，否则白字不可见 */
+.ce-page .btn.green {
+  background: var(--inner-green) !important;
+  border-color: var(--inner-green) !important;
+  color: #fff !important;
+}
+
+.inner-page .btn,
+.inner-page .admin-btn-secondary,
+.suite-page .cockpit-btn,
+.suite-page .suite-btn,
+.ce-page .btn,
+.ce-page .tab,
+.diagnostic-page .btn,
+.keywords-page .btn,
+.admin-main .admin-btn-secondary {
+  border-radius: var(--inner-radius-xs) !important;
+  border: 1px solid var(--inner-line-ink);
+  background: var(--inner-paper);
+  box-shadow: var(--inner-shadow-soft);
+}
+
+/* —— KPI 行 —— */
+.inner-kpi-row,
+.kpi-row,
+.admin-kpi-grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.inner-kpi,
+.kpi,
+.stat-card {
+  padding: 1rem 1.05rem;
+}
+
+.inner-kpi strong,
+.kpi strong,
+.stat-card .text-2xl,
+.stat-card .text-3xl {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* —— Admin 壳：侧栏菜单结构不变，只调视觉 token —— */
+.admin-sidebar {
+  background: var(--inner-paper) !important;
+  border-right: 1px solid var(--inner-line-ink) !important;
+  box-shadow: 2px 0 12px rgba(26, 26, 26, 0.04);
+}
+
+.admin-main .border-slate-100,
+.admin-main .border-slate-50 {
+  border-color: var(--inner-line-ink) !important;
+}
+
+.admin-main .data-table th,
+.admin-main table th {
+  color: var(--inner-muted);
+  font-weight: 600;
+}
+
+.admin-main .sidebar-link.is-active,
+.admin-sidebar .sidebar-link.active {
+  background: var(--inner-primary-soft) !important;
+  color: var(--inner-primary) !important;
+}
+
+/* —— Auth / Profile —— */
+body.auth-page main,
+body.profile-page main {
+  min-height: calc(100vh - 8rem);
+}
+
+#auth-page-root .auth-card,
+.profile-page .profile-card,
+.auth-page [class*="card"],
+.profile-page .bg-white {
+  background: var(--inner-paper) !important;
+  border: 1px solid var(--inner-line-ink) !important;
+  border-radius: var(--inner-radius) !important;
+  box-shadow: var(--inner-shadow) !important;
+}
+
+/* —— 诊断 / 拓词 —— */
+.diagnostic-page,
+.keywords-page {
+  --border: var(--inner-line-ink);
+  --border-width: 1px;
+  --shadow-hard: var(--inner-shadow);
+  --shadow-hard-press: var(--geo-shadow-press);
+  --accent-blue: var(--inner-primary);
+  --accent-orange: var(--inner-accent);
+  --radius: var(--inner-radius-sm);
+}
+
+.diagnostic-page .diag-search,
+.keywords-page .kw-search,
+.diagnostic-page .diag-panel,
+.keywords-page .kw-panel {
+  background: var(--inner-paper);
+  border: 1px solid var(--inner-line-ink);
+  border-radius: var(--inner-radius);
+  box-shadow: var(--inner-shadow);
+}
+
+/* —— Tools —— */
+.tools-page .tools-grid > *,
+.tools-page .tool-card {
+  background: var(--inner-paper);
+  border: 1px solid var(--inner-line-ink);
+  border-radius: var(--inner-radius-sm);
+  box-shadow: var(--inner-shadow-soft);
+}
+
+/* —— 内容引擎：奶油壳 + 橙强调 —— */
+.ce-page .ce-wrap {
+  max-width: 1180px;
+}
+
+.ce-page .tabs {
+  gap: 0.45rem;
+}
+
+.ce-page .tab.active {
+  background: var(--inner-primary-soft);
+  color: var(--inner-primary);
+  border-color: #C9DBFF;
+  box-shadow: var(--inner-shadow-soft);
+}
+
+.ce-page .hub-card,
+.ce-page .kpi {
+  border: 1px solid var(--inner-line-ink);
+  box-shadow: var(--inner-shadow);
+  background: var(--inner-paper);
+}
+
+.ce-page .hub-card {
+  background: #FFFCFA;
+}
+
+.ce-page .embed-bar {
+  height: 10px;
+  background: #F3E8DE;
+}
+
+.ce-page .embed-bar i {
+  background: var(--inner-accent);
+}
+
+/* —— Suite cockpit 与观测 —— */
+.suite-page--cockpit .cockpit-card,
+.suite-page--cockpit .pipe-card,
+.suite-page--cockpit .task-card,
+.suite-page--cockpit .measure-card {
+  border: 1px solid var(--inner-line-ink);
+  box-shadow: var(--inner-shadow);
+}
+
+.suite-page--cockpit .cockpit-tab.is-active {
+  color: var(--inner-primary);
+  background: var(--inner-primary-soft);
+}
+
+.measure-cockpit .gauge,
+.side-gauge .gauge {
+  background: conic-gradient(var(--inner-primary) calc(var(--p) * 1%), #E8EEF7 0);
+}
+
+/* —— 顶栏克制：白底细线；内页不要跟它一样素 —— */
+.geo-header,
+.site-header,
+header.geo-header {
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom: 1px solid var(--inner-line-ink);
+  backdrop-filter: blur(8px);
+}
