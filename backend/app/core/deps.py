@@ -48,32 +48,48 @@ async def _get_user_from_token(
     return user
 
 
+async def _demo_open_admin(db: AsyncSession) -> User | None:
+    """本地演示：GEORANK_ALLOW_ANONYMOUS_AI 时回落到首个启用管理员，免登录。"""
+    if not bool(getattr(settings, "GEORANK_ALLOW_ANONYMOUS_AI", False)):
+        return None
+    result = await db.execute(
+        select(User)
+        .where(User.role == UserRole.ADMIN, User.is_active.is_(True))
+        .order_by(User.created_at.asc())
+        .limit(1)
+    )
+    return result.scalar_one_or_none()
+
+
 async def get_current_user_optional(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
     db: DbSession,
 ) -> User | None:
-    """可选认证 — 未登录时返回 None"""
+    """可选认证 — 未登录时返回 None；演示开放模式下回落管理员。"""
     user = await _get_user_from_token(credentials, db)
-    if not user or not user.is_active:
-        return None
-    return user
+    if user and user.is_active:
+        return user
+    return await _demo_open_admin(db)
 
 
 async def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_required)],
     db: DbSession,
 ) -> User:
-    """必须认证 — 未登录返回 401"""
+    """必须认证 — 未登录返回 401；演示开放模式下回落管理员。"""
     user = await _get_user_from_token(credentials, db)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="无效或过期的认证令牌",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    if not user.is_active:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="账号已停用")
-    return user
+    if user:
+        if not user.is_active:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="账号已停用")
+        return user
+    demo = await _demo_open_admin(db)
+    if demo:
+        return demo
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="无效或过期的认证令牌",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 
 async def require_admin(current_user: Annotated[User, Depends(get_current_user)]) -> User:

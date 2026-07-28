@@ -37,7 +37,12 @@ class StorageService:
         return self._client
 
     def put(self, key: str, data: bytes, content_type: str = "text/html") -> bool:
-        """上传文件，失败时降级到内存缓存"""
+        """上传文件；裸跑默认写本地目录，MinIO 可用时再双写。"""
+        local_ok = self._put_local(key, data)
+        if self._prefer_local_only():
+            self._fallback[key] = data
+            return local_ok or True
+
         try:
             client = self._get_client()
             client.put_object(
@@ -50,18 +55,49 @@ class StorageService:
             return True
         except Exception:
             self._fallback[key] = data
-            return False
+            return True
 
     def get(self, key: str) -> Optional[bytes]:
-        """下载文件，先查内存缓存"""
+        """下载文件：先内存，再本地目录，再 MinIO"""
         if key in self._fallback:
             return self._fallback[key]
+        local = self._get_local(key)
+        if local is not None:
+            return local
+        if self._prefer_local_only():
+            return None
         try:
             client = self._get_client()
             response = client.get_object(Bucket=settings.MINIO_BUCKET, Key=key)
             return response["Body"].read()
         except Exception:
             return None
+
+    def _prefer_local_only(self) -> bool:
+        endpoint = (settings.MINIO_ENDPOINT or "").strip().lower()
+        return endpoint in {"", "minio", "minio:9000", "127.0.0.1:0"}
+
+    def _put_local(self, key: str, data: bytes) -> bool:
+        try:
+            from pathlib import Path
+
+            path = Path(settings.LOCAL_OBJECT_STORE_DIR) / key
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+            return True
+        except Exception:
+            return False
+
+    def _get_local(self, key: str) -> Optional[bytes]:
+        try:
+            from pathlib import Path
+
+            path = Path(settings.LOCAL_OBJECT_STORE_DIR) / key
+            if path.is_file():
+                return path.read_bytes()
+        except Exception:
+            return None
+        return None
 
     def delete(self, key: str):
         """删除文件"""

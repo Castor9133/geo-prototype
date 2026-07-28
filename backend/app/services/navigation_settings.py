@@ -26,7 +26,7 @@ KNOWLEDGE_NAVIGATION_ITEM: dict[str, Any] = {
 DISTRIBUTE_NAVIGATION_ITEM: dict[str, Any] = {
     "id": "distribute",
     "label": "分发",
-    "url": "/knowledge?tab=tasks",
+    "url": "/distribute",
     "target": "_self",
     "enabled": True,
 }
@@ -86,6 +86,19 @@ def _is_admin_content_engine_knowledge_url(url: str) -> bool:
     return "tab=tasks" not in raw and "tab=channels" not in raw
 
 
+def _is_legacy_public_distribute_url(url: str) -> bool:
+    """旧前台分发入口：挂在知识页 ?tab=tasks|channels，现独立为 /distribute。"""
+    raw = str(url or "").strip().lower()
+    if not raw:
+        return False
+    path = raw.split("?", 1)[0].rstrip("/")
+    if path in {"/distribute", "/distribute.html"}:
+        return True
+    if path in {"/knowledge", "/knowledge.html"} and ("tab=tasks" in raw or "tab=channels" in raw):
+        return True
+    return False
+
+
 def _is_admin_content_engine_distribute_url(url: str) -> bool:
     raw = str(url or "").strip().lower()
     if not raw:
@@ -104,12 +117,20 @@ def _rewrite_frontend_pillar_navigation_urls(items: list[dict[str, Any]]) -> lis
         item_id = str(next_item.get("id") or "").strip().lower()
         item_url = str(next_item.get("url") or "").strip()
         if item_id == "knowledge" or _is_legacy_suite_knowledge_url(item_url) or _is_admin_content_engine_knowledge_url(item_url):
-            next_item["id"] = "knowledge"
-            next_item["label"] = str(next_item.get("label") or "知识库").strip() or "知识库"
-            next_item["url"] = KNOWLEDGE_NAVIGATION_ITEM["url"]
-            next_item["target"] = "_self"
-            next_item["enabled"] = next_item.get("enabled") is not False
-        elif item_id == "distribute" or _is_admin_content_engine_distribute_url(item_url):
+            # 勿把旧「知识页+分发 tab」误改写成知识库
+            if _is_legacy_public_distribute_url(item_url):
+                next_item["id"] = "distribute"
+                next_item["label"] = str(next_item.get("label") or "分发").strip() or "分发"
+                next_item["url"] = DISTRIBUTE_NAVIGATION_ITEM["url"]
+                next_item["target"] = "_self"
+                next_item["enabled"] = next_item.get("enabled") is not False
+            else:
+                next_item["id"] = "knowledge"
+                next_item["label"] = str(next_item.get("label") or "知识库").strip() or "知识库"
+                next_item["url"] = KNOWLEDGE_NAVIGATION_ITEM["url"]
+                next_item["target"] = "_self"
+                next_item["enabled"] = next_item.get("enabled") is not False
+        elif item_id == "distribute" or _is_admin_content_engine_distribute_url(item_url) or _is_legacy_public_distribute_url(item_url):
             next_item["id"] = "distribute"
             next_item["label"] = str(next_item.get("label") or "分发").strip() or "分发"
             next_item["url"] = DISTRIBUTE_NAVIGATION_ITEM["url"]
@@ -173,9 +194,26 @@ def _has_distribute_navigation_item(items: list[Any]) -> bool:
         item_url = str(item.get("url") or "").strip().lower()
         if item_id == "distribute":
             return True
-        if "tab=tasks" in item_url or "tab=channels" in item_url:
+        if _is_legacy_public_distribute_url(item_url):
+            return True
+        if _is_admin_content_engine_distribute_url(item_url):
             return True
     return False
+
+
+def _dedupe_pillar_navigation_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Keep one entry per six-pillar id (suite/诊断/知识库/拓词/分发/观测/配置)."""
+    pillar_ids = {"suite", "diagnostic", "knowledge", "keywords", "distribute", "measure", "config"}
+    seen: set[str] = set()
+    deduped: list[dict[str, Any]] = []
+    for item in items:
+        item_id = str(item.get("id") or "").strip().lower()
+        if item_id in pillar_ids:
+            if item_id in seen:
+                continue
+            seen.add(item_id)
+        deduped.append(item)
+    return deduped
 
 
 def _insert_distribute_navigation_item(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -222,8 +260,10 @@ def ensure_suite_in_navigation_menu(payload: Any) -> dict[str, list[dict[str, An
     if not _has_suite_navigation_item(items):
         items = [deepcopy(SUITE_NAVIGATION_ITEM), *items]
     items = _rewrite_frontend_pillar_navigation_urls(items)
+    items = _dedupe_pillar_navigation_items(items)
     items = _insert_knowledge_navigation_item(items)
     items = _insert_distribute_navigation_item(items)
+    items = _dedupe_pillar_navigation_items(items)
     if len(items) > MAX_NAVIGATION_ITEMS:
         items = [items[0], *items[1:MAX_NAVIGATION_ITEMS]]
     return {"items": items}

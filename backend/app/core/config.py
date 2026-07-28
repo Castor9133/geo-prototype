@@ -86,6 +86,8 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("MINIO_SECRET_KEY", "MINIO_PASSWORD"),
     )
     MINIO_BUCKET: str = "georank-assets"
+    # 裸跑无 MinIO 时落盘目录（诊断 HTML 等）
+    LOCAL_OBJECT_STORE_DIR: str = r"C:\georank-runtime\object-store"
 
     # ----- AI / LLM -----
     # 主 LLM 服务（兼容 OpenAI API 格式的服务均可）

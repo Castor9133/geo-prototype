@@ -17,6 +17,12 @@
     return `/admin/?returnUrl=${encodeURIComponent(returnUrl || "/knowledge")}`;
   }
 
+  function isDemoOpenAccess() {
+    if (window.GEORANK_OPEN_DEMO === true) return true;
+    const host = String(window.location.hostname || "").toLowerCase();
+    return host === "localhost" || host === "127.0.0.1" || host === "::1";
+  }
+
   function redirectToLogin() {
     window.location.href = loginHref();
   }
@@ -24,6 +30,11 @@
   function showAuthGate(visible) {
     const gate = document.getElementById("ce-auth-gate");
     if (!gate) return;
+    // 本地演示永不展示登录门
+    if (isDemoOpenAccess()) {
+      gate.classList.add("hidden");
+      return;
+    }
     gate.classList.toggle("hidden", !visible);
     const link = document.getElementById("ce-auth-login");
     if (link) link.href = loginHref();
@@ -43,6 +54,10 @@
       headers: { ...headers(!(opts.body instanceof FormData)), ...(opts.headers || {}) },
     });
     if (res.status === 401 || res.status === 403) {
+      if (isDemoOpenAccess()) {
+        showAuthGate(false);
+        throw new Error("演示免登录失败：请确认 API 已设 GEORANK_ALLOW_ANONYMOUS_AI=true 并已重启");
+      }
       if (isPublicShell) {
         showAuthGate(true);
       } else {
@@ -71,14 +86,68 @@
       .replace(/"/g, "&quot;");
   }
 
+  function ensureToastHost() {
+    let host = document.getElementById("ce-toast-host");
+    if (host) return host;
+    host = document.createElement("div");
+    host.id = "ce-toast-host";
+    host.className = "ce-toast-host";
+    host.setAttribute("aria-live", "polite");
+    document.body.appendChild(host);
+    return host;
+  }
+
+  function toast(message, kind = "info") {
+    const host = ensureToastHost();
+    const el = document.createElement("div");
+    el.className = `ce-toast ce-toast--${kind}`;
+    el.textContent = String(message || "");
+    host.appendChild(el);
+    requestAnimationFrame(() => el.classList.add("is-in"));
+    window.setTimeout(() => {
+      el.classList.remove("is-in");
+      window.setTimeout(() => el.remove(), 220);
+    }, 2600);
+  }
+
+  async function withBusy(button, work, busyLabel) {
+    if (!button) return work();
+    if (button.dataset.busy === "1") return;
+    const original = button.textContent;
+    button.dataset.busy = "1";
+    button.disabled = true;
+    button.classList.add("is-busy");
+    if (busyLabel) button.textContent = busyLabel;
+    try {
+      return await work();
+    } finally {
+      button.dataset.busy = "0";
+      button.disabled = false;
+      button.classList.remove("is-busy");
+      button.textContent = original;
+    }
+  }
+
   let currentTaskId = null;
   let currentDraft = "";
   let currentTemplateKey = "";
   let templates = [];
+  let suppressDocAutofill = false;
 
   function activateTab(name) {
     document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
     document.querySelectorAll(".panel").forEach((p) => p.classList.toggle("active", p.id === `panel-${name}`));
+    const panel = document.getElementById(`panel-${name}`);
+    if (panel) {
+      panel.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", name);
+      window.history.replaceState({}, "", url);
+    } catch (_) {
+      /* ignore */
+    }
   }
 
   document.querySelectorAll(".tab").forEach((btn) => {
@@ -86,7 +155,19 @@
   });
 
   const params = new URLSearchParams(window.location.search);
-  const deepTab = params.get("tab");
+  const pathNorm = String(window.location.pathname || "").replace(/\.html$/, "").replace(/\/+$/, "") || "/";
+  // 旧链 /knowledge?tab=tasks|channels → 独立分发页，避免与知识库导航双高亮
+  if (pathNorm === "/knowledge") {
+    const legacyTab = params.get("tab");
+    if (legacyTab === "tasks" || legacyTab === "channels") {
+      const next = legacyTab === "tasks" ? "/distribute" : `/distribute?tab=${encodeURIComponent(legacyTab)}`;
+      window.location.replace(next);
+      return;
+    }
+  }
+  const deepTab = params.get("tab")
+    || document.body.getAttribute("data-ce-default-tab")
+    || (pathNorm === "/distribute" ? "tasks" : "");
   if (deepTab) activateTab(deepTab);
 
   async function loadStatus() {
@@ -143,22 +224,81 @@
       </div>`;
   }
 
+  let kbCache = [];
+  let docCache = [];
+
+  function fillKbMetaFromSelection() {
+    const kbId = $("kb-select")?.value;
+    const kb = kbCache.find((k) => k.id === kbId);
+    if (!kb) return;
+    if ($("kb-name")) $("kb-name").value = kb.name || "";
+    if ($("kb-desc")) $("kb-desc").value = kb.description || "";
+    if ($("kb-detail-sub")) {
+      $("kb-detail-sub").textContent = kb.name
+        ? `当前：${kb.name}`
+        : "编辑名称、描述与 Markdown 证据正文，再提交语义切片";
+    }
+  }
+
+  function renderTaskKbCards(items, selectedId) {
+    const host = $("task-kb-cards");
+    if (!host) return;
+    const selected = selectedId || $("task-kb")?.value || "";
+    host.innerHTML =
+      (items || [])
+        .map(
+          (k) => `<button type="button" class="ce-kb-card${k.id === selected ? " is-selected" : ""}" data-kb-card="${k.id}">
+          <span aria-hidden="true">${k.id === selected ? "☑" : "☐"}</span>
+          <span>
+            <strong>${escapeHtml(k.name)}</strong>
+            <small>${escapeHtml(k.slug || "")} · ${k.doc_count || 0} 文档</small>
+          </span>
+        </button>`
+        )
+        .join("") || `<p class="ce-hint">暂无知识库，请先在「知识库」页导入或新建。</p>`;
+    host.querySelectorAll("[data-kb-card]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if ($("task-kb")) $("task-kb").value = btn.dataset.kbCard;
+        renderTaskKbCards(kbCache, btn.dataset.kbCard);
+      });
+    });
+  }
+
   async function refreshDocs(kbId) {
     if (!kbId) {
       $("doc-table").innerHTML = "<tr><td colspan=3>选择知识库</td></tr>";
+      docCache = [];
       return;
     }
     const detail = await api(`/knowledge-bases/${kbId}`);
+    docCache = detail.documents || [];
+    if ($("kb-name") && detail.name) $("kb-name").value = detail.name;
+    if ($("kb-desc") && detail.description != null) $("kb-desc").value = detail.description || "";
+    if ($("kb-detail-sub") && detail.name) $("kb-detail-sub").textContent = `当前：${detail.name}`;
+
     $("doc-table").innerHTML =
-      (detail.documents || [])
+      docCache
         .map(
           (d) => `<tr>
         <td>${escapeHtml(d.title)}<br><small>${escapeHtml(d.source_path || "")}</small></td>
         <td>${d.chunk_count}</td>
-        <td><button type="button" class="btn" data-del-doc="${d.id}">删除</button></td>
+        <td>
+          <button type="button" class="btn" data-edit-doc="${d.id}">编辑</button>
+          <button type="button" class="btn" data-del-doc="${d.id}">删除</button>
+        </td>
       </tr>`
         )
         .join("") || "<tr><td colspan=3>暂无文档</td></tr>";
+
+    $("doc-table").querySelectorAll("[data-edit-doc]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const doc = docCache.find((d) => d.id === btn.dataset.editDoc);
+        if (!doc) return;
+        $("doc-title").value = doc.title || "";
+        $("doc-body").value = doc.body || "";
+        activateTab("kb");
+      });
+    });
     $("doc-table").querySelectorAll("[data-del-doc]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         if (!confirm("删除该文档及其切片？")) return;
@@ -167,13 +307,20 @@
         await refreshDocs($("kb-select").value);
       });
     });
+
+    if (docCache[0] && !suppressDocAutofill && !$("doc-body")?.value.trim()) {
+      $("doc-title").value = docCache[0].title || "";
+      $("doc-body").value = docCache[0].body || "";
+    }
+    suppressDocAutofill = false;
   }
 
   async function refreshKbs() {
     const data = await api("/knowledge-bases");
+    kbCache = data.items || [];
     const tbody = $("kb-table");
     tbody.innerHTML =
-      data.items
+      kbCache
         .map(
           (k) => `<tr>
         <td>${escapeHtml(k.name)}<br><small>${escapeHtml(k.slug)}</small></td>
@@ -188,19 +335,29 @@
         )
         .join("") || "<tr><td colspan=5>暂无</td></tr>";
 
-    const opts = data.items.map((k) => `<option value="${k.id}">${escapeHtml(k.name)}</option>`).join("");
-    $("kb-select").innerHTML = opts;
-    $("task-kb").innerHTML = `<option value="">不绑定知识库</option>` + opts;
+    const opts = kbCache.map((k) => `<option value="${k.id}">${escapeHtml(k.name)}</option>`).join("");
+    const prevKb = $("kb-select")?.value || "";
+    const prevTaskKb = $("task-kb")?.value || "";
+    $("kb-select").innerHTML = opts || `<option value="">暂无知识库</option>`;
+    if ($("task-kb")) {
+      $("task-kb").innerHTML = `<option value="">不绑定知识库</option>` + opts;
+      if (prevTaskKb && kbCache.some((k) => k.id === prevTaskKb)) $("task-kb").value = prevTaskKb;
+    }
 
     const prefer = params.get("kb");
-    if (prefer && data.items.some((k) => k.id === prefer)) {
+    if (prefer && kbCache.some((k) => k.id === prefer)) {
       $("kb-select").value = prefer;
+    } else if (prevKb && kbCache.some((k) => k.id === prevKb)) {
+      $("kb-select").value = prevKb;
     }
+
+    renderTaskKbCards(kbCache, $("task-kb")?.value || "");
 
     tbody.querySelectorAll("[data-open-kb]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         $("kb-select").value = btn.dataset.openKb;
         activateTab("kb");
+        fillKbMetaFromSelection();
         await refreshDocs(btn.dataset.openKb);
       });
     });
@@ -212,50 +369,45 @@
       });
     });
 
-    if ($("kb-select").value) await refreshDocs($("kb-select").value);
+    if ($("kb-select").value) {
+      fillKbMetaFromSelection();
+      await refreshDocs($("kb-select").value);
+    }
+  }
+
+  let promptCache = [];
+
+  async function loadPromptDetail(pid) {
+    if (!pid) {
+      $("prompt-body").textContent = "从下拉列表选择提示词查看正文";
+      return null;
+    }
+    const p = await api(`/prompts/${pid}`);
+    $("prompt-body").textContent = p.body || "（无正文）";
+    return p;
   }
 
   async function refreshPrompts() {
     const data = await api("/prompts");
-    $("prompt-table").innerHTML = data.items
-      .map(
-        (p) => `<tr>
-        <td>${escapeHtml(p.title)}</td>
-        <td>
-          <button type="button" class="btn" data-view-pid="${p.id}">查看</button>
-          <button type="button" class="btn" data-edit-pid="${p.id}">编辑</button>
-          <button type="button" class="btn" data-del-pid="${p.id}">停用</button>
-        </td>
-      </tr>`
-      )
-      .join("");
-    $("task-prompt").innerHTML = data.items
+    promptCache = data.items || [];
+    const opts = promptCache
       .map((p) => `<option value="${p.id}">${escapeHtml(p.title)}</option>`)
       .join("");
-
-    $("prompt-table").querySelectorAll("[data-view-pid]").forEach((b) => {
-      b.addEventListener("click", async () => {
-        const p = await api(`/prompts/${b.dataset.viewPid}`);
-        $("prompt-body").textContent = p.body;
-      });
-    });
-    $("prompt-table").querySelectorAll("[data-edit-pid]").forEach((b) => {
-      b.addEventListener("click", async () => {
-        const p = await api(`/prompts/${b.dataset.editPid}`);
-        $("prompt-id").value = p.id;
-        $("prompt-title").value = p.title;
-        $("prompt-edit-body").value = p.body;
-        $("prompt-body").textContent = p.body;
-        activateTab("prompts");
-      });
-    });
-    $("prompt-table").querySelectorAll("[data-del-pid]").forEach((b) => {
-      b.addEventListener("click", async () => {
-        if (!confirm("停用该提示词？")) return;
-        await api(`/prompts/${b.dataset.delPid}`, { method: "DELETE" });
-        await refreshPrompts();
-      });
-    });
+    const pick = $("prompt-pick");
+    const taskPrompt = $("task-prompt");
+    const prevPick = pick?.value || "";
+    const prevTask = taskPrompt?.value || "";
+    if (pick) {
+      pick.innerHTML = opts || `<option value="">暂无提示词</option>`;
+      if (prevPick && promptCache.some((p) => p.id === prevPick)) pick.value = prevPick;
+    }
+    if (taskPrompt) {
+      taskPrompt.innerHTML =
+        `<option value="">请选择内容提示词</option>` +
+        (opts || `<option value="" disabled>暂无提示词</option>`);
+      if (prevTask && promptCache.some((p) => p.id === prevTask)) taskPrompt.value = prevTask;
+    }
+    if (pick?.value) await loadPromptDetail(pick.value);
   }
 
   function setTaskActions(enabled) {
@@ -306,7 +458,36 @@
   }
 
   $("kb-select")?.addEventListener("change", () => {
+    fillKbMetaFromSelection();
+    $("doc-title").value = "";
+    $("doc-body").value = "";
     void refreshDocs($("kb-select").value);
+  });
+
+  $("btn-save-kb")?.addEventListener("click", async () => {
+    const kbId = $("kb-select")?.value;
+    if (!kbId) {
+      toast("请先选择或新建知识库", "warn");
+      return;
+    }
+    const btn = $("btn-save-kb");
+    try {
+      await withBusy(btn, async () => {
+        await api(`/knowledge-bases/${kbId}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            name: $("kb-name").value.trim(),
+            description: $("kb-desc").value,
+          }),
+        });
+        await refreshKbs();
+        $("kb-select").value = kbId;
+        fillKbMetaFromSelection();
+      }, "保存中…");
+      toast("知识库信息已保存", "ok");
+    } catch (e) {
+      toast(String(e.message || e), "err");
+    }
   });
 
   $("btn-import-dji").addEventListener("click", async () => {
@@ -406,53 +587,85 @@
   });
 
   $("btn-create-kb").addEventListener("click", async () => {
-    await api("/knowledge-bases", {
-      method: "POST",
-      body: JSON.stringify({ name: $("kb-name").value, description: $("kb-desc").value }),
-    });
-    $("kb-name").value = "";
-    $("kb-desc").value = "";
-    await refreshKbs();
+    const name = ($("kb-name").value || "").trim();
+    if (!name) {
+      toast("请填写知识库名称", "warn");
+      $("kb-name")?.focus();
+      return;
+    }
+    try {
+      await withBusy($("btn-create-kb"), async () => {
+        const created = await api("/knowledge-bases", {
+          method: "POST",
+          body: JSON.stringify({ name, description: $("kb-desc").value }),
+        });
+        await refreshKbs();
+        if (created?.id) {
+          $("kb-select").value = created.id;
+          fillKbMetaFromSelection();
+          await refreshDocs(created.id);
+        }
+      }, "创建中…");
+      toast("知识库已创建", "ok");
+    } catch (e) {
+      toast(String(e.message || e), "err");
+    }
   });
 
   $("btn-add-doc").addEventListener("click", async () => {
     const kbId = $("kb-select").value;
-    if (!kbId) return alert("请先选择知识库");
-    await api(`/knowledge-bases/${kbId}/documents`, {
-      method: "POST",
-      body: JSON.stringify({ title: $("doc-title").value, body: $("doc-body").value }),
-    });
-    $("doc-title").value = "";
-    $("doc-body").value = "";
-    await refreshKbs();
-    await refreshDocs(kbId);
+    if (!kbId) return toast("请先选择知识库", "warn");
+    if (!($("doc-title").value || "").trim() || !($("doc-body").value || "").trim()) {
+      toast("请填写文档标题和正文", "warn");
+      return;
+    }
+    try {
+      await withBusy($("btn-add-doc"), async () => {
+        await api(`/knowledge-bases/${kbId}/documents`, {
+          method: "POST",
+          body: JSON.stringify({ title: $("doc-title").value, body: $("doc-body").value }),
+        });
+        suppressDocAutofill = true;
+        $("doc-title").value = "";
+        $("doc-body").value = "";
+        await refreshKbs();
+        await refreshDocs(kbId);
+      }, "切片中…");
+      toast("已提交语义切片", "ok");
+    } catch (e) {
+      toast(String(e.message || e), "err");
+    }
   });
 
   $("btn-upload-doc").addEventListener("click", async () => {
     const kbId = $("kb-select").value;
     const file = $("doc-file").files?.[0];
-    if (!kbId) return alert("请先选择知识库");
-    if (!file) return alert("请选择 .md / .txt 文件");
+    if (!kbId) return toast("请先选择知识库", "warn");
+    if (!file) return toast("请选择 .md / .txt 文件", "warn");
     try {
-      const form = new FormData();
-      form.append("file", file);
-      if ($("doc-title").value) form.append("title", $("doc-title").value);
-      const res = await fetch(`/api/content-engine/knowledge-bases/${kbId}/upload`, {
-        method: "POST",
-        headers: headers(false),
-        body: form,
-      });
-      if (res.status === 401 || res.status === 403) {
-        redirectToLogin();
-        return;
-      }
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.detail || data.message || res.statusText);
-      $("doc-file").value = "";
-      await refreshKbs();
-      await refreshDocs(kbId);
-      $("search-out").textContent = `已上传：${data.title}（${data.chunk_count} 切片）`;
+      await withBusy($("btn-upload-doc"), async () => {
+        const form = new FormData();
+        form.append("file", file);
+        if ($("doc-title").value) form.append("title", $("doc-title").value);
+        const res = await fetch(`/api/content-engine/knowledge-bases/${kbId}/upload`, {
+          method: "POST",
+          headers: headers(false),
+          body: form,
+        });
+        if (res.status === 401 || res.status === 403) {
+          redirectToLogin();
+          return;
+        }
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.detail || data.message || res.statusText);
+        $("doc-file").value = "";
+        await refreshKbs();
+        await refreshDocs(kbId);
+        $("search-out").textContent = `已上传：${data.title}（${data.chunk_count} 切片）`;
+      }, "上传中…");
+      toast("文件已上传并切片", "ok");
     } catch (e) {
+      toast(String(e.message || e), "err");
       $("search-out").textContent = String(e.message || e);
     }
   });
@@ -460,59 +673,154 @@
   $("btn-search").addEventListener("click", async () => {
     const kbId = $("kb-select").value;
     const query = $("search-q").value.trim();
-    if (!kbId || !query) return;
-    const r = await api(`/knowledge-bases/${kbId}/search`, {
-      method: "POST",
-      body: JSON.stringify({ query, limit: 6 }),
-    });
-    $("search-out").textContent = (r.items || [])
-      .map((h, i) => `#${i + 1} score=${h.score}\n${h.content}`)
-      .join("\n\n---\n\n") || "无命中";
+    if (!kbId) return toast("请先选择知识库", "warn");
+    if (!query) return toast("请输入检索问题", "warn");
+    try {
+      await withBusy($("btn-search"), async () => {
+        const r = await api(`/knowledge-bases/${kbId}/search`, {
+          method: "POST",
+          body: JSON.stringify({ query, limit: 6 }),
+        });
+        $("search-out").textContent = (r.items || [])
+          .map((h, i) => `#${i + 1} score=${h.score}\n${h.content}`)
+          .join("\n\n---\n\n") || "无命中";
+      }, "检索中…");
+    } catch (e) {
+      toast(String(e.message || e), "err");
+    }
+  });
+
+  $("search-q")?.addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter") {
+      ev.preventDefault();
+      $("btn-search")?.click();
+    }
   });
 
   $("btn-save-prompt").addEventListener("click", async () => {
     const id = $("prompt-id").value;
-    const body = { title: $("prompt-title").value, body: $("prompt-edit-body").value };
-    if (id) {
-      await api(`/prompts/${id}`, { method: "PATCH", body: JSON.stringify(body) });
-    } else {
-      await api("/prompts", { method: "POST", body: JSON.stringify(body) });
+    const title = ($("prompt-title").value || "").trim();
+    if (!title || !($("prompt-edit-body").value || "").trim()) {
+      toast("请填写提示词标题和正文", "warn");
+      return;
     }
-    $("prompt-id").value = "";
-    $("prompt-title").value = "";
-    $("prompt-edit-body").value = "";
-    await refreshPrompts();
+    const body = { title, body: $("prompt-edit-body").value };
+    try {
+      await withBusy($("btn-save-prompt"), async () => {
+        if (id) {
+          await api(`/prompts/${id}`, { method: "PATCH", body: JSON.stringify(body) });
+        } else {
+          await api("/prompts", { method: "POST", body: JSON.stringify(body) });
+        }
+        $("prompt-id").value = "";
+        $("prompt-title").value = "";
+        $("prompt-edit-body").value = "";
+        await refreshPrompts();
+      }, "保存中…");
+      toast(id ? "提示词已更新" : "提示词已创建", "ok");
+    } catch (e) {
+      toast(String(e.message || e), "err");
+    }
   });
 
   $("btn-reset-prompt").addEventListener("click", () => {
     $("prompt-id").value = "";
     $("prompt-title").value = "";
     $("prompt-edit-body").value = "";
+    toast("已清空编辑区", "info");
+  });
+
+  $("prompt-pick")?.addEventListener("change", async () => {
+    await loadPromptDetail($("prompt-pick").value);
+  });
+
+  $("btn-load-prompt")?.addEventListener("click", async () => {
+    const p = await loadPromptDetail($("prompt-pick")?.value);
+    if (!p) {
+      toast("请先选择提示词模板", "warn");
+      return;
+    }
+    $("prompt-id").value = p.id;
+    $("prompt-title").value = p.title;
+    $("prompt-edit-body").value = p.body;
+    activateTab("prompts");
+    toast("已载入到编辑区", "ok");
+  });
+
+  $("btn-del-prompt")?.addEventListener("click", async () => {
+    const pid = $("prompt-pick")?.value;
+    if (!pid) return toast("请先选择提示词", "warn");
+    if (!confirm("停用当前选中的提示词？")) return;
+    try {
+      await api(`/prompts/${pid}`, { method: "DELETE" });
+      await refreshPrompts();
+      toast("提示词已停用", "ok");
+    } catch (e) {
+      toast(String(e.message || e), "err");
+    }
+  });
+
+  $("btn-restore-prompts")?.addEventListener("click", async () => {
+    if (!confirm("恢复内置 8 套提示词，并停用被改乱的非内置项？")) return;
+    try {
+      const r = await withBusy($("btn-restore-prompts"), async () => {
+        return api("/prompt-library/restore", { method: "POST", body: "{}" });
+      }, "恢复中…");
+      $("prompt-body").textContent = `已恢复 ${r.restored || 0} 套内置模板：\n${(r.titles || []).join("\n")}`;
+      await refreshPrompts();
+      toast(`已恢复 ${r.restored || 0} 套内置提示词`, "ok");
+    } catch (e) {
+      toast(String(e.message || e), "err");
+    }
   });
 
   $("btn-create-task").addEventListener("click", async () => {
+    const title = ($("task-title").value || "").trim();
+    if (!title) {
+      toast("请填写任务名称", "warn");
+      $("task-title")?.focus();
+      return;
+    }
+    if (!$("task-prompt")?.value) {
+      toast("请选择内容提示词", "warn");
+      $("task-prompt")?.focus();
+      return;
+    }
     const channelSelect = $("task-channel");
     const selected = channelSelect.options[channelSelect.selectedIndex];
     const channelTk = selected?.dataset?.tk || "";
     const templateKey = $("task-template").value || channelTk || null;
     const body = {
-      title: $("task-title").value || "未命名任务",
+      title,
       knowledge_base_id: $("task-kb").value || null,
       prompt_id: $("task-prompt").value || null,
       channel_id: $("task-channel").value || null,
       template_key: templateKey,
-      input_query: $("task-title").value,
+      input_query: title,
+      meta: {
+        model: $("task-model")?.value || null,
+        model_mode: $("task-model-mode")?.value || "fixed",
+        status: $("task-status")?.value || "open",
+      },
     };
     $("task-draft").textContent = "生成中…";
-    const r = await api("/tasks", { method: "POST", body: JSON.stringify(body) });
-    currentTaskId = r.id;
-    const full = await api(`/tasks/${r.id}`);
-    currentDraft = full.draft_body || r.draft_preview || "";
-    currentTemplateKey = full.template_key || templateKey || "wechat-article";
-    $("task-draft").textContent = currentDraft || "（无正文）";
-    setTaskActions(Boolean(currentDraft));
-    $("shell-preview").classList.add("hidden");
-    await refreshTasks();
+    try {
+      await withBusy($("btn-create-task"), async () => {
+        const r = await api("/tasks", { method: "POST", body: JSON.stringify(body) });
+        currentTaskId = r.id;
+        const full = await api(`/tasks/${r.id}`);
+        currentDraft = full.draft_body || r.draft_preview || "";
+        currentTemplateKey = full.template_key || templateKey || "wechat-article";
+        $("task-draft").textContent = currentDraft || "（无正文）";
+        setTaskActions(Boolean(currentDraft));
+        $("shell-preview").classList.add("hidden");
+        await refreshTasks();
+      }, "生成中…");
+      toast(currentDraft ? "草稿已生成" : "任务已创建，但暂无正文", currentDraft ? "ok" : "warn");
+    } catch (e) {
+      $("task-draft").textContent = String(e.message || e);
+      toast(String(e.message || e), "err");
+    }
   });
 
   $("btn-preview-shell").addEventListener("click", () => {
@@ -543,7 +851,8 @@
 
   (async function init() {
     const authed = Boolean(getToken());
-    if (!authed) {
+    const demo = isDemoOpenAccess();
+    if (!authed && !demo) {
       if (isPublicShell) {
         showAuthGate(true);
         await loadStatus();

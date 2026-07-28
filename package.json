@@ -18,8 +18,11 @@
     ]
   },
   "scripts": {
+    "dev": "powershell -NoProfile -File ./scripts/start-local.ps1",
     "dev:web": "pnpm --filter @georank/web dev",
     "dev:admin": "pnpm --filter @georank/admin dev",
+    "legacy:dev:web": "pnpm --filter @georank/web dev",
+    "legacy:dev:admin": "pnpm --filter @georank/admin dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",

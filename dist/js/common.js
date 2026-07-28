@@ -72,7 +72,7 @@
                     { id: 'diagnostic', label: '诊断', url: '/diagnostic', target: '_self', enabled: true },
                     { id: 'knowledge', label: '知识库', url: '/knowledge', target: '_self', enabled: true },
                     { id: 'keywords', label: '拓词', url: '/keywords', target: '_self', enabled: true },
-                    { id: 'distribute', label: '分发', url: '/knowledge?tab=tasks', target: '_self', enabled: true },
+                    { id: 'distribute', label: '分发', url: '/distribute', target: '_self', enabled: true },
                     { id: 'measure', label: '观测', url: '/suite?step=measure', target: '_self', enabled: true },
                     { id: 'config', label: '配置', url: '/settings', target: '_self', enabled: true },
                 ],
@@ -84,7 +84,7 @@
             promise: null,
         },
 
-        CACHE_KEY: 'georank:public-settings:v1',
+        CACHE_KEY: 'georank:public-settings:v3',
         CACHE_TTL_MS: 60_000,
 
         readCache() {
@@ -177,10 +177,16 @@
                 const id = String(item.id || '').toLowerCase();
                 const url = String(item.url || '').toLowerCase();
                 const path = url.split('?')[0].replace(/\/$/, '');
-                const isLegacyKnowledge = id === 'knowledge'
+                const isDistributeUrl = path === '/distribute'
+                    || path.endsWith('/distribute.html')
+                    || ((path === '/knowledge' || path.endsWith('/knowledge.html'))
+                        && (url.includes('tab=tasks') || url.includes('tab=channels')));
+                const isLegacyKnowledge = !isDistributeUrl && (
+                    id === 'knowledge'
                     || (url.includes('/suite') && url.includes('step=knowledge'))
                     || ((path === '/admin/content-engine' || path.endsWith('/content-engine'))
-                        && !url.includes('tab=tasks') && !url.includes('tab=channels'));
+                        && !url.includes('tab=tasks') && !url.includes('tab=channels'))
+                );
                 if (isLegacyKnowledge) {
                     return {
                         ...item,
@@ -191,14 +197,14 @@
                         enabled: item.enabled !== false,
                     };
                 }
-                if (id === 'distribute'
+                if (id === 'distribute' || isDistributeUrl
                     || ((path === '/admin/content-engine' || path.endsWith('/content-engine'))
                         && (url.includes('tab=tasks') || url.includes('tab=channels')))) {
                     return {
                         ...item,
                         id: 'distribute',
                         label: item.label || '分发',
-                        url: '/knowledge?tab=tasks',
+                        url: '/distribute',
                         target: '_self',
                         enabled: item.enabled !== false,
                     };
@@ -208,6 +214,16 @@
                     return { ...item, target: '_self' };
                 }
                 return item;
+            });
+            // 六大能力菜单 id 去重，避免历史配置里出现多个「分发」
+            const pillarIds = new Set(['suite', 'diagnostic', 'knowledge', 'keywords', 'distribute', 'measure', 'config']);
+            const seenPillars = new Set();
+            next = next.filter((item) => {
+                const id = String(item.id || '').toLowerCase();
+                if (!pillarIds.has(id)) return true;
+                if (seenPillars.has(id)) return false;
+                seenPillars.add(id);
+                return true;
             });
             if (!next.some(item => item.id === 'suite' || item.url === '/suite')) {
                 next = [
@@ -236,6 +252,30 @@
                 const insertAt = diagnosticIndex >= 0 ? diagnosticIndex + 1 : Math.min(1, next.length);
                 next = [...next.slice(0, insertAt), knowledge, ...next.slice(insertAt)];
             }
+            const hasDistribute = next.some(item => String(item.id || '').toLowerCase() === 'distribute'
+                || String(item.url || '').split('?')[0].replace(/\/$/, '') === '/distribute');
+            if (!hasDistribute) {
+                const distribute = { id: 'distribute', label: '分发', url: '/distribute', target: '_self', enabled: true };
+                const keywordsIndex = next.findIndex(item => {
+                    const id = String(item.id || '').toLowerCase();
+                    const url = String(item.url || '').toLowerCase();
+                    return id === 'keywords' || url === '/keywords' || url.startsWith('/keywords?');
+                });
+                const knowledgeIndex = next.findIndex(item => String(item.id || '').toLowerCase() === 'knowledge');
+                const insertAt = keywordsIndex >= 0
+                    ? keywordsIndex + 1
+                    : (knowledgeIndex >= 0 ? knowledgeIndex + 1 : Math.min(next.length, 4));
+                next = [...next.slice(0, insertAt), distribute, ...next.slice(insertAt)];
+            }
+            // 插入后再去一次重
+            const seenAfter = new Set();
+            next = next.filter((item) => {
+                const id = String(item.id || '').toLowerCase();
+                if (!pillarIds.has(id)) return true;
+                if (seenAfter.has(id)) return false;
+                seenAfter.add(id);
+                return true;
+            });
             return next.slice(0, 12);
         },
 
@@ -804,7 +844,7 @@
                 <a href="/diagnostic" data-nav-link data-i18n="nav.diagnostic">诊断</a>
                 <a href="/knowledge" data-nav-link data-navigation-item="knowledge">知识库</a>
                 <a href="/keywords" data-nav-link data-i18n="nav.keywords">拓词</a>
-                <a href="/knowledge?tab=tasks" data-nav-link data-navigation-item="distribute">分发</a>
+                <a href="/distribute" data-nav-link data-navigation-item="distribute">分发</a>
                 <a href="/suite?step=measure" data-nav-link data-navigation-item="measure">观测</a>
                 <a href="/settings" data-nav-link data-navigation-item="config">配置</a>
             </div>
@@ -833,7 +873,7 @@
             <a href="/diagnostic" data-nav-link data-i18n="nav.diagnostic">诊断</a>
             <a href="/knowledge" data-nav-link data-navigation-item="knowledge">知识库</a>
             <a href="/keywords" data-nav-link data-i18n="nav.keywords">拓词</a>
-            <a href="/knowledge?tab=tasks" data-nav-link data-navigation-item="distribute">分发</a>
+            <a href="/distribute" data-nav-link data-navigation-item="distribute">分发</a>
             <a href="/suite?step=measure" data-nav-link data-navigation-item="measure">观测</a>
             <a href="/settings" data-nav-link data-navigation-item="config">配置</a>
         </div>
@@ -2415,6 +2455,10 @@ const FOOTER_HTML = `
         highlightCurrentPage() {
             const currentPath = Routes.getModulePath(window.location.pathname);
             const currentSearch = window.location.search || '';
+            const curParams = new URLSearchParams(currentSearch);
+            const curTab = curParams.get('tab');
+            const curIsDistributePath = currentPath === '/distribute'
+                || ((currentPath === '/knowledge') && (curTab === 'tasks' || curTab === 'channels'));
             const navLinks = DOM.getAll('#main-nav [data-nav-link]');
 
             navLinks.forEach(link => {
@@ -2422,10 +2466,21 @@ const FOOTER_HTML = `
                 const url = new URL(href, window.location.origin);
                 const target = Routes.getModulePath(url.pathname);
                 const linkSearch = url.search || '';
+                const linkParams = new URLSearchParams(linkSearch);
+                const linkTab = linkParams.get('tab');
+                const linkItem = String(link.getAttribute('data-navigation-item') || '').toLowerCase();
+                const linkIsDistribute = linkItem === 'distribute'
+                    || target === '/distribute'
+                    || linkTab === 'tasks'
+                    || linkTab === 'channels';
                 let active = currentPath === target;
-                if (active && target === '/suite') {
-                    const curStep = new URLSearchParams(currentSearch).get('step');
-                    const linkStep = new URLSearchParams(linkSearch).get('step');
+                if (linkIsDistribute) {
+                    active = curIsDistributePath || currentPath === '/distribute';
+                } else if (linkItem === 'knowledge' || (target === '/knowledge' && !linkTab)) {
+                    active = currentPath === '/knowledge' && !curIsDistributePath;
+                } else if (active && target === '/suite') {
+                    const curStep = curParams.get('step');
+                    const linkStep = linkParams.get('step');
                     if (linkStep) active = curStep === linkStep;
                     else active = !curStep || curStep === 'diagnostic';
                 }

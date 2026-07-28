@@ -17,6 +17,13 @@ DEFAULT_CHAT_MAX_TOKENS = 4096
 ACTION_PLAN_MAX_TOKENS = 6000
 
 
+def _deepseek_v4_non_thinking_body(model: str) -> dict[str, Any]:
+    """文章生成等场景：V4 默认 thinking 过重，flash 用非思考模式。"""
+    if str(model or "").strip().lower().startswith("deepseek-v4"):
+        return {"thinking": {"type": "disabled"}}
+    return {}
+
+
 class EmbeddingNotConfiguredError(ValueError):
     """Raised when no dedicated embedding provider is configured."""
 
@@ -164,6 +171,7 @@ class AIClient:
         }
         if max_tokens is not None:
             payload["max_tokens"] = max_tokens
+        payload.update(_deepseek_v4_non_thinking_body(model))
 
         await validate_provider_base_url(base_url)
         async with build_provider_http_client(timeout=60.0) as client:
@@ -258,6 +266,9 @@ class AIClient:
                     }
                     if max_tokens is not None:
                         payload["max_tokens"] = max_tokens
+                    extra = _deepseek_v4_non_thinking_body(target_model)
+                    if extra:
+                        payload["extra_body"] = extra
                     response = await client.chat.completions.create(**payload)
                     content = response.choices[0].message.content or ""
                     if self._is_blank_text(content):
@@ -289,6 +300,9 @@ class AIClient:
                     }
                     if max_tokens is not None:
                         payload["max_tokens"] = max_tokens
+                    extra = _deepseek_v4_non_thinking_body(target_model)
+                    if extra:
+                        payload["extra_body"] = extra
                     response = await client.chat.completions.create(**payload)
                     content = response.choices[0].message.content or ""
                 if self._is_blank_text(content):
@@ -342,6 +356,9 @@ class AIClient:
                     }
                     if max_tokens is not None:
                         payload["max_tokens"] = max_tokens
+                    extra = _deepseek_v4_non_thinking_body(target_model)
+                    if extra:
+                        payload["extra_body"] = extra
                     stream = await client.chat.completions.create(**payload)
                     async for chunk in stream:
                         delta = chunk.choices[0].delta.content
@@ -387,6 +404,9 @@ class AIClient:
                     }
                     if max_tokens is not None:
                         payload["max_tokens"] = max_tokens
+                    extra = _deepseek_v4_non_thinking_body(target_model)
+                    if extra:
+                        payload["extra_body"] = extra
                     stream = await client.chat.completions.create(**payload)
                     async for chunk in stream:
                         delta = chunk.choices[0].delta.content

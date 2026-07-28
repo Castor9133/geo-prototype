@@ -73,8 +73,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function distributeHref() {
         if (!isNative()) return geoflowUrl(DEMO_KB.tasksPath);
-        const base = nativePublicPath();
-        return base.includes('tab=') ? base : (base.includes('?') ? `${base}&tab=tasks` : `${base}?tab=tasks`);
+        return '/distribute';
     }
 
     function readStepFromUrl() {
@@ -307,7 +306,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const card = {
                 title: t.title || '内容任务',
                 meta: `${status}${t.has_draft ? ' · 有草稿' : ''}`,
-                href: isNative() ? distributeHref() : '/knowledge?tab=tasks',
+                href: distributeHref(),
                 pct: status === 'distributed' || status === 'completed' ? 100 : (t.has_draft ? 80 : 40),
                 kind: status === 'distributed' || status === 'completed' ? 'done' : (status === 'running' || status === 'pending' ? 'running' : 'review'),
             };
@@ -560,6 +559,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             const tab = el.getAttribute('data-suite-tab');
             const active = isMeasure ? tab === 'measure' : tab === 'factory';
             el.classList.toggle('is-active', active);
+        });
+        // 观测页只保留监测主区，避免步骤卡 / 看板 / 侧栏叠层
+        [
+            'suite-pipeline',
+            'suite-step-panel',
+            'suite-board-section',
+            'suite-last-handoff',
+        ].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.hidden = isMeasure;
+        });
+        document.querySelectorAll('.cockpit-side').forEach((el) => {
+            el.hidden = isMeasure;
+        });
+        document.querySelectorAll('.suite-wf-bar, [data-suite-workflow-bar]').forEach((el) => {
+            el.hidden = isMeasure;
         });
         const shortcuts = document.getElementById('suite-side-shortcuts');
         if (shortcuts) shortcuts.hidden = isMeasure;

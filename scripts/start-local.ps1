@@ -30,6 +30,25 @@ if (-not (Test-Path $venvPython)) {
     & $venvPython -m pip install -r "$Root\backend\requirements.txt"
 }
 
+# Portable Redis + Postgres (Windows, no Docker). Optional helper.
+$depsScript = Join-Path $Root "scripts\start-local-deps.py"
+if (Test-Path $depsScript) {
+    Write-Host "Ensuring local Postgres/Redis..." -ForegroundColor Cyan
+    & $venvPython -m pip show pgembed 2>$null | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        & $venvPython -m pip install -q pgembed
+    }
+    $bootstrapRedis = Join-Path $Root "scripts\_bootstrap_runtime_deps.py"
+    if (Test-Path $bootstrapRedis) {
+        & $venvPython $bootstrapRedis
+    }
+    & $venvPython $depsScript
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Local deps failed; install Postgres+Redis manually (docs/本地裸跑-postgres-redis.md)" -ForegroundColor Yellow
+        exit 1
+    }
+}
+
 $env:PYTHONPATH = Join-Path $Root "backend"
 Get-Content "$Root\.env" | ForEach-Object {
     $line = $_.Trim()
@@ -47,6 +66,9 @@ Get-Content "$Root\.env" | ForEach-Object {
     Set-Item -Path "Env:$k" -Value $v
 }
 
+# 本地演示默认免登录（Admin / 内容引擎）；生产部署勿复制此强制项
+$env:GEORANK_ALLOW_ANONYMOUS_AI = "true"
+
 if (-not $SkipMigrate) {
     Write-Host "Alembic migrate..." -ForegroundColor Cyan
     Push-Location (Join-Path $Root "backend")
@@ -63,7 +85,8 @@ $worker = $null
 if (-not $SkipWorker) {
     Write-Host "Celery worker..." -ForegroundColor Cyan
     $worker = Start-Process -FilePath $venvPython -ArgumentList @(
-        "-m", "celery", "-A", "app.core.celery_app.celery_app", "worker", "-c", "1", "-l", "info"
+        "-m", "celery", "-A", "app.core.celery_app.celery_app", "worker",
+        "-c", "1", "-l", "info", "-Q", "crawl,process,diagnose,celery", "--pool=solo"
     ) -WorkingDirectory (Join-Path $Root "backend") -PassThru -WindowStyle Minimized
 }
 

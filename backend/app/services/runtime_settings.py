@@ -166,7 +166,7 @@ DEFAULT_AI_USAGE_POLICY = {
             "default_model": "gpt-4o-mini",
         },
     ],
-    "metered_modules": ["solutions", "keywords", "diagnostics", "companies", "tools"],
+    "metered_modules": ["keywords", "diagnostics", "tools"],
 }
 DEFAULT_LLM_PROVIDER_CONFIG = {
     "strategy": "failover",

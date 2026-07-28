@@ -55,7 +55,16 @@ LLM / Embedding Key 按现有字段配置（`LLM_*` / `EMBEDDING_*`）。无 Emb
 ```powershell
 cd "C:\Cursor local\GEORank"
 .\scripts\start-local.ps1
+# 或
+pnpm dev
 ```
+
+Windows 若未安装系统级 Postgres/Redis，`start-local.ps1` 会调用：
+
+- `scripts/_bootstrap_runtime_deps.py`（便携 Redis → `~/.georank-runtime/redis`）
+- `scripts/start-local-deps.py`（将 `pgembed` 拷到 `C:\georank-runtime\pgsql` 后起库，避开中文路径问题）
+
+仍可按上文手动安装官方 PostgreSQL / Redis / Memurai。
 
 | 服务 | URL |
 |------|-----|

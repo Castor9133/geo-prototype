@@ -33,7 +33,7 @@ class NavigationSettingsTests(unittest.TestCase):
         self.assertEqual(knowledge["url"], "/knowledge")
         self.assertEqual(knowledge["target"], "_self")
         distribute = next(item for item in menu["items"] if item["id"] == "distribute")
-        self.assertEqual(distribute["url"], "/knowledge?tab=tasks")
+        self.assertEqual(distribute["url"], "/distribute")
         self.assertEqual(distribute["target"], "_self")
         self.assertTrue(all(item["target"] == "_self" for item in menu["items"]))
 
@@ -128,7 +128,7 @@ class NavigationSettingsTests(unittest.TestCase):
         self.assertEqual(knowledge["url"], "/knowledge")
         self.assertEqual(knowledge["target"], "_self")
         distribute = next(item for item in menu["items"] if item["id"] == "distribute")
-        self.assertEqual(distribute["url"], "/knowledge?tab=tasks")
+        self.assertEqual(distribute["url"], "/distribute")
         self.assertEqual(distribute["target"], "_self")
 
     def test_ensure_suite_rewrites_admin_content_engine_to_public(self):
@@ -143,6 +143,30 @@ class NavigationSettingsTests(unittest.TestCase):
         knowledge = next(item for item in menu["items"] if item["id"] == "knowledge")
         self.assertEqual(knowledge["url"], "/knowledge")
         self.assertEqual(knowledge["target"], "_self")
+
+    def test_ensure_suite_dedupes_duplicate_distribute(self):
+        menu = ensure_suite_in_navigation_menu(
+            {
+                "items": [
+                    {"id": "suite", "label": "GEO Suite", "url": "/suite", "target": "_self"},
+                    {"id": "diagnostic", "label": "诊断", "url": "/diagnostic", "target": "_self"},
+                    {"id": "knowledge", "label": "知识库", "url": "/knowledge", "target": "_self"},
+                    {"id": "keywords", "label": "拓词", "url": "/keywords", "target": "_self"},
+                    {"id": "distribute", "label": "分发", "url": "/distribute", "target": "_self"},
+                    {"id": "distribute", "label": "分发", "url": "/distribute", "target": "_self"},
+                    {"id": "distribute", "label": "分发", "url": "/knowledge?tab=tasks", "target": "_self"},
+                    {"id": "distribute", "label": "分发", "url": "/admin/content-engine?tab=channels", "target": "_blank"},
+                    {"id": "measure", "label": "观测", "url": "/suite?step=measure", "target": "_self"},
+                    {"id": "config", "label": "配置", "url": "/settings", "target": "_self"},
+                ]
+            }
+        )
+        ids = [item["id"] for item in menu["items"]]
+        self.assertEqual(ids.count("distribute"), 1)
+        self.assertEqual(
+            ids,
+            ["suite", "diagnostic", "knowledge", "keywords", "distribute", "measure", "config"],
+        )
 
 
 if __name__ == "__main__":

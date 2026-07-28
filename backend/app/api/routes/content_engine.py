@@ -102,6 +102,7 @@ class TaskCreate(BaseModel):
     channel_id: uuid.UUID | None = None
     template_key: str | None = None
     input_query: str | None = None
+    meta: dict[str, Any] | None = None
 
 
 class ChannelCreate(BaseModel):
@@ -264,6 +265,7 @@ async def get_kb(kb_id: uuid.UUID, db: DbSession, _: AdminUser):
                 "chunk_count": d.chunk_count,
                 "status": d.status,
                 "source_path": d.source_path,
+                "body": d.body or "",
             }
             for d in docs
         ],
@@ -369,6 +371,18 @@ async def list_prompts(db: DbSession, _: AdminUser):
     return {"items": [_prompt_dict(p) for p in rows]}
 
 
+@router.post("/prompt-library/restore")
+async def restore_default_prompts(db: DbSession, _: AdminUser):
+    """恢复内置提示词正文，并停用标题不在内置清单中的自定义项。"""
+    rows = await ce.ensure_default_prompts(db, prune_custom=True)
+    await db.commit()
+    return {
+        "restored": len(rows),
+        "titles": [r.title for r in rows],
+        "items": [_prompt_dict(p) for p in rows],
+    }
+
+
 @router.post("/prompts")
 async def create_prompt(payload: PromptCreate, db: DbSession, _: AdminUser):
     row = ContentPrompt(
@@ -452,7 +466,7 @@ async def create_task(payload: TaskCreate, db: DbSession, _: AdminUser):
         template_key=payload.template_key,
         input_query=payload.input_query or payload.title,
         status="pending",
-        meta={},
+        meta=dict(payload.meta or {}),
     )
     db.add(task)
     await db.commit()

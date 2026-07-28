@@ -106,6 +106,18 @@
 .ce-form-col > label {
   margin-top: 0.15rem;
 }
+.ce-preview-col > label {
+  display: block;
+  margin: 0.15rem 0 0.35rem;
+  font-size: 0.85rem;
+}
+.ce-preview-col > select {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 0.75rem;
+}
 .ce-form-col > input,
 .ce-form-col > select,
 .ce-form-col > textarea,
@@ -177,17 +189,22 @@
   justify-content: center;
 }
 
-/* —— 前台顶栏壳（图2：暖灰底 · 白卡 · 蓝主色） —— */
+/* —— 前台顶栏壳（第三图：奶油底 · 白卡 · 橙主 CTA · 蓝选中 Tab） —— */
 .ce-page--public {
-  --ce-accent: var(--ce-blue, #0052D9);
-  --ce-accent-soft: var(--ce-blue-soft, #E8F1FF);
+  --ce-accent: var(--inner-accent, #E8641B);
+  --ce-accent-soft: var(--inner-accent-soft, #FFF1E6);
   background: var(--ce-bg, #F8F7F2) !important;
   min-height: 100vh;
 }
 .ce-page--public .btn.primary {
-  background: var(--ce-blue);
-  border-color: var(--ce-blue);
-  box-shadow: 0 4px 14px rgba(0, 82, 217, 0.28);
+  background: var(--ce-accent);
+  border-color: var(--ce-accent);
+  box-shadow: 0 4px 14px rgba(232, 100, 27, 0.28);
+}
+.ce-page--public .tab.active {
+  background: var(--ce-blue-soft, #E8F1FF);
+  color: var(--ce-blue, #0052D9);
+  border-color: #C9DBFF;
 }
 .ce-public-main {
   max-width: 1180px;
@@ -258,10 +275,6 @@
 .ce-page--public .panel {
   border-radius: 16px;
   box-shadow: 0 6px 22px rgba(26, 26, 26, 0.08);
-}
-.ce-page--public .tab.active {
-  background: var(--ce-blue-soft);
-  color: var(--ce-blue);
 }
 .panel {
   display: none;
@@ -388,15 +401,298 @@ pre {
 }
 .embed-bar i { display: block; height: 100%; background: var(--ce-accent); }
 
+/* Toast / busy / focus */
+.ce-toast-host {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-width: min(360px, calc(100vw - 2rem));
+  pointer-events: none;
+}
+.ce-toast {
+  pointer-events: auto;
+  padding: 0.7rem 0.9rem;
+  border-radius: 12px;
+  background: #1A1A1A;
+  color: #fff;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.ce-toast.is-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+.ce-toast--ok { background: #1B7A4A; }
+.ce-toast--warn { background: #9A5B12; }
+.ce-toast--err { background: #B42318; }
+.ce-toast--info { background: #1A1A1A; }
+.btn.is-busy,
+.tab.is-busy {
+  opacity: 0.72;
+  cursor: wait;
+}
+.tab,
+.btn,
+.ce-kb-card {
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease;
+}
+.tab:hover,
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.tab:focus-visible,
+.btn:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+.ce-kb-card:focus-visible {
+  outline: 2px solid #0052D9;
+  outline-offset: 2px;
+}
+.ce-kb-card:hover {
+  border-color: #C9DBFF;
+  box-shadow: var(--ce-shadow-soft);
+}
+.panel {
+  scroll-margin-top: 5.5rem;
+}
+
 .badge-ok { color: var(--ce-green); font-weight: 700; }
 .badge-wait { color: var(--ce-orange); font-weight: 700; }
+
+/* —— GEOFlow 对齐：知识库详情 / 创建新任务 —— */
+.ce-flow-card {
+  background: #fff;
+  border: 1px solid var(--ce-line);
+  border-radius: 16px;
+  padding: 1.15rem 1.25rem 1.25rem;
+  margin-bottom: 1.1rem;
+}
+.ce-flow-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.ce-flow-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.ce-flow-sub {
+  margin: 0.35rem 0 0;
+  color: var(--ce-muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  max-width: 42rem;
+}
+.ce-flow-select-inline {
+  min-width: 220px;
+  max-width: 100%;
+}
+.ce-field-row {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr;
+  gap: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+.ce-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+  min-width: 0;
+}
+.ce-field > label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #334155;
+}
+.ce-field > input,
+.ce-field > select,
+.ce-field > textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+.ce-md-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+.ce-md-bar > span {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.ce-md-bar > small {
+  color: var(--ce-muted);
+  font-size: 0.78rem;
+}
+.ce-md-editor {
+  min-height: 280px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+.ce-flow-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  justify-content: flex-end;
+  position: sticky;
+  bottom: 0.5rem;
+  z-index: 2;
+  margin-top: 0.35rem;
+  margin-left: -0.25rem;
+  margin-right: -0.25rem;
+  padding: 0.65rem 0.25rem 0.15rem;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--ce-line);
+}
+.ce-flow-actions .btn {
+  width: auto !important;
+  min-width: 7.5rem;
+}
+.ce-pack {
+  margin: 0.25rem 0 1.1rem;
+  padding: 0.85rem 0.9rem;
+  background: #FAFBFC;
+  border: 1px solid var(--ce-line);
+  border-radius: 12px;
+}
+.ce-pack > h3 {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+}
+.ce-pack-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+.ce-pack-item {
+  background: #fff;
+  border: 1px solid var(--ce-line);
+  border-radius: 10px;
+  padding: 0.7rem 0.75rem;
+}
+.ce-pack-item strong {
+  display: block;
+  font-size: 0.86rem;
+  margin-bottom: 0.3rem;
+}
+.ce-pack-item p {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--ce-muted);
+  line-height: 1.45;
+}
+.ce-section {
+  margin-bottom: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid #F0F0EC;
+}
+.ce-section:last-of-type {
+  border-bottom: 0;
+}
+.ce-section > h3 {
+  margin: 0 0 0.65rem;
+  font-size: 0.95rem;
+}
+.ce-section > label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin: 0.45rem 0 0.3rem;
+}
+.ce-section > input,
+.ce-section > select {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 0.2rem;
+}
+.ce-hint {
+  margin: 0.35rem 0 0.55rem;
+  font-size: 0.78rem;
+  color: var(--ce-muted);
+  line-height: 1.45;
+}
+.ce-kb-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+.ce-kb-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid var(--ce-line);
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
+}
+.ce-kb-card.is-selected {
+  border-color: #C9DBFF;
+  background: var(--ce-blue-soft, #E8F1FF);
+  box-shadow: inset 0 0 0 1px #C9DBFF;
+}
+.ce-kb-card strong {
+  display: block;
+  font-size: 0.84rem;
+}
+.ce-kb-card small {
+  color: var(--ce-muted);
+  font-size: 0.72rem;
+}
+.ce-visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.ce-task-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 1rem;
+  align-items: start;
+}
 
 @media (max-width: 900px) {
   .kpi-row { grid-template-columns: 1fr 1fr; }
   .hub-grid, .row { grid-template-columns: 1fr; }
+  .ce-field-row,
+  .ce-pack-grid,
+  .ce-kb-cards,
+  .ce-task-layout {
+    grid-template-columns: 1fr;
+  }
 }
 @media (max-width: 560px) {
   .kpi-row { grid-template-columns: 1fr; }
   .ce-wrap { padding: 16px 12px 40px; }
   .tabs { overflow-x: auto; flex-wrap: nowrap; }
+  .ce-flow-actions { justify-content: stretch; }
+  .ce-flow-actions .btn { flex: 1 1 auto; }
 }

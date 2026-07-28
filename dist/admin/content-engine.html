@@ -10,11 +10,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
   <script src="../js/tailwind.config.js"></script>
-  <link rel="stylesheet" href="../css/common.css?v=20260728-admin1">
-  <link rel="stylesheet" href="../css/admin.css?v=20260728-admin1">
-  <link rel="stylesheet" href="../css/channel-shells.css?v=20260728-admin1">
-  <link rel="stylesheet" href="../css/content-engine.css?v=20260728-admin1">
-  <link rel="stylesheet" href="../css/inner-shell.css?v=20260728-admin1">
+  <link rel="stylesheet" href="../css/common.css?v=20260729-fixenc1">
+  <link rel="stylesheet" href="../css/admin.css?v=20260729-fixenc1">
+  <link rel="stylesheet" href="../css/channel-shells.css?v=20260729-fixenc1">
+  <link rel="stylesheet" href="../css/content-engine.css?v=20260729-ue1">
+  <link rel="stylesheet" href="../css/inner-shell.css?v=20260729-fixenc1">
 </head>
 <body class="admin-page bg-slate-50 text-on-surface antialiased inner-page ce-page ce-page--admin">
   <div class="admin-layout">
@@ -23,7 +23,7 @@
 
     <div class="admin-main">
       <div id="admin-topbar"></div>
-      <script src="../js/admin.js?v=20260728-admin1"></script>
+      <script src="../js/admin.js?v=20260729-fixenc1"></script>
 
       <main class="p-6 lg:p-8 space-y-5">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -111,23 +111,45 @@
           </section>
 
           <section class="panel" id="panel-kb">
-            <div class="row">
-              <div class="ce-form-col">
-                <h3>新建知识库</h3>
-                <input id="kb-name" placeholder="名称">
-                <textarea id="kb-desc" rows="2" placeholder="描述"></textarea>
-                <button type="button" class="btn primary btn-block" id="btn-create-kb">创建</button>
-              </div>
-              <div class="ce-form-col">
-                <h3>添加文档</h3>
-                <select id="kb-select"></select>
-                <input id="doc-title" placeholder="文档标题">
-                <textarea id="doc-body" rows="4" placeholder="正文（或下方上传 .md/.txt）"></textarea>
-                <input type="file" id="doc-file" accept=".md,.txt,.markdown,text/plain,text/markdown">
-                <div class="btn-row btn-row--stack">
-                  <button type="button" class="btn primary btn-block" id="btn-add-doc">切片并向量化</button>
-                  <button type="button" class="btn btn-block" id="btn-upload-doc">上传文件</button>
+            <div class="ce-flow-card">
+              <div class="ce-flow-card__head">
+                <div>
+                  <h2 class="ce-flow-title">知识库详情</h2>
+                  <p class="ce-flow-sub" id="kb-detail-sub">编辑名称、描述与 Markdown 证据正文，再提交语义切片</p>
                 </div>
+                <select id="kb-select" class="ce-flow-select-inline" title="切换知识库"></select>
+              </div>
+              <div class="ce-field-row">
+                <div class="ce-field">
+                  <label for="kb-name">知识库名称</label>
+                  <input id="kb-name" placeholder="例如：中文产品演示包 · DJI Mini 5 Pro">
+                </div>
+                <div class="ce-field">
+                  <label for="doc-type">文档类型</label>
+                  <select id="doc-type">
+                    <option value="markdown">Markdown</option>
+                    <option value="text">纯文本</option>
+                  </select>
+                </div>
+              </div>
+              <div class="ce-field">
+                <label for="kb-desc">描述</label>
+                <textarea id="kb-desc" rows="2" placeholder="例如：CN product demo v2 fact cards from DJI Mini 5 Pro public specs/FAQ"></textarea>
+              </div>
+              <div class="ce-field">
+                <div class="ce-md-bar">
+                  <span>内容</span>
+                  <small>默认以预览方式编辑 Markdown，支持源码、所见即所得和分屏预览。</small>
+                </div>
+                <input id="doc-title" placeholder="文档标题，例如：DJI Mini 5 Pro · 事实卡包">
+                <textarea id="doc-body" class="ce-md-editor" rows="14" placeholder="粘贴事实卡 / FAQ 等 Markdown 正文…"></textarea>
+                <input type="file" id="doc-file" accept=".md,.txt,.markdown,text/plain,text/markdown">
+              </div>
+              <div class="ce-flow-actions">
+                <button type="button" class="btn" id="btn-create-kb">新建知识库</button>
+                <button type="button" class="btn" id="btn-save-kb">保存更改</button>
+                <button type="button" class="btn" id="btn-upload-doc">上传文件</button>
+                <button type="button" class="btn primary" id="btn-add-doc">重新提交语义切片</button>
               </div>
             </div>
             <h3>检索</h3>
@@ -165,34 +187,95 @@
                 </div>
               </div>
               <div class="ce-preview-col">
-                <h3>列表</h3>
-                <div class="table-scroll">
-                  <table>
-                    <thead><tr><th>标题</th><th>操作</th></tr></thead>
-                    <tbody id="prompt-table"></tbody>
-                  </table>
+                <h3>选择模板</h3>
+                <label for="prompt-pick">提示词模板</label>
+                <select id="prompt-pick"></select>
+                <div class="btn-row btn-row--stack">
+                  <button type="button" class="btn btn-block" id="btn-load-prompt">载入到编辑区</button>
+                  <button type="button" class="btn btn-block" id="btn-del-prompt">停用当前</button>
+                  <button type="button" class="btn btn-block" id="btn-restore-prompts">恢复内置 8 套</button>
                 </div>
-                <pre id="prompt-body">选择提示词查看正文</pre>
+                <pre id="prompt-body">从下拉列表选择提示词查看正文</pre>
               </div>
             </div>
           </section>
 
           <section class="panel" id="panel-tasks">
-            <div class="row ce-task-grid">
-              <div class="ce-form-col">
-                <h3>生成任务</h3>
-                <input id="task-title" placeholder="任务标题 / 问题">
-                <label for="task-kb">知识库</label>
-                <select id="task-kb"></select>
-                <label for="task-prompt">提示词</label>
-                <select id="task-prompt"></select>
-                <label for="task-channel">渠道</label>
-                <select id="task-channel"></select>
-                <label for="task-template">模板壳</label>
-                <select id="task-template"></select>
+            <div class="ce-task-layout">
+              <div class="ce-flow-card">
+                <h2 class="ce-flow-title">创建新任务</h2>
+                <p class="ce-flow-sub">构建自己可控的GEO诊断和内容工作流</p>
+
+                <div class="ce-pack">
+                  <h3>内容工程任务包</h3>
+                  <div class="ce-pack-grid">
+                    <div class="ce-pack-item">
+                      <strong>问题输入</strong>
+                      <p>标题、关键词和提示词决定本任务覆盖哪些用户问题。</p>
+                    </div>
+                    <div class="ce-pack-item">
+                      <strong>证据召回</strong>
+                      <p>选择知识库，让生成内容优先吸收已验证资料。</p>
+                    </div>
+                    <div class="ce-pack-item">
+                      <strong>质量门禁</strong>
+                      <p>草稿预览与人工复核后再分发，控制上线风险。</p>
+                    </div>
+                    <div class="ce-pack-item">
+                      <strong>权威分发</strong>
+                      <p>选择渠道与模板壳，形成外部可发现触点。</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="ce-section">
+                  <h3>基础信息</h3>
+                  <label for="task-title">任务名称</label>
+                  <input id="task-title" placeholder="例如：大疆为什么值得信任">
+                  <label for="task-status">任务状态</label>
+                  <select id="task-status">
+                    <option value="open">开启</option>
+                    <option value="paused">暂停</option>
+                    <option value="done">完成</option>
+                  </select>
+                </div>
+
+                <div class="ce-section">
+                  <h3>内容配置</h3>
+                  <label for="task-prompt">内容提示词</label>
+                  <select id="task-prompt"></select>
+                  <label for="task-model">AI 模型选择</label>
+                  <select id="task-model">
+                    <option value="deepseek-v4-flash">DeepSeek v4 flash（默认）</option>
+                    <option value="deepseek-chat">DeepSeek Chat</option>
+                  </select>
+                  <label for="task-model-mode">模型选择模式</label>
+                  <select id="task-model-mode">
+                    <option value="fixed">固定模型</option>
+                    <option value="smart">智能切换</option>
+                  </select>
+                  <p class="ce-hint">固定模型始终使用所选模型；智能切换在主模型失败时回退备用模型。</p>
+                </div>
+
+                <div class="ce-section">
+                  <h3>知识库选择</h3>
+                  <p class="ce-hint">点选知识库注入 {{Knowledge}}；演示每次绑定 1 个库。</p>
+                  <select id="task-kb" class="ce-visually-hidden" aria-hidden="true" tabindex="-1"></select>
+                  <div id="task-kb-cards" class="ce-kb-cards"></div>
+                </div>
+
+                <div class="ce-section">
+                  <h3>分发范围</h3>
+                  <label for="task-channel">渠道</label>
+                  <select id="task-channel"></select>
+                  <label for="task-template">模板壳</label>
+                  <select id="task-template"></select>
+                </div>
+
                 <button type="button" class="btn primary btn-block" id="btn-create-task">生成草稿</button>
               </div>
-              <div class="ce-preview-col">
+
+              <div class="ce-preview-col ce-flow-card">
                 <h3>草稿 / 预览</h3>
                 <div class="btn-row btn-row--stack">
                   <button type="button" class="btn btn-block" id="btn-preview-shell" disabled>渠道预览</button>
@@ -243,6 +326,6 @@
       </main>
     </div>
   </div>
-  <script src="../js/content-engine-admin.js?v=20260728-admin1"></script>
+  <script src="../js/content-engine-admin.js?v=20260729-ue1"></script>
 </body>
 </html>

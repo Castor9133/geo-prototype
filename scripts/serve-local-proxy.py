@@ -59,6 +59,34 @@ def main() -> None:
         def __init__(self, *a, **k):
             super().__init__(*a, directory=str(DIST), **k)
 
+        def end_headers(self):  # noqa: N802
+            # Local demo: avoid serving stale mojibake HTML after encoding repairs.
+            path = (urlsplit(self.path).path or "").lower()
+            if path.endswith((".html", ".js", ".css", ".json", ".svg", ".md", "/")) or path in {"", "/"}:
+                self.send_header("Cache-Control", "no-store, max-age=0")
+            super().end_headers()
+
+        def guess_type(self, path):  # noqa: N802
+            ctype = super().guess_type(path)
+            if ctype.startswith("text/") or ctype in {
+                "application/javascript",
+                "application/json",
+                "text/css",
+                "text/html",
+            }:
+                if "charset=" not in ctype:
+                    if ctype == "text/html":
+                        return "text/html; charset=utf-8"
+                    if ctype in {"text/javascript", "application/javascript"}:
+                        return "application/javascript; charset=utf-8"
+                    if ctype == "text/css":
+                        return "text/css; charset=utf-8"
+                    if ctype == "application/json":
+                        return "application/json; charset=utf-8"
+                    if ctype.startswith("text/"):
+                        return f"{ctype}; charset=utf-8"
+            return ctype
+
         def do_GET(self):  # noqa: N802
             if self.path.startswith("/api/") or self.path.startswith("/api?"):
                 return self._proxy()

@@ -93,7 +93,24 @@ class KeywordExpansionServiceTests(unittest.IsolatedAsyncioTestCase):
     def test_low_quality_keyword_filter_rejects_empty_stacking(self):
         self.assertTrue(_is_low_quality_keyword("GEO平台", "GEO", "semantic"))
         self.assertTrue(_is_low_quality_keyword("GEO优化", "GEO优化", "scenario"))
+        self.assertTrue(_is_low_quality_keyword("品牌官网 DJI Mini 5 Pro", "DJI Mini 5 Pro", "scenario"))
         self.assertFalse(_is_low_quality_keyword("如何开始做GEO优化", "GEO优化", "question"))
+        self.assertFalse(_is_low_quality_keyword("旅行航拍选 DJI Mini 5 Pro", "DJI Mini 5 Pro", "scenario"))
+
+    async def test_dji_seed_uses_consumer_electronics_and_natural_scenarios(self):
+        with patch(
+            "app.services.keyword_expansion.ai_client.complete",
+            new=AsyncMock(side_effect=RuntimeError("gateway unavailable")),
+        ):
+            payload = await expand_keywords(["DJI Mini 5 Pro"])
+
+        self.assertEqual(payload["profile"]["name"], "消费电子")
+        scenario_keywords = [
+            item["keyword"] for item in next(d for d in payload["dimensions"] if d["key"] == "scenario")["items"]
+        ]
+        self.assertTrue(any("旅行" in kw or "怎么" in kw or "第一次" in kw for kw in scenario_keywords))
+        self.assertFalse(any(kw.startswith("品牌官网 ") or kw.startswith("市场部 ") for kw in scenario_keywords))
+        self.assertFalse(any("内容团队做" in kw for kw in scenario_keywords))
 
 
 class KeywordExpansionApiTests(unittest.IsolatedAsyncioTestCase):

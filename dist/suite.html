@@ -8,11 +8,20 @@
     <meta name="description" content="GEO Suite：诊断 → 知识库 → 拓词 → 分发 → 观测。对照内容增长工厂信息架构。">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/geo-ui.css?v=20260728-ux1">
-    <link rel="stylesheet" href="/css/common.css?v=20260728-ux1">
-    <link rel="stylesheet" href="/css/suite.css?v=20260728-ux1">
-    <link rel="stylesheet" href="/css/suite-cockpit.css?v=20260728-ux1">
-    <link rel="stylesheet" href="/css/inner-shell.css?v=20260728-ux1">
+    <link rel="stylesheet" href="/css/geo-ui.css?v=20260729-measure-tidy2">
+    <link rel="stylesheet" href="/css/common.css?v=20260729-measure-tidy2">
+    <link rel="stylesheet" href="/css/suite.css?v=20260729-measure-tidy2">
+    <link rel="stylesheet" href="/css/suite-cockpit.css?v=20260729-measure-tidy4">
+    <link rel="stylesheet" href="/css/inner-shell.css?v=20260729-measure-tidy3">
+    <script>
+      (function () {
+        try {
+          if (/[?&]step=measure(?:&|$)/.test(location.search || '')) {
+            document.documentElement.classList.add('suite-preload-measure');
+          }
+        } catch (_) {}
+      })();
+    </script>
 </head>
 <body class="suite-page suite-page--cockpit text-on-surface antialiased inner-page">
     <div id="header-container"></div>
@@ -136,7 +145,7 @@
                             <li><span>抖音口播</span><div class="bar"><i style="width:50%"></i></div><b>50%</b></li>
                         </ul>
                     </div>
-                    <a class="cockpit-btn cockpit-btn--block" href="/knowledge?tab=channels">查看渠道矩阵</a>
+                    <a class="cockpit-btn cockpit-btn--block" href="/distribute?tab=channels">查看渠道矩阵</a>
                 </section>
                 <section class="cockpit-card" id="suite-side-shortcuts">
                     <h3>快捷入口</h3>
@@ -144,7 +153,7 @@
                         <a href="/diagnostic?from=suite&amp;workflow=1"><span>① 诊断</span><span class="material-symbols-outlined text-sm">analytics</span></a>
                         <a href="/knowledge"><span>② 知识库</span><span class="material-symbols-outlined text-sm">auto_stories</span></a>
                         <a href="/keywords?from=suite&amp;workflow=1"><span>③ 拓词</span><span class="material-symbols-outlined text-sm">manage_search</span></a>
-                        <a href="/knowledge?tab=tasks"><span>④ 分发</span><span class="material-symbols-outlined text-sm">send</span></a>
+                        <a href="/distribute"><span>④ 分发</span><span class="material-symbols-outlined text-sm">send</span></a>
                     </div>
                     <p class="suite-note" id="suite-next-steps">本地：scripts/start-local.ps1</p>
                     <p class="suite-note" id="suite-integration-copy" hidden></p>
@@ -163,10 +172,10 @@
     </main>
 
     <div id="footer-container"></div>
-    <script src="/js/common.js?v=20260728-ux1" defer></script>
-    <script src="/js/geoflow-handoff.js?v=20260728-ux1" defer></script>
-    <script src="/js/suite-workflow.js?v=20260728-ux1" defer></script>
-    <script src="/js/suite-extra.js?v=20260728-ux1" defer></script>
-    <script src="/js/suite.js?v=20260728-ux1" defer></script>
+    <script src="/js/common.js?v=20260729-measure-tidy2" defer></script>
+    <script src="/js/geoflow-handoff.js?v=20260729-measure-tidy2" defer></script>
+    <script src="/js/suite-workflow.js?v=20260729-measure-tidy2" defer></script>
+    <script src="/js/suite-extra.js?v=20260729-measure-tidy4" defer></script>
+    <script src="/js/suite.js?v=20260729-measure-tidy3" defer></script>
 </body>
 </html>

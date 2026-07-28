@@ -36,13 +36,17 @@ CONTENT_BACKEND_MODE=native-python
 PUBLIC_BASE_URL=http://localhost:3009
 ```
 
-3. 一条脚本起 API + worker + 带 `/api` 反代的静态前台：
+3. 一条脚本起 API + worker + 带 `/api` 反代的静态前台（**默认入口**是 `dist/` 静态站，不是 Next）：
 
 ```powershell
 .\scripts\start-local.ps1
+# 或
+pnpm dev
 # 或（默认同样走裸跑）
 .\scripts\start-geo-suite.ps1
 ```
+
+`pnpm dev:web` / `pnpm dev:admin`（Next）为 **legacy** 对照，演示主路径请用上面的裸跑。
 
 | 服务 | 地址 |
 |---|---|

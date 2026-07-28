@@ -45,7 +45,7 @@
             label: '分发',
             title: '任务 · 绑定 KB · 答案优先',
             desc: 'native-python：在 Rank 内容引擎新建任务 → 中国生态提示词 → 绑定 DJI 演示知识库 → 生成草稿 → 登记渠道/模板 key。legacy-flow 才走 GEOFlow。',
-            href: '/knowledge?tab=tasks',
+            href: '/distribute',
             cta: '打开分发任务',
             icon: 'sync_alt',
             next: 'measure',
@@ -425,8 +425,8 @@
             knowledge.href = publicPath;
             knowledge.cta = '打开知识库';
             knowledge.external = false;
-            distribute.desc = '在前台知识/分发页新建任务 → 中国生态提示词 → 绑定 DJI 知识库 → 生成草稿 → 渠道/模板 key。不经 Laravel。';
-            distribute.href = publicPath.includes('?') ? `${publicPath}&tab=tasks` : `${publicPath}?tab=tasks`;
+            distribute.desc = '在前台分发页新建任务 → 中国生态提示词 → 绑定 DJI 知识库 → 生成草稿 → 渠道/模板 key。不经 Laravel。';
+            distribute.href = '/distribute';
             distribute.cta = '打开分发任务';
             distribute.external = false;
         } else {

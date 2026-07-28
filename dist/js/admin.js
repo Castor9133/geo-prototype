@@ -374,7 +374,19 @@
     }
 
     // ─── 登录页面 ────────────────────────────────────────────────────────────
+    function isDemoOpenAccess() {
+        if (window.GEORANK_OPEN_DEMO === true) return true;
+        const host = String(window.location.hostname || '').toLowerCase();
+        return host === 'localhost' || host === '127.0.0.1' || host === '::1';
+    }
+
     function showLoginModal(errMsg) {
+        // 本地演示开放：不弹登录墙，由后端 GEORANK_ALLOW_ANONYMOUS_AI 免鉴权
+        if (isDemoOpenAccess()) {
+            document.getElementById('login-modal')?.remove();
+            console.warn('[demo] skip admin login modal', errMsg || '');
+            return;
+        }
         document.getElementById('login-modal')?.remove();
         const modal = document.createElement('div');
         modal.id = 'login-modal';
@@ -6141,6 +6153,10 @@ ${pages.map(p => p === '…'
             const me = await api('GET', '/api/auth/me');
             if (me.role !== 'admin') {
                 Auth.clear();
+                if (isDemoOpenAccess()) {
+                    console.warn('[demo] /api/auth/me 非管理员，跳过登录墙');
+                    return;
+                }
                 showLoginModal('需要管理员权限');
                 return;
             }
@@ -6170,6 +6186,27 @@ ${pages.map(p => p === '…'
             const hadToken = Boolean(Auth.get());
             if (hadToken) Auth.clear();
             currentAdminUser = null;
+            if (isDemoOpenAccess()) {
+                console.warn('[demo] admin bootstrap failed', err);
+                document.getElementById('login-modal')?.remove();
+                // 演示：仍渲染侧栏，具体页接口由后端免登录回落
+                renderSidebar({ username: 'demo', role: 'admin' });
+                normalizeAdminLinks();
+                setupAdminPreviewDrawer();
+                const page = detectPage();
+                try {
+                    if (page === 'dashboard') await initDashboard();
+                    else if (page === 'diagnostics') await initDiagnostics();
+                    else if (page === 'solutions') await initSolutions();
+                    else if (page === 'keywords') await initKeywords();
+                    else if (page === 'trust-obs') await initTrustObs();
+                    else if (page === 'users') await initUsers();
+                    else if (page === 'settings') await initSettings();
+                } catch (inner) {
+                    console.warn('[demo] page init', inner);
+                }
+                return;
+            }
             showLoginModal(hadToken ? '登录已过期，请重新登录' : undefined);
         }
     }

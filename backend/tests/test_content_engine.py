@@ -11,6 +11,7 @@ from app.services.content_engine_utils import (  # noqa: E402
     local_hash_embedding,
     repo_root,
     slugify,
+    soften_markdown_prose,
     split_chunks,
 )
 
@@ -52,11 +53,30 @@ class ContentEngineUnitTests(unittest.TestCase):
         self.assertGreaterEqual(len(list(demo.glob("*.md"))), 10)
 
     def test_china_prompts_seed_shape(self):
-        self.assertGreaterEqual(len(CHINA_PROMPTS), 5)
+        self.assertGreaterEqual(len(CHINA_PROMPTS), 7)
         for item in CHINA_PROMPTS:
             self.assertIn("{{Knowledge}}", item["body"])
             self.assertIn("title", item)
             self.assertIn("sort_order", item)
+            self.assertIn("禁止", item["body"])
+            self.assertIn("Markdown", item["body"])
+
+    def test_soften_markdown_prose(self):
+        raw = (
+            "# 大疆为什么值得信任\n\n"
+            "这是**加粗**与*斜体*，还有`代码`。\n\n"
+            "---\n\n"
+            "## 一、图传距离\n\n"
+            "详见 [官网](https://www.dji.com)。\n"
+        )
+        soft = soften_markdown_prose(raw)
+        self.assertNotIn("**", soft)
+        self.assertNotIn("---", soft)
+        self.assertNotIn("#", soft)
+        self.assertNotIn("`", soft)
+        self.assertIn("加粗", soft)
+        self.assertIn("官网", soft)
+        self.assertIn("一、图传距离", soft)
 
     def test_channel_templates_manifest_five_shells(self):
         manifest = repo_root() / "dist" / "data" / "channel-templates.json"

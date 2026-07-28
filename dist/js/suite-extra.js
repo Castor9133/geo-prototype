@@ -119,7 +119,7 @@
                     `<div class="suite-metric"><strong>${pct(metrics?.coverage?.rate)}</strong><span>事实卡覆盖率</span><small>${metrics?.coverage?.approved_cards || 0}/${metrics?.coverage?.checklist_total || 0}</small></div>`,
                     `<div class="suite-metric"><strong>${pct(metrics?.embedding?.rate)}</strong><span>切片向量化率</span><small>${metrics?.embedding?.chunk_embedded || 0}/${metrics?.embedding?.chunk_total || 0}</small></div>`,
                     `<div class="suite-metric"><strong>${pct(metrics?.evidence_production?.rate)}</strong><span>带证据生产比例</span></div>`,
-                    `<div class="suite-metric"><strong>${metrics?.prompt_library_count ?? 5}</strong><span>产品提示词</span></div>`,
+                    `<div class="suite-metric"><strong>${metrics?.prompt_library_count ?? 8}</strong><span>产品提示词</span></div>`,
                 ].join(''),
             `</div>`,
             cards.length
@@ -177,7 +177,7 @@
                 `</p>`,
                 `<ol class="suite-demo-list suite-extra__steps">`,
                 `<li>打开内容引擎 → 任务</li>`,
-                `<li>提示词：中国生态 5 条之一</li>`,
+                `<li>提示词：中国生态 8 条之一</li>`,
                 `<li>知识库：绑定 DJI 演示包</li>`,
                 `<li>生成草稿（同步；无 LLM 时本地降级）</li>`,
                 `<li>渠道页登记模板 key；标记已分发</li>`,
@@ -203,7 +203,7 @@
             `</p>`,
             `<ol class="suite-demo-list suite-extra__steps">`,
             `<li>打开任务中心 → <strong>新建任务</strong></li>`,
-            `<li>提示词：中国生态 5 条之一</li>`,
+            `<li>提示词：中国生态 8 条之一</li>`,
             `<li>知识库：绑定 KB #${DEMO_KB.kbId}</li>`,
             `<li>生成正文后选分发渠道 / 模板</li>`,
             `</ol>`,
@@ -463,39 +463,36 @@
 
         container.innerHTML = [
             `<div class="measure-monitor" data-demo="${demo ? '1' : '0'}">`,
-            `<header class="measure-monitor__head">`,
-            `<div>`,
-            `<p class="measure-eyebrow">Suite · 步骤 5 观测</p>`,
-            `<h2>AI 答案监测</h2>`,
-            `<p class="measure-lead">监测 AI 回答中的品牌提及与引用来源，评估可见性与可信度表现。</p>`,
-            `</div>`,
-            `<div class="measure-monitor__tools">`,
+            `<div class="measure-toolbar">`,
+            `<div class="measure-toolbar__meta">`,
             `<span class="suite-badge">${escapeHtml(meta.badge)}</span>`,
+            `<span class="measure-toolbar__hint">问题库 · 答案抽样 · 来源可信度</span>`,
+            `</div>`,
+            `<div class="measure-toolbar__filters">`,
             `<select id="mf-range" aria-label="时间范围"><option>近 7 天</option><option selected>近 30 天</option></select>`,
             `<select id="mf-platform" aria-label="平台"><option selected>全部平台</option><option>豆包</option><option>文心一言</option><option>通义</option></select>`,
             `<button type="button" class="cockpit-btn cockpit-btn--primary" id="mf-apply">应用筛选</button>`,
             `</div>`,
-            `</header>`,
+            `</div>`,
 
             `<section class="measure-kpi-row" aria-label="观测 KPI">`,
             `<article class="measure-kpi">`,
             `<span class="measure-kpi__icon measure-kpi__icon--blue material-symbols-outlined">monitoring</span>`,
             `<div><strong id="mk-q">${questionCount}</strong><span>监测问题</span></div>`,
-            `<small>个问题</small>`,
             `</article>`,
             `<article class="measure-kpi">`,
             `<span class="measure-kpi__icon measure-kpi__icon--green material-symbols-outlined">verified</span>`,
             `<div><strong id="mk-m">${mentionKpi}</strong><span>本期提及</span></div>`,
-            `<small>次 · 样本 ${agg.total_samples ?? '--'}</small>`,
+            `<small>样本 ${agg.total_samples ?? '--'}</small>`,
             `</article>`,
             `<article class="measure-kpi">`,
             `<span class="measure-kpi__icon measure-kpi__icon--orange material-symbols-outlined">track_changes</span>`,
-            `<div><strong id="mk-t">${trustKpi}</strong><span>平均来源可信度</span></div>`,
+            `<div><strong id="mk-t">${trustKpi}</strong><span>平均可信度</span></div>`,
             `<small>/100</small>`,
             `</article>`,
             `</section>`,
 
-            `<div class="measure-body-grid">`,
+            `<div class="measure-workspace">`,
             `<section class="measure-panel measure-q-lib">`,
             `<div class="measure-panel__head"><h3>问题库</h3></div>`,
             `<label class="measure-search">`,
@@ -516,21 +513,18 @@
             `<button type="button" class="measure-add-q" id="measure-add-q">+ 新增监测问题</button>`,
             `</section>`,
 
+            `<div class="measure-main">`,
             `<section class="measure-panel measure-answer">`,
             `<div class="measure-panel__head">`,
-            `<h3>答案占位</h3>`,
+            `<h3>答案抽样</h3>`,
             `<span class="measure-ai-badge">AI</span>`,
             `</div>`,
             `<p class="measure-answer__q" id="measure-answer-q"></p>`,
             `<p class="measure-answer__meta" id="measure-answer-meta"></p>`,
             `<div class="measure-answer__box" id="measure-answer-body"></div>`,
-            `<div class="measure-answer__cites">`,
-            `<span class="measure-answer__cites-label">引用证据</span>`,
-            `<div id="measure-answer-cites"></div>`,
-            `</div>`,
             `</section>`,
 
-            `<aside class="measure-right-col">`,
+            `<div class="measure-insight-row">`,
             `<section class="measure-panel">`,
             `<div class="measure-panel__head"><h3>引用证据</h3></div>`,
             `<ol class="measure-evidence" id="measure-evidence-list"></ol>`,
@@ -542,9 +536,9 @@
             `<small>/100</small>`,
             `</div>`,
             `<p class="measure-trust-ok" id="measure-trust-note">可信度良好</p>`,
-            `<p class="cockpit-muted">按引用域名权威度与官网命中加权的演示评分。</p>`,
             `</section>`,
-            `</aside>`,
+            `</div>`,
+            `</div>`,
             `</div>`,
 
             `<div class="measure-lower-grid">`,
@@ -647,7 +641,11 @@
             return;
         }
         container.hidden = false;
-        container.innerHTML = '<p class="suite-extra__lead">加载中…</p>';
+        if (stepId === 'measure' || stepId === 'obs' || stepId === 'trustobs' || stepId === 'measurement') {
+            container.innerHTML = '<div class="measure-monitor measure-monitor--loading"><div class="measure-toolbar"><span class="suite-badge">加载中</span><span class="measure-toolbar__hint">正在拉取观测样例…</span></div><div class="measure-kpi-row"><div class="measure-kpi skeleton"></div><div class="measure-kpi skeleton"></div><div class="measure-kpi skeleton"></div></div></div>';
+        } else {
+            container.innerHTML = '<p class="suite-extra__lead">加载中…</p>';
+        }
         try {
             if (stepId === 'knowledge') await renderKnowledge(container);
             else if (stepId === 'distribute') await renderDistribute(container);

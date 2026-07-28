@@ -55,7 +55,7 @@
   --geo-font: var(--inner-font);
   --geo-font-display: var(--inner-font-display);
 
-  --suite-bg: var(--inner-bg-alt);
+  --suite-bg: var(--inner-bg);
   --suite-cream: var(--inner-bg);
   --cockpit-accent: var(--inner-primary);
   --cockpit-accent-soft: var(--inner-primary-soft);
@@ -95,7 +95,7 @@ body.bg-white {
 }
 
 body.suite-page--cockpit {
-  background: var(--inner-bg-alt) !important;
+  background: var(--inner-bg) !important;
 }
 
 /* Admin 内容区也用暖底，避免纯白仪表盘 */
@@ -148,7 +148,7 @@ body.admin-page,
   box-shadow: var(--inner-shadow) !important;
 }
 
-/* —— 主按钮：蓝主色；内容引擎橙主 CTA —— */
+/* —— 主按钮：默认蓝；Suite / 知识中枢由下方橙 CTA 覆盖 —— */
 .inner-page .btn-primary,
 .inner-page .btn.primary,
 .inner-page .admin-btn-primary,
@@ -177,12 +177,20 @@ body.admin-page,
   filter: brightness(1.05);
 }
 
-/* 内容引擎主 CTA：陶土橙（知识资产例图） */
+/* 内容引擎 / Suite 主 CTA：陶土橙（对齐知识证据中枢第三图） */
 .ce-page .btn.primary,
-.ce-page .btn--accent {
+.ce-page .btn--accent,
+.suite-page .cockpit-btn--primary,
+.suite-page .suite-btn--primary,
+.suite-page .geo-btn--primary {
   background: var(--inner-accent) !important;
   border-color: var(--inner-accent) !important;
   box-shadow: 0 4px 14px rgba(232, 100, 27, 0.28) !important;
+}
+
+.suite-page .cockpit-btn--primary:hover,
+.suite-page .suite-btn--primary:hover {
+  filter: brightness(1.04);
 }
 
 /* 次要强调：刷新摘要等；须压过下方 .ce-page .btn 白底，否则白字不可见 */

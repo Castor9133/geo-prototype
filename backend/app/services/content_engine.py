@@ -24,6 +24,7 @@ from app.services.content_engine_utils import (
     local_hash_embedding,
     repo_root,
     slugify,
+    soften_markdown_prose,
     split_chunks,
 )
 
@@ -238,23 +239,39 @@ async def search_chunks(
     return out
 
 
-async def ensure_default_prompts(db: AsyncSession) -> list[ContentPrompt]:
+async def ensure_default_prompts(
+    db: AsyncSession,
+    *,
+    prune_custom: bool = False,
+) -> list[ContentPrompt]:
     existing = list((await db.execute(select(ContentPrompt))).scalars().all())
-    if existing:
-        return existing
-    created: list[ContentPrompt] = []
+    by_title = {row.title: row for row in existing}
+    builtin_titles = {item["title"] for item in CHINA_PROMPTS}
+    result: list[ContentPrompt] = []
     for item in CHINA_PROMPTS:
-        row = ContentPrompt(
-            title=item["title"],
-            body=item["body"],
-            sort_order=item["sort_order"],
-            kind="content",
-            locale="zh-CN",
-        )
-        db.add(row)
-        created.append(row)
+        row = by_title.get(item["title"])
+        if row is None:
+            row = ContentPrompt(
+                title=item["title"],
+                body=item["body"],
+                sort_order=item["sort_order"],
+                kind="content",
+                locale="zh-CN",
+            )
+            db.add(row)
+            result.append(row)
+            continue
+        # 同步内置提示词正文，避免演示库长期停留在旧版「过 Markdown」指令
+        row.body = item["body"]
+        row.sort_order = item["sort_order"]
+        row.is_active = True
+        result.append(row)
+    if prune_custom:
+        for row in existing:
+            if row.title not in builtin_titles:
+                row.is_active = False
     await db.flush()
-    return created
+    return result or existing
 
 
 async def run_content_task(db: AsyncSession, task_id: uuid.UUID) -> ContentTask:
@@ -273,7 +290,10 @@ async def run_content_task(db: AsyncSession, task_id: uuid.UUID) -> ContentTask:
                 limit=6,
             )
             knowledge_block = "\n\n".join(h["content"] for h in hits) or "（暂无检索命中）"
-        prompt_body = "请根据知识写一篇答案优先的中文 GEO 正文。"
+        prompt_body = (
+            "请根据知识写一篇答案优先的中文 GEO 正文。"
+            "输出纯中文成稿，不要使用 Markdown 符号（井号、加粗、分隔线、反引号）。"
+        )
         if task.prompt_id:
             prompt = await db.get(ContentPrompt, task.prompt_id)
             if prompt:
@@ -284,18 +304,26 @@ async def run_content_task(db: AsyncSession, task_id: uuid.UUID) -> ContentTask:
             .replace("{{Knowledge}}", knowledge_block)
         )
         messages = [
-            {"role": "system", "content": "你是严谨的中文 GEO 内容作者，参数必须来自知识，禁止编造。"},
+            {
+                "role": "system",
+                "content": (
+                    "你是严谨的中文 GEO 内容作者，参数必须来自知识，禁止编造。"
+                    "输出像已排版的公众号/官网正文：纯中文、少符号。"
+                    "禁止 Markdown 语法（不要用 #、**、---、反引号、[]()）。"
+                    "用「一、二、三」或空行分段；FAQ 用「问：」「答：」。"
+                ),
+            },
             {"role": "user", "content": filled},
         ]
         try:
             draft = await chat_completion(messages, temperature=0.3, max_tokens=2500)
         except Exception:
             draft = (
-                f"# {task.title}\n\n"
+                f"{task.title}\n\n"
                 f"（本地降级草稿：LLM 未配置或调用失败）\n\n"
-                f"## 答案摘要\n基于知识库检索整理如下要点。\n\n{knowledge_block[:1200]}\n"
+                f"答案摘要\n基于知识库检索整理如下要点。\n\n{knowledge_block[:1200]}\n"
             )
-        task.draft_body = draft
+        task.draft_body = soften_markdown_prose(draft)
         task.status = "completed"
         task.finished_at = datetime.utcnow()
         task.meta = {**(task.meta or {}), "knowledge_chars": len(knowledge_block)}
