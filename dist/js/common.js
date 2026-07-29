@@ -919,7 +919,7 @@ const FOOTER_HTML = `
 
             try {
                 const response = await fetch(url, {
-                    cache: 'no-store',
+                    cache: 'force-cache',
                     signal: controller.signal,
                 });
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -1203,6 +1203,8 @@ const FOOTER_HTML = `
 
     // ===== 前台模块开关 =====
     const ModuleGate = {
+        CACHE_KEY: 'georank_frontend_modules_v1',
+        CACHE_TTL_MS: 5 * 60 * 1000,
         defaults: {
             default_module: 'diagnostic',
             modules: [
@@ -1222,34 +1224,75 @@ const FOOTER_HTML = `
             '/tools': 'tools',
         },
 
+        readCache() {
+            try {
+                const raw = sessionStorage.getItem(this.CACHE_KEY);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                if (!parsed || !parsed.ts || (Date.now() - parsed.ts) > this.CACHE_TTL_MS) return null;
+                return parsed;
+            } catch (_) {
+                return null;
+            }
+        },
+
+        writeCache(modulePayload, homepagePayload) {
+            try {
+                sessionStorage.setItem(this.CACHE_KEY, JSON.stringify({
+                    ts: Date.now(),
+                    modules: modulePayload,
+                    homepage: homepagePayload,
+                }));
+            } catch (_) {
+                /* ignore */
+            }
+        },
+
+        hydrateFromCache() {
+            const cached = this.readCache();
+            if (!cached) {
+                this.state.homepage = this.normalizeHomepage(null);
+                this.state.config = this.normalizeConfig(null);
+                return false;
+            }
+            this.state.homepage = this.normalizeHomepage(cached.homepage);
+            this.state.config = this.normalizeConfig(cached.modules);
+            return true;
+        },
+
         async load() {
             if (this.state.config) return this.state.config;
             if (!this.state.promise) {
+                this.hydrateFromCache();
                 const controller = new AbortController();
                 const timeout = window.setTimeout(() => controller.abort(), 2500);
                 this.state.promise = Promise.all([
                     fetch(`${apiBase()}/api/settings/frontend-modules`, {
-                        cache: 'default',
+                        cache: 'force-cache',
                         signal: controller.signal,
                     }).then(response => response.ok ? response.json() : null),
                     fetch(`${apiBase()}/api/settings/homepage`, {
-                        cache: 'default',
+                        cache: 'force-cache',
                         signal: controller.signal,
                     }).then(response => response.ok ? response.json() : null),
                 ])
                     .then(([modulePayload, homepagePayload]) => {
+                        this.writeCache(modulePayload, homepagePayload);
                         this.state.homepage = this.normalizeHomepage(homepagePayload);
                         this.state.config = this.normalizeConfig(modulePayload);
                         return this.state.config;
                     })
                     .catch(() => {
-                        this.state.homepage = this.normalizeHomepage(null);
-                        this.state.config = this.normalizeConfig(null);
+                        if (!this.state.config) {
+                            this.state.homepage = this.normalizeHomepage(null);
+                            this.state.config = this.normalizeConfig(null);
+                        }
                         return this.state.config;
                     })
                     .finally(() => {
                         window.clearTimeout(timeout);
                     });
+                if (this.state.config) return this.state.config;
             }
             return this.state.promise;
         },
@@ -1432,7 +1475,17 @@ const FOOTER_HTML = `
 
         whenAvailable() {
             if (!this.state.promise) {
-                this.setPending(true);
+                // 先用缓存/默认配置放开页面，避免顶栏切换后整页 inert 等待接口
+                ModuleGate.hydrateFromCache();
+                this.setPending(false);
+                ModuleGate.applyHeader();
+                const firstAvailable = ModuleGate.guardCurrentPage();
+                if (firstAvailable) ModuleGate.applyLinks();
+                if (firstAvailable) {
+                    document.dispatchEvent(new CustomEvent('georank:page-available', {
+                        detail: { path: window.location.pathname, warm: true },
+                    }));
+                }
                 this.state.promise = Promise.all([
                     this.whenDomReady(),
                     ModuleGate.load(),
@@ -1465,6 +1518,102 @@ const FOOTER_HTML = `
     };
 
     window.GEOrank.PageLifecycle = PageLifecycle;
+
+    // ===== 顶栏导航预取：hover / 空闲预取，减轻整页切换等待 =====
+    const NavPrefetch = {
+        done: new Set(),
+        ASSETS_BY_PATH: {
+            '/suite': ['/js/suite.js', '/js/suite-extra.js', '/js/suite-workflow.js', '/css/suite.css', '/css/suite-cockpit.css'],
+            '/diagnostic': ['/js/diagnostic.js', '/css/diagnostic.css'],
+            '/knowledge': ['/js/content-engine-admin.js', '/css/content-engine.css'],
+            '/keywords': ['/js/keywords.js', '/css/keywords.css'],
+            '/distribute': ['/js/content-engine-admin.js', '/css/content-engine.css'],
+            '/settings': ['/js/tools.js', '/css/common.css'],
+        },
+
+        normalizePath(href) {
+            try {
+                const url = new URL(href, window.location.origin);
+                if (url.origin !== window.location.origin) return '';
+                let path = url.pathname.replace(/\.html$/, '') || '/';
+                if (path.length > 1 && path.endsWith('/')) path = path.slice(0, -1);
+                if (url.searchParams.get('step') === 'measure') return '/suite?step=measure';
+                return path;
+            } catch (_) {
+                return '';
+            }
+        },
+
+        prefetchUrl(href) {
+            const path = this.normalizePath(href);
+            if (!path || this.done.has(path)) return;
+            this.done.add(path);
+            const link = document.createElement('link');
+            link.rel = 'prefetch';
+            link.href = path.startsWith('/') ? path : `/${path}`;
+            link.as = 'document';
+            document.head.appendChild(link);
+            const assets = this.ASSETS_BY_PATH[path.split('?')[0]] || [];
+            assets.forEach((asset) => {
+                if (this.done.has(asset)) return;
+                this.done.add(asset);
+                const l = document.createElement('link');
+                l.rel = 'prefetch';
+                l.href = asset;
+                if (asset.endsWith('.js')) l.as = 'script';
+                if (asset.endsWith('.css')) l.as = 'style';
+                document.head.appendChild(l);
+            });
+        },
+
+        installSpeculationRules() {
+            if (!HTMLScriptElement.supports?.('speculationrules')) return;
+            if (document.getElementById('georank-nav-speculation')) return;
+            const urls = [
+                '/suite',
+                '/diagnostic',
+                '/knowledge',
+                '/keywords',
+                '/distribute',
+                '/settings',
+                '/suite?step=measure',
+            ];
+            const script = document.createElement('script');
+            script.type = 'speculationrules';
+            script.id = 'georank-nav-speculation';
+            script.textContent = JSON.stringify({
+                prefetch: [{ source: 'list', urls }],
+                prerender: [{
+                    source: 'document',
+                    where: { href_matches: ['/suite*', '/diagnostic*', '/knowledge*', '/keywords*', '/distribute*', '/settings*'] },
+                    eagerness: 'moderate',
+                }],
+            });
+            document.head.appendChild(script);
+        },
+
+        bind() {
+            const onIntent = (event) => {
+                const link = event.target?.closest?.('a[data-nav-link], #main-nav a[href]');
+                if (!link || link.target === '_blank') return;
+                this.prefetchUrl(link.href);
+            };
+            document.addEventListener('pointerenter', onIntent, true);
+            document.addEventListener('touchstart', onIntent, { capture: true, passive: true });
+            const scheduleIdle = window.requestIdleCallback
+                ? (fn) => window.requestIdleCallback(fn, { timeout: 1800 })
+                : (fn) => window.setTimeout(fn, 400);
+            scheduleIdle(() => {
+                this.installSpeculationRules();
+                document.querySelectorAll('#main-nav a[data-nav-link], [data-site-navigation] a[data-nav-link]').forEach((link) => {
+                    if (link.target === '_blank') return;
+                    this.prefetchUrl(link.href);
+                });
+            });
+        },
+    };
+
+    window.GEOrank.NavPrefetch = NavPrefetch;
 
     // ===== 风控设备身份 =====
     // 随机 ID 保持同一浏览器稳定。
@@ -1885,6 +2034,8 @@ const FOOTER_HTML = `
             if (window.GEORANK_OPEN_DEMO === true) return true;
             const host = String(window.location.hostname || '').toLowerCase();
             if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return true;
+            // 局域网演示（10/8、172.16/12、192.168/16、链路本地）免登录
+            if (/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.|169\.254\.)/.test(host)) return true;
             return Boolean(window.GEOrank?.APIKeyStore?.policy?.allow_anonymous_ai_usage);
         },
 
@@ -2715,6 +2866,7 @@ const FOOTER_HTML = `
 
         // 初始化认证
         Auth.init();
+        NavPrefetch.bind();
         const scheduleIdle = window.requestIdleCallback
             ? (fn) => window.requestIdleCallback(fn, { timeout: 2500 })
             : (fn) => window.setTimeout(fn, 1);

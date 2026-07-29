@@ -20,7 +20,9 @@
   function isDemoOpenAccess() {
     if (window.GEORANK_OPEN_DEMO === true) return true;
     const host = String(window.location.hostname || "").toLowerCase();
-    return host === "localhost" || host === "127.0.0.1" || host === "::1";
+    if (host === "localhost" || host === "127.0.0.1" || host === "::1") return true;
+    if (/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.|169\.254\.)/.test(host)) return true;
+    return Boolean(window.GEOrank?.APIKeyStore?.policy?.allow_anonymous_ai_usage);
   }
 
   function redirectToLogin() {
@@ -133,6 +135,10 @@
   let currentTemplateKey = "";
   let templates = [];
   let suppressDocAutofill = false;
+  let promptCache = [];
+  let kbCache = [];
+  let docCache = [];
+  let ceBootReady = false;
 
   function activateTab(name) {
     document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
@@ -147,6 +153,16 @@
       window.history.replaceState({}, "", url);
     } catch (_) {
       /* ignore */
+    }
+    // 切到提示词页时若下拉仍空，立刻补拉（避免 init 后半段失败导致永久空白）
+    if (name === "prompts" && ceBootReady) {
+      const pick = $("prompt-pick");
+      const empty = !pick || !pick.options.length || (pick.options.length === 1 && !pick.options[0].value);
+      if (empty || !promptCache.length) {
+        refreshPrompts().catch((e) => {
+          if ($("prompt-body")) $("prompt-body").textContent = String(e.message || e);
+        });
+      }
     }
   }
 
@@ -190,9 +206,15 @@
     const opts = templates
       .map((t) => `<option value="${escapeHtml(t.key)}">${escapeHtml(t.name)} (${escapeHtml(t.key)})</option>`)
       .join("");
-    $("task-template").innerHTML = `<option value="">自动（跟渠道）</option>` + opts;
-    $("ch-template").innerHTML = opts || `<option value="wechat-article">公众号文章</option>`;
-    $("template-manifest").textContent = JSON.stringify({ items: templates }, null, 2);
+    if ($("task-template")) {
+      $("task-template").innerHTML = `<option value="">自动（跟渠道）</option>` + opts;
+    }
+    if ($("ch-template")) {
+      $("ch-template").innerHTML = opts || `<option value="wechat-article">公众号文章</option>`;
+    }
+    if ($("template-manifest")) {
+      $("template-manifest").textContent = JSON.stringify({ items: templates }, null, 2);
+    }
   }
 
   function shellClass(templateKey) {
@@ -223,9 +245,6 @@
         <div class="shell-preview__meta">对照 GEOFlow themes: ${escapeHtml(flowKeys.join(", ") || "—")}（静态预览，无编译）</div>
       </div>`;
   }
-
-  let kbCache = [];
-  let docCache = [];
 
   function fillKbMetaFromSelection() {
     const kbId = $("kb-select")?.value;
@@ -375,8 +394,6 @@
     }
   }
 
-  let promptCache = [];
-
   async function loadPromptDetail(pid) {
     if (!pid) {
       $("prompt-body").textContent = "从下拉列表选择提示词查看正文";
@@ -388,18 +405,22 @@
   }
 
   async function refreshPrompts() {
+    const pick = $("prompt-pick");
+    const taskPrompt = $("task-prompt");
+    if (pick && !pick.options.length) {
+      pick.innerHTML = `<option value="">加载中…</option>`;
+    }
     const data = await api("/prompts");
     promptCache = data.items || [];
     const opts = promptCache
       .map((p) => `<option value="${p.id}">${escapeHtml(p.title)}</option>`)
       .join("");
-    const pick = $("prompt-pick");
-    const taskPrompt = $("task-prompt");
     const prevPick = pick?.value || "";
     const prevTask = taskPrompt?.value || "";
     if (pick) {
-      pick.innerHTML = opts || `<option value="">暂无提示词</option>`;
+      pick.innerHTML = opts || `<option value="">暂无提示词 · 可点「恢复内置 8 套」</option>`;
       if (prevPick && promptCache.some((p) => p.id === prevPick)) pick.value = prevPick;
+      else if (promptCache[0]) pick.value = promptCache[0].id;
     }
     if (taskPrompt) {
       taskPrompt.innerHTML =
@@ -407,7 +428,15 @@
         (opts || `<option value="" disabled>暂无提示词</option>`);
       if (prevTask && promptCache.some((p) => p.id === prevTask)) taskPrompt.value = prevTask;
     }
-    if (pick?.value) await loadPromptDetail(pick.value);
+    if (pick?.value) {
+      try {
+        await loadPromptDetail(pick.value);
+      } catch (e) {
+        if ($("prompt-body")) {
+          $("prompt-body").textContent = `模板列表已加载，但正文读取失败：${e.message || e}`;
+        }
+      }
+    }
   }
 
   function setTaskActions(enabled) {
@@ -868,12 +897,35 @@
     }
     showAuthGate(false);
     await loadStatus();
+    // 中枢 + 提示词优先，避免后半段失败时下拉永久空白
+    await Promise.allSettled([refreshHubDashboard(), refreshPrompts()]);
     await loadTemplates();
+    const settled = await Promise.allSettled([
+      refreshKbs(),
+      refreshPrompts(),
+      refreshTasks(),
+      refreshChannels(),
+    ]);
     try {
-      await Promise.all([refreshKbs(), refreshPrompts(), refreshTasks(), refreshChannels()]);
       await refreshHubDashboard();
-    } catch (e) {
-      if ($("hub-out")) $("hub-out").textContent = String(e.message || e);
+    } catch (_) {
+      /* keep first paint */
     }
+    const failed = settled.find((r) => r.status === "rejected");
+    if (failed && $("hub-out") && $("hub-out").classList.contains("hidden")) {
+      $("hub-out").textContent = String(failed.reason?.message || failed.reason || "部分面板加载失败");
+      $("hub-out").classList.remove("hidden");
+    }
+    const tbody = $("evidence-table");
+    if (tbody && /加载中/.test(tbody.textContent || "")) {
+      tbody.innerHTML = "<tr><td colspan=6>加载失败 · 请点「刷新摘要」或「导入 DJI 演示包」</td></tr>";
+    }
+    const pick = $("prompt-pick");
+    if (pick && (!pick.options.length || (pick.options.length === 1 && !pick.options[0].value))) {
+      pick.innerHTML = `<option value="">暂无提示词 · 请点「恢复内置 8 套」</option>`;
+    }
+    ceBootReady = true;
+    const deep = params.get("tab");
+    if (deep === "prompts") activateTab("prompts");
   })();
 })();

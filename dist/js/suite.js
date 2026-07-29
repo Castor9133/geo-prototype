@@ -537,10 +537,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const extra = document.getElementById('suite-extra-panel');
-        if (window.GEOrank?.SuiteExtra?.renderExtraPanel) {
+        // 等 content-backend 就绪后再拉观测面板，避免 init 阶段二次 refresh 把「加载中」盖住结果
+        if (window.GEOrank?.SuiteExtra?.renderExtraPanel && window.GEOrank._suiteExtraReady) {
             window.GEOrank.SuiteExtra.renderExtraPanel(step.id, extra);
         } else if (extra) {
-            extra.hidden = true;
+            const pendingExtra = step.id === 'measure'
+                || step.id === 'knowledge'
+                || step.id === 'distribute'
+                || step.id === 'trust_asset';
+            if (pendingExtra) {
+                extra.hidden = false;
+                if (!extra.dataset.bootLoading) {
+                    extra.dataset.bootLoading = '1';
+                    extra.innerHTML = step.id === 'measure'
+                        ? '<div class="measure-monitor measure-monitor--loading"><div class="measure-toolbar"><span class="suite-badge">加载中</span><span class="measure-toolbar__hint">正在拉取观测样例…</span></div><div class="measure-kpi-row"><div class="measure-kpi skeleton"></div><div class="measure-kpi skeleton"></div><div class="measure-kpi skeleton"></div></div></div>'
+                        : '<p class="suite-extra__lead">加载中…</p>';
+                }
+            } else {
+                extra.hidden = true;
+                delete extra.dataset.bootLoading;
+            }
         }
     }
 
@@ -696,6 +712,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             const handoffCard = document.getElementById('suite-last-handoff');
             if (handoffCard && !Workflow.load().lastHandoff) handoffCard.hidden = true;
+            window.GEOrank._suiteExtraReady = true;
             refresh();
         } else {
             integrationStatus = await window.GEOrank.GeoflowHandoff.fetchStatus();
@@ -745,12 +762,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             } catch (error) {
                 console.warn('[suite] review failed', error);
             }
+            window.GEOrank._suiteExtraReady = true;
             refresh();
         }
     } catch (error) {
         if (statusEl) statusEl.dataset.mode = 'native-python';
         if (statusText) statusText.textContent = '内容后端默认 native-python；仍可使用 Suite 工作流与内容引擎';
         console.warn('[suite] content-backend / status failed', error);
+        window.GEOrank._suiteExtraReady = true;
         refresh();
     }
 });

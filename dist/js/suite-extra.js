@@ -44,10 +44,25 @@
         return hash ? path + hash : path;
     }
 
-    async function fetchJson(url) {
-        const response = await fetch(url, { credentials: 'same-origin' });
-        if (!response.ok) throw new Error(`加载失败 ${response.status}`);
-        return response.json();
+    async function fetchJson(url, timeoutMs) {
+        const ms = Number(timeoutMs) > 0 ? Number(timeoutMs) : 8000;
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), ms);
+        try {
+            const response = await fetch(url, {
+                credentials: 'same-origin',
+                signal: controller.signal,
+            });
+            if (!response.ok) throw new Error(`加载失败 ${response.status}`);
+            return await response.json();
+        } catch (error) {
+            if (error && error.name === 'AbortError') {
+                throw new Error(`加载超时 ${url}`);
+            }
+            throw error;
+        } finally {
+            clearTimeout(timer);
+        }
     }
 
     function pct(rate) {
@@ -629,6 +644,8 @@
         renderMeasurePayload(container, demo);
     }
 
+    var _extraRenderGen = 0;
+
     async function renderExtraPanel(stepId, container) {
         if (!container) return;
         const suiteOnly = stepId === 'knowledge'
@@ -638,20 +655,31 @@
         if (!suiteOnly) {
             container.hidden = true;
             container.innerHTML = '';
+            container.dataset.renderedStep = '';
             return;
         }
+        const gen = ++_extraRenderGen;
         container.hidden = false;
-        if (stepId === 'measure' || stepId === 'obs' || stepId === 'trustobs' || stepId === 'measurement') {
-            container.innerHTML = '<div class="measure-monitor measure-monitor--loading"><div class="measure-toolbar"><span class="suite-badge">加载中</span><span class="measure-toolbar__hint">正在拉取观测样例…</span></div><div class="measure-kpi-row"><div class="measure-kpi skeleton"></div><div class="measure-kpi skeleton"></div><div class="measure-kpi skeleton"></div></div></div>';
-        } else {
-            container.innerHTML = '<p class="suite-extra__lead">加载中…</p>';
+        const sameStepReady = container.dataset.renderedStep === stepId
+            && container.querySelector('.measure-monitor:not(.measure-monitor--loading), .suite-extra__lead, .suite-cta-row');
+        // 同一步重复 refresh 时勿清空已渲染内容，避免「加载中」卡死
+        if (!sameStepReady) {
+            if (stepId === 'measure' || stepId === 'obs' || stepId === 'trustobs' || stepId === 'measurement') {
+                container.innerHTML = '<div class="measure-monitor measure-monitor--loading"><div class="measure-toolbar"><span class="suite-badge">加载中</span><span class="measure-toolbar__hint">正在拉取观测样例…</span></div><div class="measure-kpi-row"><div class="measure-kpi skeleton"></div><div class="measure-kpi skeleton"></div><div class="measure-kpi skeleton"></div></div></div>';
+            } else {
+                container.innerHTML = '<p class="suite-extra__lead">加载中…</p>';
+            }
         }
         try {
             if (stepId === 'knowledge') await renderKnowledge(container);
             else if (stepId === 'distribute') await renderDistribute(container);
             else if (stepId === 'trust_asset') await renderTrustAsset(container);
             else await renderMeasure(container);
+            if (gen !== _extraRenderGen) return;
+            container.dataset.renderedStep = stepId;
         } catch (error) {
+            if (gen !== _extraRenderGen) return;
+            container.dataset.renderedStep = '';
             container.innerHTML = `<p class="suite-extra__lead">面板加载失败：${error.message || error}</p>`;
         }
     }
