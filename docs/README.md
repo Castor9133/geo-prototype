@@ -7,6 +7,7 @@
 | [本地裸跑-postgres-redis.md](./本地裸跑-postgres-redis.md) | **默认启动**：本机 PG/Redis + `start-local.ps1` |
 | [m1-acceptance-checklist.md](./m1-acceptance-checklist.md) | **M1 验收门禁**（裸跑 + 内容引擎 UI + 登录回跳） |
 | [design/ref-ui/README.md](./design/ref-ui/README.md) | **参考 UI 映射**（内容增长工厂 / 驾驶舱 / 知识证据中枢） |
+| [REAL_OBSERVE_DESIGN.md](./REAL_OBSERVE_DESIGN.md) | **真实结果观测设计说明书**（改版前后对比 / 白号外置 / 给人评审，非实现清单） |
 | [GEO-Suite-leadership-demo-guide.md](./GEO-Suite-leadership-demo-guide.md) | **领导汇报 / 演示剧本 / live 验收清单** |
 | [content-engineering-sop.md](./content-engineering-sop.md) | **内容工程 SOP / 清单（双层方法 → Suite 6 能力；演示走查）** |
 | [pilot-demo/geo-demo-column/README.md](./pilot-demo/geo-demo-column/README.md) | **合成栏目演示资产（事实卡 / L3 样板；Flow 导入仅对照）** |

@@ -607,3 +607,44 @@ body.bg-white {
         grid-template-columns: 1fr 1fr;
     }
 }
+
+.diag-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 1.25rem;
+}
+.diag-tab {
+    border: var(--border-width) solid var(--border);
+    background: var(--bg-elevated);
+    border-radius: 999px;
+    padding: 0.45rem 0.95rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+.diag-tab.is-active {
+    background: var(--accent-blue);
+    color: #fff;
+    border-color: var(--accent-blue);
+}
+.diag-demo-badge {
+    margin-left: auto;
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 0.28rem 0.65rem;
+    border-radius: 999px;
+    background: #fff4e8;
+    color: var(--accent-orange-deep);
+    border: 1px solid rgba(232, 100, 27, 0.28);
+}
+.seo-module-card {
+    background: var(--bg-elevated);
+}
+#seo-priority .diag-card {
+    margin-bottom: 0;
+}
+.diag-hero__lead {
+    max-width: 36rem;
+}

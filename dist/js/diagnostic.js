@@ -52,6 +52,40 @@
         company_id: '',
         status: 'completed',
         overall_score: 82,
+        seo_modules: [
+            {
+                id: 'crawlability',
+                title: '可抓取与可达',
+                purpose: '确认页面可被打开并读到基础摘要信号。',
+                score: 88,
+                result: 'Meta 就绪分 88。基础抓取信号较完整。',
+                advice: '补齐 og_locale，保持 title / description 完整。',
+            },
+            {
+                id: 'parseable_structure',
+                title: '可解析结构',
+                purpose: '确认 Schema 与标题/FAQ 可被解析。',
+                score: 85,
+                result: '结构合成分 85；H1=1 · H2=7 · FAQ 样块=2。',
+                advice: '补 Schema：FAQPage；关键 H2 改为用户问句。',
+            },
+            {
+                id: 'internal_discovery',
+                title: '内链与发现',
+                purpose: '确认内链发现与权威外链背书就绪。',
+                score: 71,
+                result: '外链 7 · 权威 2；发现/背书就绪分 71。',
+                advice: '用内链串起规格与对比页，并保留权威外链。',
+            },
+            {
+                id: 'performance_cost',
+                title: '性能与成本',
+                purpose: '页面体量对抓取/摘要成本的代理信号。',
+                score: 72,
+                result: '正文体量适中；优先短直答段落降低上下文成本。',
+                advice: '把关键事实放在靠前、可独立摘录的段落。',
+            },
+        ],
         schema_analysis: {
             score: 84,
             found_types: ['WebSite', 'Organization', 'Service', 'BreadcrumbList', 'Article'],
@@ -127,7 +161,7 @@
             summary: {
                 headline: '这是一份较成熟的企业官网示例报告，已经具备不错的 GEO 基础，但仍有进一步提升可发现/可理解的背书信号的空间。',
                 overview: '示例报告以一家 AI 搜索优化服务官网为蓝本，展示从结构化实体、摘要预览到权威背书的完整 GEO 诊断视角。真实诊断完成后，会沿用同一套富报告结构替换这份样例。',
-                priority_action: '优先把 FAQPage 与服务页的答案式摘要继续做深，让高价值页面能更稳定地进入生成式答案。'
+                priority_action: '先补齐 FAQPage，再强化内链与权威外链。'
             },
             strengths: [
                 '结构化实体较完整，品牌、服务与文章关系已经能被机器清晰识别。',
@@ -268,37 +302,37 @@
         }
         if (transitionCopy && mode === 'loading') {
             const statusText = {
-                pending: '任务已创建，正在排队；完成后将替换当前示例报告。',
-                crawling: '正在抓取页面 HTML、Schema 与问句化结构，示例即将切换。',
-                analyzing: '抓取完成，正在汇总就绪信号与修复建议，马上换成真实结果。',
+                pending: '任务已创建，正在排队…',
+                crawling: '正在抓取页面…',
+                analyzing: '正在汇总 SEO 四类结果…',
             };
-            transitionCopy.textContent = statusText[context.step] || '正在抓取页面、检测 Schema 与结构，并生成你的 GEO 就绪报告。';
+            transitionCopy.textContent = statusText[context.step] || '正在抓取页面并生成检查结果…';
         }
 
         const meta = {
             demo: {
-                eyebrow: '示例诊断报告',
-                title: '先看一份 GEO 诊断示例',
-                copy: '下方是典型页面的诊断样例，帮你快速看清报告结构与修复优先级。发起真实诊断后，样例会平滑替换为你的结果。',
-                chip: '示例预览',
+                eyebrow: '示例报告',
+                title: '基础 SEO 检查示例',
+                copy: '输入真实网址并开始检查后，将替换为该页的抓取结果。',
+                chip: '示例',
                 icon: 'visibility',
             },
             loading: {
-                eyebrow: '真实诊断生成中',
-                title: '正在用真实报告替换示例',
+                eyebrow: '检查进行中',
+                title: '正在抓取并分析',
                 copy: context.url
-                    ? `正在分析 ${context.url} 的技术可访问性、Schema、问句结构与背书就绪信号（≠ AI 引用率）。`
-                    : '正在分析技术可访问性、Schema、问句结构与背书就绪信号（≠ AI 引用率）。',
+                    ? `正在分析 ${context.url} 的基础 SEO 就绪情况。`
+                    : '正在分析基础 SEO 就绪情况。',
                 chip: '分析中',
                 icon: 'progress_activity',
             },
             live: {
-                eyebrow: '你的真实诊断报告',
-                title: '已切换为最新 GEO 诊断结果',
+                eyebrow: '检查结果',
+                title: '基础 SEO 就绪情况',
                 copy: context.url
-                    ? `下方是 ${context.url} 的真实就绪诊断。可导出报告，或进入拓词扩展选题。`
-                    : '下方是刚生成的真实 GEO 就绪诊断。可导出报告，或进入拓词扩展选题。',
-                chip: '实时结果',
+                    ? `${context.url} 的抓取结果如下。`
+                    : '抓取结果如下。',
+                chip: '已完成',
                 icon: 'verified',
             },
         }[mode] || {};
@@ -339,7 +373,7 @@
         diagnoseBtn.disabled = loading;
         diagnoseBtn.innerHTML = loading
             ? '<span class="material-symbols-outlined text-lg" style="animation:diagnostic-spin .7s linear infinite">progress_activity</span><span class="font-bold text-sm">分析中</span>'
-            : '开始诊断';
+            : '开始检查';
     }
 
     function updateLocation(reportId, url) {
@@ -954,6 +988,164 @@
             `;
     }
 
+    function fallbackSeoModules(report) {
+        const schema = report.schema_analysis || {};
+        const meta = report.meta_analysis || {};
+        const content = report.content_analysis || {};
+        const citation = report.citation_analysis || {};
+        const structure = Math.round((Number(schema.score || 0) * 0.55) + (Number(content.score || 0) * 0.45));
+        return [
+            {
+                id: 'crawlability',
+                title: '可抓取与可达',
+                purpose: '确认页面可被打开并读到基础摘要信号。',
+                score: Math.round(Number(meta.score || 0)),
+                result: `Meta 就绪分 ${Math.round(Number(meta.score || 0))}。`,
+                advice: (meta.missing || []).length ? `补齐：${(meta.missing || []).slice(0, 3).join('、')}` : '保持抓取信号完整。',
+            },
+            {
+                id: 'parseable_structure',
+                title: '可解析结构',
+                purpose: '确认 Schema 与标题/FAQ 可被解析。',
+                score: structure,
+                result: `结构合成分 ${structure}；H1=${content.h1_count || 0} · H2=${content.h2_count || 0}。`,
+                advice: (schema.missing_recommended || []).length
+                    ? `补 Schema：${(schema.missing_recommended || []).slice(0, 3).join('、')}`
+                    : '继续强化问句化 H2 / FAQ。',
+            },
+            {
+                id: 'internal_discovery',
+                title: '内链与发现',
+                purpose: '确认内链发现与权威外链背书就绪（≠ 引用率）。',
+                score: Math.round(Number(citation.score || 0)),
+                result: `外链 ${citation.external_link_count || 0} · 权威 ${citation.authority_link_count || 0}。`,
+                advice: '用内链串起规格/禁飞/对比页，并保留权威外链。',
+            },
+            {
+                id: 'performance_cost',
+                title: '性能与成本',
+                purpose: '页面体量对抓取/摘要成本的代理信号。',
+                score: 72,
+                result: '演示代理分：优先短直答段落降低上下文成本。',
+                advice: '把关键事实放在靠前、可独立摘录的段落。',
+            },
+        ];
+    }
+
+    function renderSeoModules(report) {
+        const host = document.getElementById('seo-modules-grid');
+        if (!host) return;
+        const modules = (Array.isArray(report.seo_modules) && report.seo_modules.length)
+            ? report.seo_modules
+            : (report.recommendations && report.recommendations.seo_modules) || fallbackSeoModules(report);
+        host.innerHTML = [
+            '<div class="seo-modules-grid grid grid-cols-1 md:grid-cols-2 gap-4">',
+            modules.map((m) => `
+                <article class="seo-module-card diag-card p-4 md:p-5">
+                    <div class="flex items-center justify-between gap-2">
+                        <h4 class="text-sm font-bold">${escapeHtml(m.title || '')}</h4>
+                        <strong class="text-xl font-black">${Math.round(Number(m.score || 0))}</strong>
+                    </div>
+                    <p class="mt-3 text-xs text-on-surface-variant leading-6"><span class="font-bold text-on-surface">目的</span> ${escapeHtml(m.purpose || '')}</p>
+                    <p class="mt-2 text-xs leading-6"><span class="font-bold">结果</span> ${escapeHtml(m.result || '')}</p>
+                    <p class="mt-2 text-xs leading-6"><span class="font-bold">建议</span> ${escapeHtml(m.advice || '')}</p>
+                </article>
+            `).join(''),
+            '</div>',
+        ].join('');
+        return modules;
+    }
+
+    function renderPriority(report, modules) {
+        if (!summaryPriority) return;
+        const fromRec = report?.recommendations?.summary?.priority_action;
+        if (fromRec) {
+            summaryPriority.textContent = fromRec;
+            return;
+        }
+        const list = modules || [];
+        if (!list.length) {
+            summaryPriority.textContent = '完成检查后将给出优先修复建议。';
+            return;
+        }
+        const worst = list.slice().sort((a, b) => Number(a.score || 0) - Number(b.score || 0))[0];
+        summaryPriority.textContent = worst?.advice || '优先补齐低分模块中的关键缺口。';
+    }
+
+    function renderGeoFunnel(script) {
+        const body = document.getElementById('geo-funnel-body');
+        if (!body || !script) return;
+        const layers = script.layers || [];
+        const questions = script.questions || [];
+        const summary = script.summary || {};
+        const entityRate = Math.round((summary.entity_appearance_rate || 0) * 100);
+        const compRate = Math.round((summary.competitor_appearance_rate || 0) * 100);
+        const dens = Math.round((summary.avg_evidence_density || 0) * 100);
+        body.innerHTML = [
+            '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">',
+            `<div class="p-3 rounded-lg border" style="border-color:var(--border)"><p class="text-[11px] text-on-surface-variant">本品出现率</p><p class="text-2xl font-black">${entityRate}%</p></div>`,
+            `<div class="p-3 rounded-lg border" style="border-color:var(--border)"><p class="text-[11px] text-on-surface-variant">竞品出现率</p><p class="text-2xl font-black">${compRate}%</p></div>`,
+            `<div class="p-3 rounded-lg border" style="border-color:var(--border)"><p class="text-[11px] text-on-surface-variant">证据密度</p><p class="text-2xl font-black">${dens}%</p></div>`,
+            '</div>',
+            layers.map((layer) => {
+                const qs = questions.filter((q) => q.layer === layer.id);
+                return `
+                    <section class="geo-layer-card border rounded-xl p-4" style="border-color:var(--border)">
+                        <h4 class="text-sm font-bold">${escapeHtml(layer.label)}</h4>
+                        <ul class="mt-3 space-y-2">
+                            ${qs.map((q) => {
+                                const hit = Object.values(q.platforms || {}).filter((r) => r.entity_mentioned).length;
+                                const total = Object.keys(q.platforms || {}).length || 4;
+                                return `<li class="text-sm"><span class="font-semibold">${escapeHtml(q.text)}</span><br><span class="text-xs text-on-surface-variant">本品出现 ${hit}/${total} 平台</span></li>`;
+                            }).join('')}
+                        </ul>
+                    </section>
+                `;
+            }).join(''),
+        ].join('');
+    }
+
+    async function loadGeoDemo() {
+        const runId = Workflow?.getRunId?.();
+        const url = runId
+            ? `/api/geo-runs/${runId}/geo-preview`
+            : '/api/geo-runs/scripts/geo-observe-funnel-dji-vs-autel';
+        try {
+            const data = await request(url);
+            const script = data.script || data;
+            renderGeoFunnel(script);
+        } catch (error) {
+            try {
+                const res = await fetch('/pilot-demo/geo-observe-funnel-dji-vs-autel.json');
+                if (res.ok) renderGeoFunnel(await res.json());
+            } catch (e) {
+                const body = document.getElementById('geo-funnel-body');
+                if (body) body.innerHTML = '<p class="text-sm text-rose-600">演示剧本加载失败。</p>';
+            }
+        }
+    }
+
+    function bindDiagTabs() {
+        const tabs = document.querySelectorAll('[data-diag-tab]');
+        tabs.forEach((tab) => {
+            tab.addEventListener('click', () => {
+                const id = tab.getAttribute('data-diag-tab');
+                tabs.forEach((t) => {
+                    const on = t === tab;
+                    t.classList.toggle('is-active', on);
+                    t.setAttribute('aria-selected', on ? 'true' : 'false');
+                });
+                document.querySelectorAll('[data-diag-panel]').forEach((panel) => {
+                    const on = panel.getAttribute('data-diag-panel') === id;
+                    panel.classList.toggle('hidden', !on);
+                    if (on) panel.removeAttribute('hidden');
+                    else panel.setAttribute('hidden', 'hidden');
+                });
+                if (id === 'geo') loadGeoDemo();
+            });
+        });
+    }
+
     function fallbackNarrative(report) {
         const schema = report.schema_analysis || {};
         const meta = report.meta_analysis || {};
@@ -1011,49 +1203,8 @@
     }
 
     function renderReport(report) {
-        const schema = report.schema_analysis || {};
-        const content = report.content_analysis || {};
-        const meta = report.meta_analysis || {};
-        const citation = report.citation_analysis || {};
-        const sections = buildDiagnosticSections(report);
-        const readinessStages = buildReadinessStages(sections, Number(report.overall_score || 0));
-        const signalMix = buildSignalMix(report);
-
-        renderNarrative(report);
-        renderScore(report.overall_score || 0);
-        renderCategoryBars(sections);
-        renderReadinessFunnel(readinessStages);
-        renderSignalMix(signalMix, report.overall_score || 0);
-        renderRiskGrid(sections);
-        renderModuleSections(sections);
-        renderRoadmap(report);
-        renderEvidence(report);
-        renderMetric(
-            'schema',
-            schema.score,
-            Array.isArray(schema.missing_recommended) && schema.missing_recommended.length
-                ? `缺少 ${schema.missing_recommended.slice(0, 3).join('、')} 等关键 Schema 类型`
-                : '核心 Schema 类型覆盖较完整，可继续补充实体字段细节。'
-        );
-        renderMetric(
-            'content',
-            content.score,
-            `H1 ${content.h1_count ?? 0} · H2 ${content.h2_count ?? 0} · FAQ 样块 ${content.faq_like_sections ?? 0}；建议关键 H2 用用户问句。`
-        );
-        renderMetric(
-            'meta',
-            meta.score,
-            Array.isArray(meta.missing) && meta.missing.length
-                ? `技术可访问待补：${meta.missing.slice(0, 3).join('、')}。`
-                : 'Meta / OG / Twitter Card 与基础抓取信号较完整。'
-        );
-        renderMetric(
-            'citation',
-            citation.score,
-            `外链 ${citation.external_link_count ?? 0} · 权威 ${citation.authority_link_count ?? 0}（就绪信号 ≠ AI 答案引用率）。`
-        );
-        renderSchema(schema);
-        renderRecommendations(report.recommendations || {});
+        const modules = renderSeoModules(report);
+        renderPriority(report, modules);
 
         if (toSolutionsBtn) {
             if (Workflow?.buildHref) {
@@ -1070,42 +1221,50 @@
             }
         }
         showResults();
-        setReportMode('live', { url: report.url || '' });
-        animateLiveSwap();
+        setReportMode(report.report_id === 'demo-report' ? 'demo' : 'live', { url: report.url || '' });
+        if (report.report_id !== 'demo-report') animateLiveSwap();
         maybeGuideSuiteNext(report);
     }
 
     function maybeGuideSuiteNext(report) {
         if (!Workflow || !report || report.report_id === 'demo-report') return;
         if (report.status && report.status !== 'completed') return;
-        Workflow.markComplete('diagnostic', {
-            report_id: report.report_id,
-            url: report.url || '',
-        });
-        Workflow.mountBar({
-            stepId: 'diagnostic',
-            force: true,
-            hint: '诊断已完成，可进入拓词继续全套工作流。',
-            nextHref: Workflow.buildHref('keywords', {
+        const finish = (run) => {
+            Workflow.markComplete('diagnostic', {
+                report_id: report.report_id,
+                url: report.url || '',
+                run_id: run && run.id,
+            });
+            const extras = {
                 diagnostic_report_id: report.report_id || '',
                 url: report.url || '',
-            }),
-            nextLabel: '下一步：拓词',
-        });
-        const host = reportShell || resultsGrid || document.querySelector('main');
-        const keywordsHref = Workflow.buildHref('keywords', {
-            diagnostic_report_id: report.report_id || '',
+                run_id: (run && run.id) || Workflow.getRunId() || '',
+            };
+            Workflow.mountBar({
+                stepId: 'diagnostic',
+                force: true,
+                hint: '检查完成，可继续拓词选题。',
+                nextHref: Workflow.buildHref('keywords', extras),
+                nextLabel: '下一步：拓词',
+            });
+            const host = reportShell || resultsGrid || document.querySelector('main');
+            Workflow.mountNextCard?.(host, {
+                stepId: 'diagnostic',
+                title: '检查完成',
+                copy: '基础 SEO 四类结果已就绪。',
+                primaryHref: Workflow.buildHref('keywords', extras),
+                primaryLabel: '去拓词',
+            });
+        };
+        const handoffPayload = {
+            diagnostic_report_id: report.report_id,
             url: report.url || '',
-        });
-        Workflow.mountNextCard(host, {
-            id: 'suite-wf-next-diagnostic',
-            prepend: true,
-            stepId: 'diagnostic',
-            title: '诊断完成 · 进入拓词',
-            copy: '已记入 GEO Suite。下一步扩展问题词与场景词，形成可移交的内容选题资产。',
-            primaryHref: keywordsHref,
-            primaryLabel: '进入拓词',
-        });
+            meta: { overall_score: report.overall_score },
+        };
+        Promise.resolve(Workflow.ensureRun({ url: report.url || '' }))
+            .then((run) => Workflow.handoff('diagnostic', handoffPayload).then(() => run).catch(() => run))
+            .then(finish)
+            .catch(() => finish(null));
     }
 
     async function pollReport(reportId, attempt = 0) {
@@ -1117,9 +1276,15 @@
             if (report.status === 'completed') {
                 clearPolling();
                 setLoading(false);
-                setStatus('诊断完成，以下为最新 GEO 报告。', 'success');
-                renderReport(report);
-                resultsGrid?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                setStatus('检查完成。', 'success');
+                try {
+                    renderReport(report);
+                    resultsGrid?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } catch (renderError) {
+                    console.error('[diagnostic] renderReport failed', renderError);
+                    setStatus(renderError?.message || '结果渲染失败，请刷新页面重试。', 'error');
+                    setReportMode('live', { url: report.url || '' });
+                }
                 return;
             }
 
@@ -1134,11 +1299,11 @@
             }
 
             const statusMessages = {
-                pending: '任务已创建，正在排队准备诊断。',
-                crawling: '正在抓取目标页面的 HTML 内容与结构化数据。',
-                analyzing: '已完成抓取，正在进行 GEO 多维分析与建议生成。',
+                pending: '任务已创建，正在排队…',
+                crawling: '正在抓取页面…',
+                analyzing: '正在汇总 SEO 四类结果…',
             };
-            setStatus(statusMessages[report.status] || '正在同步诊断状态...');
+            setStatus(statusMessages[report.status] || '正在同步检查状态…');
             setReportMode('loading', { url: report.url || '', step: report.status });
         } catch (error) {
             if (attempt >= 10) {
@@ -1205,23 +1370,26 @@
         }
     }
 
+    Workflow?.syncFromQuery?.();
+    bindDiagTabs();
+
     Workflow?.mountBar({
         stepId: 'diagnostic',
         nextHref: Workflow.buildHref('keywords'),
         nextLabel: '下一步：拓词',
-        hint: '全套工作流第 1 步：完成诊断后进入拓词。',
+        hint: '检查页：输入网址查看基础 SEO。',
     });
 
     if (initialReportId) {
         showResults();
         setReportMode('loading', { url: initialUrl });
         setLoading(true);
-        setStatus('正在恢复这份 GEO 诊断报告...');
+        setStatus('正在恢复检查结果…');
         pollReport(initialReportId);
     } else if (initialUrl) {
         showResults();
         setReportMode('loading', { url: initialUrl });
-        setStatus('已从上下文带入目标 URL，正在自动发起诊断...');
+        setStatus('已带入目标 URL，正在检查…');
         startDiagnosis();
     } else {
         showResults();

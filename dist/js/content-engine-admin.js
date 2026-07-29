@@ -58,7 +58,7 @@
     if (res.status === 401 || res.status === 403) {
       if (isDemoOpenAccess()) {
         showAuthGate(false);
-        throw new Error("演示免登录失败：请确认 API 已设 GEORANK_ALLOW_ANONYMOUS_AI=true 并已重启");
+        throw new Error("暂时无法免登录访问，请稍后重试或联系管理员");
       }
       if (isPublicShell) {
         showAuthGate(true);
@@ -137,13 +137,17 @@
   let suppressDocAutofill = false;
   let promptCache = [];
   let kbCache = [];
+  let selectedKbIds = new Set();
   let docCache = [];
   let ceBootReady = false;
 
   function activateTab(name) {
+    if (!name) return;
+    const tabBtn = document.querySelector(`.tab[data-tab="${name}"]`);
+    const panel = document.getElementById(`panel-${name}`);
+    if (!tabBtn && !panel) return;
     document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
     document.querySelectorAll(".panel").forEach((p) => p.classList.toggle("active", p.id === `panel-${name}`));
-    const panel = document.getElementById(`panel-${name}`);
     if (panel) {
       panel.scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -166,6 +170,19 @@
     }
   }
 
+  function hrefForMissingTab(name) {
+    if (name === "tasks" || name === "channels") {
+      return name === "tasks" ? "/distribute?tab=tasks" : `/distribute?tab=${encodeURIComponent(name)}`;
+    }
+    if (name === "kb" || name === "hub") {
+      return `/knowledge?tab=${encodeURIComponent(name)}`;
+    }
+    if (name === "prompts") {
+      return pathNorm === "/distribute" ? "/distribute?tab=prompts" : `/knowledge?tab=prompts`;
+    }
+    return null;
+  }
+
   document.querySelectorAll(".tab").forEach((btn) => {
     btn.addEventListener("click", () => activateTab(btn.dataset.tab));
   });
@@ -176,8 +193,15 @@
   if (pathNorm === "/knowledge") {
     const legacyTab = params.get("tab");
     if (legacyTab === "tasks" || legacyTab === "channels") {
-      const next = legacyTab === "tasks" ? "/distribute" : `/distribute?tab=${encodeURIComponent(legacyTab)}`;
+      const next = legacyTab === "tasks" ? "/distribute?tab=tasks" : `/distribute?tab=${encodeURIComponent(legacyTab)}`;
       window.location.replace(next);
+      return;
+    }
+  }
+  if (pathNorm === "/distribute") {
+    const legacyTab = params.get("tab");
+    if (legacyTab === "kb" || legacyTab === "hub") {
+      window.location.replace(`/knowledge?tab=${encodeURIComponent(legacyTab)}`);
       return;
     }
   }
@@ -259,31 +283,52 @@
     }
   }
 
+  function syncTaskKbSelect() {
+    const primary = [...selectedKbIds][0] || "";
+    if ($("task-kb")) $("task-kb").value = primary;
+    return primary;
+  }
+
   function renderTaskKbCards(items, selectedId) {
     const host = $("task-kb-cards");
     if (!host) return;
-    const selected = selectedId || $("task-kb")?.value || "";
+    if (selectedId) {
+      selectedKbIds = new Set(
+        Array.isArray(selectedId) ? selectedId.filter(Boolean) : [selectedId].filter(Boolean)
+      );
+    } else if (!selectedKbIds.size && $("task-kb")?.value) {
+      selectedKbIds.add($("task-kb").value);
+    }
+    const validIds = new Set((items || []).map((k) => k.id));
+    selectedKbIds = new Set([...selectedKbIds].filter((id) => validIds.has(id)));
+    syncTaskKbSelect();
     host.innerHTML =
       (items || [])
-        .map(
-          (k) => `<button type="button" class="ce-kb-card${k.id === selected ? " is-selected" : ""}" data-kb-card="${k.id}">
-          <span aria-hidden="true">${k.id === selected ? "☑" : "☐"}</span>
-          <span>
+        .map((k) => {
+          const on = selectedKbIds.has(k.id);
+          return `<button type="button" class="ce-kb-card${on ? " is-selected" : ""}" data-kb-card="${k.id}" aria-pressed="${on}">
+          <input class="ce-kb-card__check" type="checkbox" tabindex="-1" ${on ? "checked" : ""} aria-hidden="true">
+          <span class="ce-kb-card__text">
             <strong>${escapeHtml(k.name)}</strong>
             <small>${escapeHtml(k.slug || "")} · ${k.doc_count || 0} 文档</small>
           </span>
-        </button>`
-        )
+        </button>`;
+        })
         .join("") || `<p class="ce-hint">暂无知识库，请先在「知识库」页导入或新建。</p>`;
     host.querySelectorAll("[data-kb-card]").forEach((btn) => {
       btn.addEventListener("click", () => {
-        if ($("task-kb")) $("task-kb").value = btn.dataset.kbCard;
-        renderTaskKbCards(kbCache, btn.dataset.kbCard);
+        const id = btn.dataset.kbCard;
+        if (!id) return;
+        if (selectedKbIds.has(id)) selectedKbIds.delete(id);
+        else selectedKbIds.add(id);
+        syncTaskKbSelect();
+        renderTaskKbCards(kbCache);
       });
     });
   }
 
   async function refreshDocs(kbId) {
+    if (!$("doc-table") && !$("kb-select")) return;
     if (!kbId) {
       $("doc-table").innerHTML = "<tr><td colspan=3>选择知识库</td></tr>";
       docCache = [];
@@ -334,14 +379,25 @@
     suppressDocAutofill = false;
   }
 
+  function syncImportExampleVisibility(kbCount) {
+    const btn = $("btn-import-dji");
+    if (!btn) return;
+    const count = Number(kbCount);
+    const hasKb = Number.isFinite(count) ? count > 0 : (kbCache && kbCache.length > 0);
+    btn.hidden = hasKb;
+    btn.textContent = "导入示例知识库";
+  }
+
   async function refreshKbs() {
     const data = await api("/knowledge-bases");
     kbCache = data.items || [];
+    syncImportExampleVisibility(kbCache.length);
     const tbody = $("kb-table");
-    tbody.innerHTML =
-      kbCache
-        .map(
-          (k) => `<tr>
+    if (tbody) {
+      tbody.innerHTML =
+        kbCache
+          .map(
+            (k) => `<tr>
         <td>${escapeHtml(k.name)}<br><small>${escapeHtml(k.slug)}</small></td>
         <td>${k.doc_count}</td>
         <td>${k.chunk_count}</td>
@@ -351,44 +407,59 @@
           <button type="button" class="btn" data-del-kb="${k.id}">删除</button>
         </td>
       </tr>`
-        )
-        .join("") || "<tr><td colspan=5>暂无</td></tr>";
+          )
+          .join("") || "<tr><td colspan=5>暂无知识库 · 可新建或导入示例</td></tr>";
+    }
 
     const opts = kbCache.map((k) => `<option value="${k.id}">${escapeHtml(k.name)}</option>`).join("");
     const prevKb = $("kb-select")?.value || "";
     const prevTaskKb = $("task-kb")?.value || "";
-    $("kb-select").innerHTML = opts || `<option value="">暂无知识库</option>`;
+    if ($("kb-select")) {
+      $("kb-select").innerHTML = opts || `<option value="">暂无知识库</option>`;
+    }
     if ($("task-kb")) {
       $("task-kb").innerHTML = `<option value="">不绑定知识库</option>` + opts;
       if (prevTaskKb && kbCache.some((k) => k.id === prevTaskKb)) $("task-kb").value = prevTaskKb;
     }
 
     const prefer = params.get("kb");
-    if (prefer && kbCache.some((k) => k.id === prefer)) {
-      $("kb-select").value = prefer;
-    } else if (prevKb && kbCache.some((k) => k.id === prevKb)) {
-      $("kb-select").value = prevKb;
+    if ($("kb-select")) {
+      if (prefer && kbCache.some((k) => k.id === prefer)) {
+        $("kb-select").value = prefer;
+      } else if (prevKb && kbCache.some((k) => k.id === prevKb)) {
+        $("kb-select").value = prevKb;
+      }
     }
 
-    renderTaskKbCards(kbCache, $("task-kb")?.value || "");
+    if (!selectedKbIds.size && prevTaskKb && kbCache.some((k) => k.id === prevTaskKb)) {
+      selectedKbIds.add(prevTaskKb);
+    }
+    renderTaskKbCards(kbCache);
 
-    tbody.querySelectorAll("[data-open-kb]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        $("kb-select").value = btn.dataset.openKb;
-        activateTab("kb");
-        fillKbMetaFromSelection();
-        await refreshDocs(btn.dataset.openKb);
+    if (tbody) {
+      tbody.querySelectorAll("[data-open-kb]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          if ($("kb-select")) $("kb-select").value = btn.dataset.openKb;
+          const href = hrefForMissingTab("kb");
+          if (href && !document.querySelector('.tab[data-tab="kb"]')) {
+            window.location.href = href;
+            return;
+          }
+          activateTab("kb");
+          fillKbMetaFromSelection();
+          await refreshDocs(btn.dataset.openKb);
+        });
       });
-    });
-    tbody.querySelectorAll("[data-del-kb]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        if (!confirm("删除整个知识库？")) return;
-        await api(`/knowledge-bases/${btn.dataset.delKb}`, { method: "DELETE" });
-        await refreshKbs();
+      tbody.querySelectorAll("[data-del-kb]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          if (!confirm("删除整个知识库？")) return;
+          await api(`/knowledge-bases/${btn.dataset.delKb}`, { method: "DELETE" });
+          await refreshKbs();
+        });
       });
-    });
+    }
 
-    if ($("kb-select").value) {
+    if ($("kb-select")?.value) {
       fillKbMetaFromSelection();
       await refreshDocs($("kb-select").value);
     }
@@ -396,11 +467,11 @@
 
   async function loadPromptDetail(pid) {
     if (!pid) {
-      $("prompt-body").textContent = "从下拉列表选择提示词查看正文";
+      if ($("prompt-body")) $("prompt-body").textContent = "从下拉列表选择提示词查看正文";
       return null;
     }
     const p = await api(`/prompts/${pid}`);
-    $("prompt-body").textContent = p.body || "（无正文）";
+    if ($("prompt-body")) $("prompt-body").textContent = p.body || "（无正文）";
     return p;
   }
 
@@ -418,7 +489,7 @@
     const prevPick = pick?.value || "";
     const prevTask = taskPrompt?.value || "";
     if (pick) {
-      pick.innerHTML = opts || `<option value="">暂无提示词 · 可点「恢复内置 8 套」</option>`;
+      pick.innerHTML = opts || `<option value="">暂无提示词 · 可点「恢复内置 10 套」</option>`;
       if (prevPick && promptCache.some((p) => p.id === prevPick)) pick.value = prevPick;
       else if (promptCache[0]) pick.value = promptCache[0].id;
     }
@@ -440,36 +511,212 @@
   }
 
   function setTaskActions(enabled) {
-    $("btn-preview-shell").disabled = !enabled;
-    $("btn-mark-dist").disabled = !enabled;
+    if ($("btn-preview-shell")) $("btn-preview-shell").disabled = !enabled;
+    if ($("btn-mark-dist")) $("btn-mark-dist").disabled = !enabled;
+  }
+
+  const TASK_STATUS_LABEL = {
+    pending: "待生成",
+    running: "生成中",
+    completed: "已完成",
+    failed: "失败",
+    open: "开启",
+    paused: "暂停",
+    done: "完成",
+  };
+
+  function formatTaskStatus(status, distributed) {
+    const label = TASK_STATUS_LABEL[status] || status || "—";
+    return distributed ? `${label} · 已就绪` : label;
+  }
+
+  let pendingKeywordsState = { keywords: [], entity: "", run_id: "", target_platforms: [] };
+  const DEFAULT_AI_PLATFORMS = ["豆包", "元宝", "Kimi", "DeepSeek"];
+  let aiFocusScript = null;
+  let taskTargetPlatforms = new Set(DEFAULT_AI_PLATFORMS);
+
+  async function loadAiFocusScript() {
+    if (aiFocusScript) return aiFocusScript;
+    const urls = [
+      "/api/geo-runs/scripts/geo-ai-focus-dji",
+      "/pilot-demo/geo-ai-focus-dji.json",
+    ];
+    for (const url of urls) {
+      try {
+        const res = await fetch(url, { credentials: "same-origin" });
+        if (!res.ok) continue;
+        aiFocusScript = await res.json();
+        return aiFocusScript;
+      } catch (_) {
+        /* next */
+      }
+    }
+    return null;
+  }
+
+  function selectedTaskPlatforms() {
+    return Array.from(taskTargetPlatforms);
+  }
+
+  function renderTaskAiPlatforms() {
+    const host = $("task-ai-platforms");
+    if (!host) return;
+    const platforms = (aiFocusScript && aiFocusScript.platforms) || DEFAULT_AI_PLATFORMS;
+    host.innerHTML = platforms
+      .map((p) => {
+        const on = taskTargetPlatforms.has(p);
+        return `<label class="ce-ai-plat"><input type="checkbox" data-task-ai-plat="${escapeHtml(p)}" ${on ? "checked" : ""}> ${escapeHtml(p)}</label>`;
+      })
+      .join("");
+    host.querySelectorAll("[data-task-ai-plat]").forEach((input) => {
+      input.addEventListener("change", () => {
+        const name = input.getAttribute("data-task-ai-plat") || "";
+        if (!name) return;
+        if (input.checked) taskTargetPlatforms.add(name);
+        else taskTargetPlatforms.delete(name);
+        if (!taskTargetPlatforms.size) {
+          taskTargetPlatforms = new Set(platforms);
+          renderTaskAiPlatforms();
+        }
+        renderTaskAiFocusCard();
+      });
+    });
+  }
+
+  function renderTaskAiFocusCard() {
+    const host = $("task-ai-focus-card");
+    if (!host) return;
+    const items = ((aiFocusScript && aiFocusScript.items) || []).filter((row) =>
+      taskTargetPlatforms.has(row.platform)
+    );
+    if (!items.length) {
+      host.innerHTML = '<p class="ce-hint">请选择至少一个目标 AI。</p>';
+      return;
+    }
+    host.innerHTML = items
+      .map((row) => {
+        const prefs = (row.source_prefs || [])
+          .map((sp) => `<span class="ce-ai-chip">${escapeHtml(sp.type)}</span>`)
+          .join("");
+        const avoids = (row.avoid || []).map((a) => escapeHtml(a)).join(" · ");
+        return `<article class="ce-ai-focus-item">`
+          + `<h4>${escapeHtml(row.platform)}</h4>`
+          + `<p>${escapeHtml(row.generation_focus || "")}</p>`
+          + `<div class="ce-ai-chips">${prefs}</div>`
+          + (avoids ? `<p class="ce-hint">易踩坑：${avoids}</p>` : "")
+          + `</article>`;
+      })
+      .join("");
+  }
+
+  function applyTargetPlatformsFromPending(platforms) {
+    if (!Array.isArray(platforms) || !platforms.length) return;
+    taskTargetPlatforms = new Set(platforms.filter(Boolean));
+    if (!taskTargetPlatforms.size) taskTargetPlatforms = new Set(DEFAULT_AI_PLATFORMS);
+    renderTaskAiPlatforms();
+    renderTaskAiFocusCard();
+  }
+
+  function readPendingKeywords() {
+    try {
+      const raw = sessionStorage.getItem("georank_pending_keywords");
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || !Array.isArray(parsed.keywords) || !parsed.keywords.length) return null;
+      return parsed;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function applyPendingKeyword(keyword) {
+    const entity = pendingKeywordsState.entity || "产品";
+    if ($("task-keyword")) $("task-keyword").value = keyword;
+    if ($("task-title")) $("task-title").value = `${entity} · ${keyword}`.slice(0, 300);
+    document.querySelectorAll(".ce-keyword-chip").forEach((chip) => {
+      chip.classList.toggle("is-active", chip.dataset.keyword === keyword);
+    });
+  }
+
+  function renderPendingKeywords() {
+    const bar = $("pending-keywords-bar");
+    const host = $("pending-keywords-chips");
+    if (!bar || !host) return;
+    const data = readPendingKeywords();
+    const Workflow = window.GEOrank?.SuiteWorkflow;
+    const fromMeta = Workflow?.load?.()?.meta?.selected_keywords
+      || Workflow?.load?.()?.lastHandoff?.selected_keywords
+      || [];
+    const keywords = (data && data.keywords) || (Array.isArray(fromMeta) ? fromMeta : []);
+    if (!keywords.length) {
+      bar.hidden = true;
+      bar.classList.add("hidden");
+      return;
+    }
+    const platforms =
+      (data && data.target_platforms)
+      || Workflow?.load?.()?.meta?.target_platforms
+      || Workflow?.load?.()?.lastHandoff?.meta?.target_platforms
+      || [];
+    pendingKeywordsState = {
+      keywords,
+      entity: (data && data.entity) || (Workflow?.load?.()?.run?.entity) || "产品",
+      run_id: (data && data.run_id) || Workflow?.getRunId?.() || "",
+      target_platforms: Array.isArray(platforms) ? platforms : [],
+    };
+    applyTargetPlatformsFromPending(pendingKeywordsState.target_platforms);
+    bar.hidden = false;
+    bar.classList.remove("hidden");
+    host.innerHTML = keywords
+      .map(
+        (kw) =>
+          `<button type="button" class="ce-keyword-chip" data-keyword="${escapeHtml(kw)}">${escapeHtml(kw)}</button>`
+      )
+      .join("");
+    host.querySelectorAll(".ce-keyword-chip").forEach((chip) => {
+      chip.addEventListener("click", () => applyPendingKeyword(chip.dataset.keyword || ""));
+    });
+    if (!$("task-title")?.value?.trim()) {
+      applyPendingKeyword(keywords[0]);
+    }
   }
 
   async function refreshTasks() {
+    if (!$("task-table")) return;
     const data = await api("/tasks");
     $("task-table").innerHTML =
       data.items
         .map(
           (t) => `<tr>
         <td>${escapeHtml(t.title)}</td>
-        <td>${escapeHtml(t.status)}${t.distributed ? " · 已分发" : ""}</td>
+        <td>${escapeHtml(formatTaskStatus(t.status, t.distributed))}</td>
         <td><button type="button" class="btn" data-tid="${t.id}">打开</button></td>
       </tr>`
         )
-        .join("") || "<tr><td colspan=3>暂无</td></tr>";
+        .join("") || "<tr><td colspan=3>暂无任务</td></tr>";
     $("task-table").querySelectorAll("[data-tid]").forEach((b) => {
       b.addEventListener("click", async () => {
         const t = await api(`/tasks/${b.dataset.tid}`);
         currentTaskId = t.id;
         currentDraft = t.draft_body || t.error_message || "";
-        currentTemplateKey = t.template_key || $("task-template").value || "wechat-article";
+        currentTemplateKey = t.template_key || $("task-template")?.value || "wechat-article";
+        if ($("task-title") && t.title) $("task-title").value = t.title;
+        if ($("task-keyword") && t.input_query) $("task-keyword").value = t.input_query;
+        if ($("task-prompt") && t.prompt_id) {
+          const opt = [...($("task-prompt").options || [])].find((o) => o.value === t.prompt_id);
+          if (opt) $("task-prompt").value = t.prompt_id;
+        }
         $("task-draft").textContent = currentDraft || "（无正文）";
         setTaskActions(Boolean(currentDraft));
-        $("shell-preview").classList.add("hidden");
+        $("shell-preview")?.classList.add("hidden");
+        activateTab("tasks");
+        $("task-draft")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
       });
     });
   }
 
   async function refreshChannels() {
+    if (!$("ch-table")) return;
     const data = await api("/channels");
     $("ch-table").innerHTML =
       data.items
@@ -519,15 +766,17 @@
     }
   });
 
-  $("btn-import-dji").addEventListener("click", async () => {
+  $("btn-import-dji")?.addEventListener("click", async () => {
     $("hub-out").textContent = "导入中…";
     try {
       const r = await api("/knowledge-bases/import-dji-demo", { method: "POST", body: "{}" });
       if ($("hub-out")) $("hub-out").textContent = JSON.stringify(r, null, 2);
       await Promise.all([refreshKbs(), refreshPrompts(), refreshChannels()]);
       await refreshHubDashboard();
+      toast("示例知识库已导入", "ok");
     } catch (e) {
       if ($("hub-out")) $("hub-out").textContent = String(e.message || e);
+      toast(String(e.message || e), "err");
     }
   });
 
@@ -564,7 +813,9 @@
     setText("kpi-chunks", String(chunks || kbs.items.reduce((n, k) => n + (k.chunk_count || 0), 0)));
     setText("kpi-vec", String(vec || kbs.items.reduce((n, k) => n + (k.vectorized_count || 0), 0)));
     setText("kpi-tasks", String(tasks.length));
-    setText("kpi-docs-note", summary && summary.demo_ready ? "DJI 演示包已导入" : "待导入演示包");
+    setText("kpi-docs-note", (summary && summary.demo_ready) || (kbs.items && kbs.items.length)
+      ? "示例库 / 自建库"
+      : "可导入示例或新建");
     setText("kpi-chunks-note", "可检索单元");
     setText("kpi-vec-note", `${readyPct}% 召回就绪`);
     setText("kpi-tasks-note", `草稿 ${drafts}`);
@@ -572,17 +823,18 @@
     setText("side-docs", String(docs));
     setText("side-chunks", String(chunks));
     setText("side-drafts", String(drafts));
-    setText("pill-pending", summary && summary.demo_ready ? "已导入" : "待导入");
+    setText("pill-pending", (summary && summary.demo_ready) || (kbs.items && kbs.items.length) ? "已就绪" : "待导入");
     setText("pill-audit", drafts ? `有草稿 ${drafts}` : "待生成");
     setText("pill-ok", `已就绪 ${vec}`);
     const bar = $("embed-bar");
     if (bar) bar.style.width = `${readyPct}%`;
     setText("embed-label", `${readyPct}% · ${vec}/${chunks || 0}`);
+    syncImportExampleVisibility((kbs.items || []).length);
 
     const tbody = $("evidence-table");
     if (tbody) {
       if (!kbs.items.length) {
-        tbody.innerHTML = "<tr><td colspan=6>暂无知识库 · 请导入 DJI 演示包</td></tr>";
+        tbody.innerHTML = "<tr><td colspan=6>暂无知识库 · 可新建或导入示例知识库</td></tr>";
       } else {
         tbody.innerHTML = kbs.items
           .map(
@@ -607,15 +859,24 @@
     }
   }
 
-  $("btn-refresh-hub").addEventListener("click", async () => {
+  $("btn-refresh-hub")?.addEventListener("click", async () => {
     await refreshHubDashboard();
   });
 
   document.querySelectorAll("[data-goto-tab]").forEach((btn) => {
-    btn.addEventListener("click", () => activateTab(btn.getAttribute("data-goto-tab")));
+    btn.addEventListener("click", () => {
+      const name = btn.getAttribute("data-goto-tab");
+      if (!name) return;
+      if (document.querySelector(`.tab[data-tab="${name}"]`) || document.getElementById(`panel-${name}`)) {
+        activateTab(name);
+        return;
+      }
+      const href = hrefForMissingTab(name);
+      if (href) window.location.href = href;
+    });
   });
 
-  $("btn-create-kb").addEventListener("click", async () => {
+  $("btn-create-kb")?.addEventListener("click", async () => {
     const name = ($("kb-name").value || "").trim();
     if (!name) {
       toast("请填写知识库名称", "warn");
@@ -641,7 +902,7 @@
     }
   });
 
-  $("btn-add-doc").addEventListener("click", async () => {
+  $("btn-add-doc")?.addEventListener("click", async () => {
     const kbId = $("kb-select").value;
     if (!kbId) return toast("请先选择知识库", "warn");
     if (!($("doc-title").value || "").trim() || !($("doc-body").value || "").trim()) {
@@ -666,7 +927,7 @@
     }
   });
 
-  $("btn-upload-doc").addEventListener("click", async () => {
+  $("btn-upload-doc")?.addEventListener("click", async () => {
     const kbId = $("kb-select").value;
     const file = $("doc-file").files?.[0];
     if (!kbId) return toast("请先选择知识库", "warn");
@@ -699,7 +960,7 @@
     }
   });
 
-  $("btn-search").addEventListener("click", async () => {
+  $("btn-search")?.addEventListener("click", async () => {
     const kbId = $("kb-select").value;
     const query = $("search-q").value.trim();
     if (!kbId) return toast("请先选择知识库", "warn");
@@ -726,7 +987,7 @@
     }
   });
 
-  $("btn-save-prompt").addEventListener("click", async () => {
+  $("btn-save-prompt")?.addEventListener("click", async () => {
     const id = $("prompt-id").value;
     const title = ($("prompt-title").value || "").trim();
     if (!title || !($("prompt-edit-body").value || "").trim()) {
@@ -752,7 +1013,7 @@
     }
   });
 
-  $("btn-reset-prompt").addEventListener("click", () => {
+  $("btn-reset-prompt")?.addEventListener("click", () => {
     $("prompt-id").value = "";
     $("prompt-title").value = "";
     $("prompt-edit-body").value = "";
@@ -790,7 +1051,7 @@
   });
 
   $("btn-restore-prompts")?.addEventListener("click", async () => {
-    if (!confirm("恢复内置 8 套提示词，并停用被改乱的非内置项？")) return;
+    if (!confirm("恢复内置提示词模板，并停用被改乱的非内置项？")) return;
     try {
       const r = await withBusy($("btn-restore-prompts"), async () => {
         return api("/prompt-library/restore", { method: "POST", body: "{}" });
@@ -803,7 +1064,7 @@
     }
   });
 
-  $("btn-create-task").addEventListener("click", async () => {
+  $("btn-create-task")?.addEventListener("click", async () => {
     const title = ($("task-title").value || "").trim();
     if (!title) {
       toast("请填写任务名称", "warn");
@@ -811,25 +1072,35 @@
       return;
     }
     if (!$("task-prompt")?.value) {
-      toast("请选择内容提示词", "warn");
+      toast("请先选择内容提示词模板", "warn");
       $("task-prompt")?.focus();
       return;
     }
     const channelSelect = $("task-channel");
-    const selected = channelSelect.options[channelSelect.selectedIndex];
+    const selected = channelSelect?.options?.[channelSelect.selectedIndex];
     const channelTk = selected?.dataset?.tk || "";
-    const templateKey = $("task-template").value || channelTk || null;
+    const templateKey = $("task-template")?.value || channelTk || null;
+    const keyword = ($("task-keyword")?.value || "").trim() || title;
+    const entity = pendingKeywordsState.entity
+      || window.GEOrank?.SuiteWorkflow?.load?.()?.run?.entity
+      || "";
     const body = {
       title,
-      knowledge_base_id: $("task-kb").value || null,
+      knowledge_base_id: syncTaskKbSelect() || null,
       prompt_id: $("task-prompt").value || null,
-      channel_id: $("task-channel").value || null,
+      channel_id: $("task-channel")?.value || null,
       template_key: templateKey,
-      input_query: title,
+      input_query: keyword,
       meta: {
         model: $("task-model")?.value || null,
         model_mode: $("task-model-mode")?.value || "fixed",
         status: $("task-status")?.value || "open",
+        entity: entity || undefined,
+        keyword,
+        knowledge_base_ids: [...selectedKbIds],
+        source: "distribute-template-first",
+        target_platforms: selectedTaskPlatforms(),
+        ai_focus_inject: Boolean($("task-ai-focus-inject")?.checked),
       },
     };
     $("task-draft").textContent = "生成中…";
@@ -842,7 +1113,7 @@
         currentTemplateKey = full.template_key || templateKey || "wechat-article";
         $("task-draft").textContent = currentDraft || "（无正文）";
         setTaskActions(Boolean(currentDraft));
-        $("shell-preview").classList.add("hidden");
+        $("shell-preview")?.classList.add("hidden");
         await refreshTasks();
       }, "生成中…");
       toast(currentDraft ? "草稿已生成" : "任务已创建，但暂无正文", currentDraft ? "ok" : "warn");
@@ -852,20 +1123,37 @@
     }
   });
 
-  $("btn-preview-shell").addEventListener("click", () => {
+  $("btn-preview-shell")?.addEventListener("click", () => {
     if (!currentDraft) return;
     renderShellPreview($("task-title").value || "任务预览", currentDraft, currentTemplateKey);
     $("shell-preview").classList.remove("hidden");
   });
 
-  $("btn-mark-dist").addEventListener("click", async () => {
+  $("btn-mark-dist")?.addEventListener("click", async () => {
     if (!currentTaskId) return;
     const r = await api(`/tasks/${currentTaskId}/mark-distributed`, { method: "POST", body: "{}" });
-    $("task-draft").textContent = `${currentDraft}\n\n——\n已标记分发 · status=${r.status}`;
+    $("task-draft").textContent = `${currentDraft}\n\n——\n已标记就绪（未真实发布） · status=${r.status}`;
+    const Workflow = window.GEOrank?.SuiteWorkflow;
+    if (Workflow?.handoff) {
+      const chLabel = ($("task-channel")?.selectedOptions?.[0]?.textContent || "channel").trim();
+      Workflow.handoff("distribute", {
+        task_ids: [currentTaskId],
+        channel_ready: [chLabel],
+        meta: { preview_only: true },
+      }).catch(() => null);
+      Workflow.markComplete("distribute", { task_id: currentTaskId, ready: true });
+      Workflow.mountBar({
+        stepId: "distribute",
+        force: true,
+        hint: "渠道壳已标记就绪（预览·不外发）",
+        nextHref: Workflow.buildHref("measure"),
+        nextLabel: "下一步：观测回放",
+      });
+    }
     await refreshTasks();
   });
 
-  $("btn-create-ch").addEventListener("click", async () => {
+  $("btn-create-ch")?.addEventListener("click", async () => {
     await api("/channels", {
       method: "POST",
       body: JSON.stringify({
@@ -918,14 +1206,19 @@
     }
     const tbody = $("evidence-table");
     if (tbody && /加载中/.test(tbody.textContent || "")) {
-      tbody.innerHTML = "<tr><td colspan=6>加载失败 · 请点「刷新摘要」或「导入 DJI 演示包」</td></tr>";
+      tbody.innerHTML = "<tr><td colspan=6>加载失败 · 请点「刷新摘要」或新建/导入知识库</td></tr>";
     }
     const pick = $("prompt-pick");
     if (pick && (!pick.options.length || (pick.options.length === 1 && !pick.options[0].value))) {
-      pick.innerHTML = `<option value="">暂无提示词 · 请点「恢复内置 8 套」</option>`;
+      pick.innerHTML = `<option value="">暂无提示词 · 请点「恢复内置」</option>`;
     }
+    await loadAiFocusScript();
+    renderTaskAiPlatforms();
+    renderTaskAiFocusCard();
+    renderPendingKeywords();
     ceBootReady = true;
     const deep = params.get("tab");
     if (deep === "prompts") activateTab("prompts");
+    if (params.get("from") === "keywords") activateTab("tasks");
   })();
 })();

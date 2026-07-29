@@ -696,6 +696,8 @@ async def _run_analysis(
             citation["score"],
             rule_config.get("normalized_weights"),
         )
+        from app.services.seo_modules import build_seo_modules
+        seo_modules = build_seo_modules(schema, meta, content, citation)
 
         recommendations, provider_succeeded = await _llm_recommendations(
             report.url,
@@ -704,6 +706,12 @@ async def _run_analysis(
             content,
             citation,
         )
+        if isinstance(recommendations, dict):
+            recommendations = {
+                **recommendations,
+                "seo_modules": seo_modules,
+                "score_note": "overall_score 为 SEO 就绪合成分，不含品牌 GEO 演示漏斗。",
+            }
         if claim_id:
             from app.services.ai_usage import (
                 complete_async_reservation_stage,

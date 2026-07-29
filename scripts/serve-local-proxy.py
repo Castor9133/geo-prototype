@@ -13,12 +13,22 @@ ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
 
 
+# Client-routed pages (history API); hard refresh must still serve the HTML shell.
+_SPA_SHELLS = (
+    ("/diagnostic/reports/", "/diagnostic.html"),
+)
+
+
 def _html_fallback_path(url_path: str) -> str:
     """Extensionless paths -> .html or directory index.html under dist/."""
     parts = urlsplit(url_path)
     path = parts.path or "/"
     if path != "/" and path.endswith("/"):
         path = path.rstrip("/") or "/"
+
+    for prefix, shell in _SPA_SHELLS:
+        if path == prefix.rstrip("/") or path.startswith(prefix):
+            return urlunsplit(("", "", shell, parts.query, parts.fragment))
 
     name = Path(path).name
     if name and "." in name:

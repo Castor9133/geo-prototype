@@ -69,10 +69,10 @@
             navigation_menu: {
                 items: [
                     { id: 'suite', label: 'GEO Suite', url: '/suite', target: '_self', enabled: true },
-                    { id: 'diagnostic', label: '诊断', url: '/diagnostic', target: '_self', enabled: true },
-                    { id: 'knowledge', label: '知识库', url: '/knowledge', target: '_self', enabled: true },
+                    { id: 'diagnostic', label: '检查', url: '/diagnostic', target: '_self', enabled: true },
+                    { id: 'knowledge', label: '知识', url: '/knowledge', target: '_self', enabled: true },
                     { id: 'keywords', label: '拓词', url: '/keywords', target: '_self', enabled: true },
-                    { id: 'distribute', label: '分发', url: '/distribute', target: '_self', enabled: true },
+                    { id: 'distribute', label: '分发预览', url: '/distribute', target: '_self', enabled: true },
                     { id: 'measure', label: '观测', url: '/suite?step=measure', target: '_self', enabled: true },
                     { id: 'config', label: '配置', url: '/settings', target: '_self', enabled: true },
                 ],
@@ -243,7 +243,7 @@
                     || url.includes('/knowledge-bases');
             });
             if (!hasKnowledge) {
-                const knowledge = { id: 'knowledge', label: '知识库', url: '/knowledge', target: '_self', enabled: true };
+                const knowledge = { id: 'knowledge', label: '知识', url: '/knowledge', target: '_self', enabled: true };
                 const diagnosticIndex = next.findIndex(item => {
                     const id = String(item.id || '').toLowerCase();
                     const url = String(item.url || '').toLowerCase();
@@ -255,7 +255,7 @@
             const hasDistribute = next.some(item => String(item.id || '').toLowerCase() === 'distribute'
                 || String(item.url || '').split('?')[0].replace(/\/$/, '') === '/distribute');
             if (!hasDistribute) {
-                const distribute = { id: 'distribute', label: '分发', url: '/distribute', target: '_self', enabled: true };
+                const distribute = { id: 'distribute', label: '分发预览', url: '/distribute', target: '_self', enabled: true };
                 const keywordsIndex = next.findIndex(item => {
                     const id = String(item.id || '').toLowerCase();
                     const url = String(item.url || '').toLowerCase();
@@ -486,7 +486,7 @@
         },
         dictionaries: {
             'zh-CN': {
-                'nav.diagnostic': '诊断',
+                'nav.diagnostic': '检查',
                 'nav.keywords': '拓词',
                 'nav.tools': '工具',
                 'header.mobileMenu': '打开菜单',
@@ -841,10 +841,10 @@
             <a href="/" data-logo-link class="geo-header__logo">GEORank</a>
             <div class="geo-header__nav hidden md:flex" data-site-navigation data-navigation-variant="desktop">
                 <a href="/suite" data-nav-link data-navigation-item="suite">GEO Suite</a>
-                <a href="/diagnostic" data-nav-link data-i18n="nav.diagnostic">诊断</a>
-                <a href="/knowledge" data-nav-link data-navigation-item="knowledge">知识库</a>
+                <a href="/diagnostic" data-nav-link data-i18n="nav.diagnostic">检查</a>
+                <a href="/knowledge" data-nav-link data-navigation-item="knowledge">知识</a>
                 <a href="/keywords" data-nav-link data-i18n="nav.keywords">拓词</a>
-                <a href="/distribute" data-nav-link data-navigation-item="distribute">分发</a>
+                <a href="/distribute" data-nav-link data-navigation-item="distribute">分发预览</a>
                 <a href="/suite?step=measure" data-nav-link data-navigation-item="measure">观测</a>
                 <a href="/settings" data-nav-link data-navigation-item="config">配置</a>
             </div>
@@ -870,10 +870,10 @@
     <div id="mobile-menu" class="geo-header__mobile hidden md:hidden">
         <div class="geo-header__mobile-nav" data-site-navigation data-navigation-variant="mobile">
             <a href="/suite" data-nav-link data-navigation-item="suite">GEO Suite</a>
-            <a href="/diagnostic" data-nav-link data-i18n="nav.diagnostic">诊断</a>
-            <a href="/knowledge" data-nav-link data-navigation-item="knowledge">知识库</a>
+            <a href="/diagnostic" data-nav-link data-i18n="nav.diagnostic">检查</a>
+            <a href="/knowledge" data-nav-link data-navigation-item="knowledge">知识</a>
             <a href="/keywords" data-nav-link data-i18n="nav.keywords">拓词</a>
-            <a href="/distribute" data-nav-link data-navigation-item="distribute">分发</a>
+            <a href="/distribute" data-nav-link data-navigation-item="distribute">分发预览</a>
             <a href="/suite?step=measure" data-nav-link data-navigation-item="measure">观测</a>
             <a href="/settings" data-nav-link data-navigation-item="config">配置</a>
         </div>

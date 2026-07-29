@@ -98,28 +98,25 @@
         const kbName = (demo && demo.knowledge_base && demo.knowledge_base.name)
             || (metrics && metrics.kb_name)
             || DEMO_KB.kbName;
-        const badge = native ? 'native-python' : 'legacy-flow';
+        const readyFlag = demo && demo.demo_ready;
+        const badge = readyFlag ? '已就绪' : '待导入';
         const sources = (metrics && metrics.sources_note)
-            || '事实来自大疆官网产品页/技术参数/FAQ，非官方合作包';
+            || '基于公开产品页与 FAQ 整理的事实材料';
         const cards = metrics && Array.isArray(metrics.cards) ? metrics.cards : [];
-        const adminUrl = native
-            ? (demo && demo.admin_path) || nativeAdminUrl()
-            : geoflowUrl(`/geo_admin/knowledge-bases/${(metrics && metrics.kb_id) || DEMO_KB.kbId}/detail`);
-        const listUrl = native ? nativeAdminUrl() : geoflowUrl('/geo_admin/knowledge-bases');
-        const ready = demo && demo.demo_ready;
+        const adminUrl = '/knowledge';
+        const listUrl = '/knowledge';
         const kbStats = demo && demo.knowledge_base;
 
         container.innerHTML = [
             `<div class="suite-extra__head">`,
-            `<h3>${escapeHtml(entity)} · 事实卡看板</h3>`,
+            `<h3>${escapeHtml(entity)} · 知识概览</h3>`,
             `<span class="suite-badge suite-badge--accent">${escapeHtml(badge)}</span>`,
             `</div>`,
             `<p class="suite-extra__lead">`,
             `<strong>${escapeHtml(kbName)}</strong>`,
             native
-                ? ` · Rank 内容引擎${ready ? '已导入' : '待导入'} · 切片/JSONB 向量`
-                : ` · GEOFlow KB #${escapeHtml((metrics && metrics.kb_id) || DEMO_KB.kbId)}`,
-            ` · 包路径 <code>${escapeHtml(DEMO_KB.docsPath)}</code>`,
+                ? ` · ${readyFlag ? '示例库已导入' : '可导入示例库或新建知识库'}`
+                : ` · 知识库`,
             `</p>`,
             `<p class="suite-extra__meta">${escapeHtml(sources)}</p>`,
             `<div class="suite-metric-grid">`,
@@ -128,7 +125,7 @@
                     `<div class="suite-metric"><strong>${kbStats.doc_count ?? 0}</strong><span>文档</span></div>`,
                     `<div class="suite-metric"><strong>${kbStats.chunk_count ?? 0}</strong><span>切片</span></div>`,
                     `<div class="suite-metric"><strong>${kbStats.vectorized_count ?? 0}</strong><span>已向量</span></div>`,
-                    `<div class="suite-metric"><strong>${ready ? '就绪' : '待导入'}</strong><span>演示包</span></div>`,
+                    `<div class="suite-metric"><strong>${readyFlag ? '就绪' : '待导入'}</strong><span>示例库</span></div>`,
                 ].join('')
                 : [
                     `<div class="suite-metric"><strong>${pct(metrics?.coverage?.rate)}</strong><span>事实卡覆盖率</span><small>${metrics?.coverage?.approved_cards || 0}/${metrics?.coverage?.checklist_total || 0}</small></div>`,
@@ -145,12 +142,12 @@
                     )),
                     `</ul>`,
                 ].join('')
-                : (ready
-                    ? `<p class="suite-extra__meta">已从 Rank 导入演示知识库；打开内容引擎可检索切片。</p>`
-                    : `<p class="suite-extra__meta">尚未导入：请管理员在内容引擎点击「导入 DJI 演示包」。</p>`),
+                : (readyFlag
+                    ? `<p class="suite-extra__meta">示例知识库已就绪，可在知识库页检索与生成。</p>`
+                    : `<p class="suite-extra__meta">尚未导入示例库：可在知识库页导入或新建。</p>`),
             `<div class="suite-cta-row suite-cta-row--compact">`,
-            `<a class="suite-btn suite-btn--primary" href="${escapeHtml(adminUrl)}" ${native ? '' : 'target="_blank" rel="noreferrer"'}>${native ? '打开内容引擎' : '打开 KB 详情'}</a>`,
-            `<a class="suite-btn suite-btn--ghost" href="${escapeHtml(listUrl)}" ${native ? '' : 'target="_blank" rel="noreferrer"'}>${native ? '管理知识库' : '知识库列表'}</a>`,
+            `<a class="suite-btn suite-btn--primary" href="${escapeHtml(adminUrl)}">打开知识库</a>`,
+            `<a class="suite-btn suite-btn--ghost" href="${escapeHtml(listUrl)}">管理知识库</a>`,
             `</div>`,
         ].join('');
     }
@@ -179,31 +176,28 @@
                 )),
                 `</ul>`,
             ].join('')
-            : `<p class="suite-extra__meta">暂无任务草稿。请在内容引擎新建任务（绑 KB + 提示词）生成。</p>`;
+            : `<p class="suite-extra__meta">暂无任务草稿。请在知识库/分发页新建任务并生成草稿。</p>`;
 
         if (native) {
             container.innerHTML = [
                 `<div class="suite-extra__head">`,
-                `<h3>分发（Rank 原生）</h3>`,
-                `<span class="suite-badge suite-badge--accent">native-python</span>`,
+                `<h3>渠道预览</h3>`,
+                `<span class="suite-badge suite-badge--accent">预览·不外发</span>`,
                 `</div>`,
                 `<p class="suite-extra__lead">`,
-                `在 <strong>内容引擎</strong> 新建任务：选中国生态提示词并绑定「${escapeHtml(DEMO_KB.kbName)}」，生成答案优先草稿，再登记渠道 / 模板 key。`,
+                `绑定知识库与提示词生成草稿，再预览渠道壳并标记就绪。`,
                 `</p>`,
                 `<ol class="suite-demo-list suite-extra__steps">`,
-                `<li>打开内容引擎 → 任务</li>`,
-                `<li>提示词：中国生态 8 条之一</li>`,
-                `<li>知识库：绑定 DJI 演示包</li>`,
-                `<li>生成草稿（同步；无 LLM 时本地降级）</li>`,
-                `<li>渠道页登记模板 key；标记已分发</li>`,
+                `<li>打开内容/分发 → 任务</li>`,
+                `<li>选择提示词并绑定知识库</li>`,
+                `<li>生成草稿</li>`,
+                `<li>预览渠道壳并标记就绪</li>`,
                 `</ol>`,
                 taskList,
                 `<div class="suite-cta-row suite-cta-row--compact">`,
-                `<a class="suite-btn suite-btn--primary" href="${escapeHtml(tasksUrl)}">打开内容引擎任务</a>`,
-                `<a class="suite-btn suite-btn--ghost" href="${escapeHtml(detailUrl)}">核对知识库</a>`,
-                `<a class="suite-btn suite-btn--ghost" href="${escapeHtml(distUrl)}">渠道 / 模板</a>`,
+                `<a class="suite-btn suite-btn--primary" href="/distribute">打开内容/分发</a>`,
+                `<a class="suite-btn suite-btn--ghost" href="/knowledge">打开知识库</a>`,
                 `</div>`,
-                `<p class="suite-extra__meta">验收路径不经 Laravel；包路径 <code>${escapeHtml(DEMO_KB.docsPath)}</code></p>`,
             ].join('');
             return;
         }
@@ -231,17 +225,13 @@
     }
 
     async function renderTrustAsset(container) {
-        const native = isNative();
-        const kbUrl = native ? nativeAdminUrl() : geoflowUrl(DEMO_KB.defaultDetailPath);
         container.innerHTML = [
             `<div class="suite-extra__head">`,
-            `<h3>L3 信任素材（次要）</h3>`,
-            `<span class="suite-badge">样板 · 不阻塞 L2</span>`,
+            `<h3>补充材料</h3>`,
             `</div>`,
-            `<p class="suite-extra__lead">主演示走 DJI Mini 5 Pro 知识库与任务绑定。</p>`,
+            `<p class="suite-extra__lead">主路径请使用知识库与内容任务；需要时再补充公开材料。</p>`,
             `<div class="suite-cta-row suite-cta-row--compact">`,
-            `<a class="suite-btn suite-btn--primary" href="${escapeHtml(kbUrl)}" ${native ? '' : 'target="_blank" rel="noreferrer"'}>打开推荐 KB</a>`,
-            `<a class="suite-btn suite-btn--ghost" href="/pilot-demo/geo-demo-column/trust-asset.html" target="_blank" rel="noreferrer">打开 L3 样板全文</a>`,
+            `<a class="suite-btn suite-btn--primary" href="/knowledge">打开知识库</a>`,
             `</div>`,
         ].join('');
     }
@@ -573,11 +563,9 @@
             `</div>`,
 
             `<footer class="measure-monitor__foot">`,
-            `<p class="suite-extra__meta">${escapeHtml(payload.method_note || payload.message || '')} `
-            + `探针：<code>${escapeHtml(DEMO_KB.docsPath)}probe-questions.md</code></p>`,
+            `<p class="suite-extra__meta">${escapeHtml(payload.method_note || payload.message || '演示数据')}</p>`,
             `<div class="suite-cta-row suite-cta-row--compact">`,
             `<button type="button" class="suite-btn suite-btn--primary" data-measure-done="1">标记观测完成</button>`,
-            `<a class="suite-btn suite-btn--ghost" href="/admin/trust-obs">打开可信观测后台</a>`,
             `</div>`,
             `</footer>`,
             `</div>`,
@@ -608,16 +596,14 @@
                 const plat = container.querySelector('#mf-platform')?.value || '';
                 const note = container.querySelector('.measure-monitor__foot .suite-extra__meta');
                 if (note) {
-                    note.textContent = `已应用本地筛选壳：${plat}（演示 UI，不请求新采样）`;
+                    note.textContent = plat ? `已筛选：${plat}` : '已应用筛选';
                 }
             });
         }
 
         const addBtn = container.querySelector('#measure-add-q');
         if (addBtn) {
-            addBtn.addEventListener('click', () => {
-                addBtn.textContent = '+ 演示模式：请在可信观测后台配置探针';
-            });
+            addBtn.hidden = true;
         }
 
         const doneBtn = container.querySelector('[data-measure-done]');
@@ -630,7 +616,359 @@
         }
     }
 
+    function asPct(n) {
+        return Math.round((Number(n) || 0) * 100);
+    }
+
+    function questionEntityStatus(q) {
+        const rows = Object.values(q.platforms || {});
+        const total = rows.length || 1;
+        const hits = rows.filter((r) => r && r.entity_mentioned).length;
+        if (hits >= total) return { kind: 'full', label: '本品全中' };
+        if (hits <= 0) return { kind: 'miss', label: '本品缺席' };
+        return { kind: 'partial', label: '部分出现' };
+    }
+
+    function layerEntityRate(questions, layerId) {
+        let hit = 0;
+        let total = 0;
+        (questions || []).forEach((q) => {
+            if (q.layer !== layerId) return;
+            Object.values(q.platforms || {}).forEach((r) => {
+                total += 1;
+                if (r && r.entity_mentioned) hit += 1;
+            });
+        });
+        return total ? hit / total : 0;
+    }
+
+    function platformAggRows(script) {
+        const questions = script.questions || [];
+        const summary = script.summary || {};
+        const readiness = summary.platform_readiness || {};
+        return (script.platforms || []).map((name) => {
+            let e = 0;
+            let c = 0;
+            let d = 0;
+            let n = 0;
+            questions.forEach((q) => {
+                const row = (q.platforms || {})[name];
+                if (!row) return;
+                n += 1;
+                if (row.entity_mentioned) e += 1;
+                if (row.competitor_mentioned) c += 1;
+                d += Number(row.evidence_density) || 0;
+            });
+            return {
+                name,
+                entityRate: n ? e / n : 0,
+                competitorRate: n ? c / n : 0,
+                evidenceDensity: n ? d / n : 0,
+                readiness: Number(readiness[name]) || 0,
+                samples: n,
+            };
+        });
+    }
+
+    function renderFunnelObserve(container, script, aiFocus) {
+        const layers = script.layers || [];
+        const questions = script.questions || [];
+        const summary = script.summary || {};
+        const platforms = script.platforms || [];
+        const rubric = script.scoring_rubric || {};
+        const meta = script.meta || {};
+        const matrix = platformAggRows(script);
+        const sampleCount = Number(meta.sample_count) || (questions.length * platforms.length) || 0;
+        const readinessVals = Object.values(summary.platform_readiness || {});
+        const readinessAvg = readinessVals.length
+            ? readinessVals.reduce((s, v) => s + Number(v || 0), 0) / readinessVals.length
+            : 0;
+        const focusItems = (aiFocus && aiFocus.items) || [];
+
+        let layerIdx = 0;
+        let qIdx = 0;
+        let platformFilter = 'all';
+        let windowLabel = meta.window_label || '近 30 天';
+        let focusPlat = platforms[0] || '';
+
+        function layerQuestions() {
+            const layer = layers[layerIdx];
+            if (!layer) return [];
+            return questions.filter((q) => q.layer === layer.id);
+        }
+
+        function sourcePrefsPanelHtml() {
+            if (!focusItems.length) return '';
+            const rows = focusItems.map((row) => {
+                const chips = (row.source_prefs || [])
+                    .map((sp) => {
+                        const ex = (sp.examples || []).slice(0, 2).join('、');
+                        return `<span class="obs-src-chip" title="${escapeHtml(ex)}">${escapeHtml(sp.type)}</span>`
+                            + (ex ? `<span class="obs-src-ex">${escapeHtml(ex)}</span>` : '');
+                    })
+                    .join('');
+                return `<tr><th>${escapeHtml(row.platform)}</th><td class="obs-src-cell">${chips}</td></tr>`;
+            }).join('');
+            return [
+                '<section class="measure-panel obs-source-prefs-panel">',
+                '<div class="measure-panel__head"><h3>平台信源偏好</h3>',
+                '<span class="cockpit-muted">演示策略表 · 非平台实测</span></div>',
+                `<p class="obs-source-prefs__note">${escapeHtml((aiFocus && aiFocus.disclaimer) || '同源策略表，供对照生成侧重；非实测引用率。')}</p>`,
+                '<div class="obs-source-prefs-scroll"><table class="obs-source-prefs">',
+                '<thead><tr><th>平台</th><th>偏好信源类型（示例域）</th></tr></thead>',
+                `<tbody>${rows}</tbody></table></div>`,
+                '</section>',
+            ].join('');
+        }
+
+        function paint() {
+            const layer = layers[layerIdx] || {};
+            const qs = layerQuestions();
+            if (qIdx >= qs.length) qIdx = 0;
+            const q = qs[qIdx] || {};
+            const allPlatRows = Object.entries(q.platforms || {});
+            const platRows = platformFilter === 'all'
+                ? allPlatRows
+                : allPlatRows.filter(([name]) => name === platformFilter);
+            if (focusPlat && !allPlatRows.some(([name]) => name === focusPlat)) {
+                focusPlat = (allPlatRows[0] && allPlatRows[0][0]) || platforms[0] || '';
+            }
+            if (platformFilter !== 'all') focusPlat = platformFilter;
+            const entityHits = allPlatRows.filter(([, r]) => r.entity_mentioned).length;
+            const compHits = allPlatRows.filter(([, r]) => r.competitor_mentioned).length;
+            const densAvg = allPlatRows.length
+                ? allPlatRows.reduce((s, [, r]) => s + (Number(r.evidence_density) || 0), 0) / allPlatRows.length
+                : 0;
+            const focusRow = (q.platforms || {})[focusPlat] || {};
+            const focusEvidence = focusRow.evidence || [];
+
+            container.innerHTML = [
+                '<div class="measure-monitor obs-monitor" data-demo="1">',
+                '<div class="measure-toolbar obs-toolbar">',
+                '<div class="measure-toolbar__meta">',
+                '<span class="suite-badge">演示剧本 · 非平台实测</span>',
+                `<span class="obs-entity-chip">${escapeHtml(script.entity || '本品')}</span>`,
+                `<span class="obs-entity-chip obs-entity-chip--comp">vs ${escapeHtml(script.competitor || '竞品')}</span>`,
+                '</div>',
+                '<div class="measure-toolbar__filters">',
+                `<label class="obs-filter"><span>时间窗</span><select id="obs-window" aria-label="时间范围">`,
+                `<option value="近 7 天"${windowLabel === '近 7 天' ? ' selected' : ''}>近 7 天</option>`,
+                `<option value="近 30 天"${windowLabel === '近 30 天' ? ' selected' : ''}>近 30 天</option>`,
+                '</select></label>',
+                `<label class="obs-filter"><span>平台</span><select id="obs-platform" aria-label="平台筛选">`,
+                `<option value="all"${platformFilter === 'all' ? ' selected' : ''}>全部平台</option>`,
+                platforms.map((p) => `<option value="${escapeHtml(p)}"${platformFilter === p ? ' selected' : ''}>${escapeHtml(p)}</option>`).join(''),
+                '</select></label>',
+                `<span class="measure-toolbar__hint">${escapeHtml(meta.probe_cycle || `${questions.length} 问 × ${platforms.length} 平台`)}</span>`,
+                `<span class="measure-toolbar__hint">最近探针 ${escapeHtml(meta.last_probe_at || '—')}</span>`,
+                '</div></div>',
+
+                '<section class="measure-kpi-row obs-kpi-row" aria-label="观测 KPI">',
+                `<article class="measure-kpi"><span class="measure-kpi__icon measure-kpi__icon--green material-symbols-outlined">verified</span><div><strong>${asPct(summary.entity_appearance_rate)}%</strong><span>本品出现率</span></div><small>${escapeHtml(script.entity || '')}</small></article>`,
+                `<article class="measure-kpi"><span class="measure-kpi__icon measure-kpi__icon--blue material-symbols-outlined">compare</span><div><strong>${asPct(summary.competitor_appearance_rate)}%</strong><span>竞品出现率</span></div><small>${escapeHtml(script.competitor || '')}</small></article>`,
+                `<article class="measure-kpi"><span class="measure-kpi__icon measure-kpi__icon--orange material-symbols-outlined">analytics</span><div><strong>${asPct(summary.avg_evidence_density)}%</strong><span>平均证据密度</span></div><small>演示指标</small></article>`,
+                `<article class="measure-kpi"><span class="measure-kpi__icon measure-kpi__icon--blue material-symbols-outlined">hub</span><div><strong>${asPct(readinessAvg)}%</strong><span>平台就绪均值</span></div><small>四平台聚合</small></article>`,
+                `<article class="measure-kpi"><span class="measure-kpi__icon measure-kpi__icon--green material-symbols-outlined">quiz</span><div><strong>${questions.length}/${sampleCount}</strong><span>问题 / 样本</span></div><small>${escapeHtml(windowLabel)}</small></article>`,
+                '</section>',
+
+                '<div class="obs-funnel" role="tablist" aria-label="观测漏斗层">',
+                layers.map((l, i) => {
+                    const rate = layerEntityRate(questions, l.id);
+                    return `<button type="button" class="obs-funnel__btn${i === layerIdx ? ' is-active' : ''}" data-funnel-layer="${i}" role="tab" aria-selected="${i === layerIdx}">`
+                        + `<em>${i + 1}. ${escapeHtml(l.label)}</em>`
+                        + `<span>本品出现 ${asPct(rate)}%</span></button>`;
+                }).join(''),
+                '</div>',
+                `<p class="obs-layer-desc"><strong>${escapeHtml(layer.label || '')}</strong> — ${escapeHtml(layer.desc || '')}</p>`,
+
+                '<div class="obs-workspace">',
+                '<section class="measure-panel obs-q-panel">',
+                '<div class="measure-panel__head"><h3>本层追问</h3><span class="cockpit-muted">' + qs.length + ' 条</span></div>',
+                '<ul class="measure-q-list">',
+                qs.map((item, i) => {
+                    const st = questionEntityStatus(item);
+                    return `<li><button type="button" class="measure-q-item${i === qIdx ? ' is-active' : ''}" data-funnel-q="${i}">`
+                        + `<span class="measure-q-item__text">${escapeHtml(item.text)}</span>`
+                        + `<span class="obs-q-status obs-q-status--${st.kind}">${escapeHtml(st.label)}</span>`
+                        + `</button></li>`;
+                }).join(''),
+                '</ul></section>',
+
+                '<section class="measure-panel obs-cards-panel">',
+                `<div class="measure-panel__head"><h3>平台答案回放</h3>`
+                + `<span class="cockpit-muted">本品 ${entityHits}/${allPlatRows.length} · 竞品 ${compHits}/${allPlatRows.length} · 证据 ${asPct(densAvg)}%</span></div>`,
+                `<p class="measure-answer__q">${escapeHtml(q.text || '')}</p>`,
+                '<div class="obs-plat-cards">',
+                (platRows.length ? platRows : [['—', {}]]).map(([name, row]) => {
+                    const dens = asPct(row.evidence_density);
+                    const body = row.answer_excerpt || row.snippet || '（无摘录）';
+                    const evid = (row.evidence || []).map((e) => `<span class="obs-chip">${escapeHtml(e)}</span>`).join('');
+                    return `<button type="button" class="obs-plat-card${name === focusPlat ? ' is-active' : ''}" data-focus-plat="${escapeHtml(name)}">`
+                        + `<header><strong>${escapeHtml(name)}</strong>`
+                        + `<span class="obs-dens">${dens}%</span></header>`
+                        + `<div class="obs-dens-bar" aria-hidden="true"><i style="width:${dens}%"></i></div>`
+                        + `<div class="obs-flags">`
+                        + `<span class="obs-flag${row.entity_mentioned ? ' is-on' : ''}">本品${row.entity_mentioned ? '✓' : '×'}</span>`
+                        + `<span class="obs-flag${row.competitor_mentioned ? ' is-on is-comp' : ''}">竞品${row.competitor_mentioned ? '✓' : '×'}</span>`
+                        + `</div>`
+                        + `<p class="obs-excerpt">${escapeHtml(body)}</p>`
+                        + `<div class="obs-chips">${evid || '<span class="obs-chip obs-chip--muted">无引用示意</span>'}</div>`
+                        + `</button>`;
+                }).join(''),
+                '</div></section>',
+
+                '<aside class="measure-panel obs-side-panel">',
+                '<div class="measure-panel__head"><h3>本问洞察</h3></div>',
+                `<ul class="obs-stat-list">`
+                + `<li><span>本品出现</span><b>${entityHits}/${allPlatRows.length}</b></li>`
+                + `<li><span>竞品出现</span><b>${compHits}/${allPlatRows.length}</b></li>`
+                + `<li><span>证据密度</span><b>${asPct(densAvg)}%</b></li>`
+                + `<li><span>焦点平台</span><b>${escapeHtml(focusPlat || '—')}</b></li>`
+                + `</ul>`,
+                '<div class="measure-panel__head"><h3>评分规则</h3></div>',
+                '<div class="obs-rubric">',
+                '<p class="obs-rubric__label">加分</p>',
+                '<ul>' + (rubric.plus || []).map((t) => `<li>${escapeHtml(t)}</li>`).join('') + '</ul>',
+                '<p class="obs-rubric__label obs-rubric__label--minus">扣分</p>',
+                '<ul>' + (rubric.minus || []).map((t) => `<li>${escapeHtml(t)}</li>`).join('') + '</ul>',
+                '</div>',
+                `<div class="measure-panel__head"><h3>引用 · ${escapeHtml(focusPlat || '')}</h3></div>`,
+                '<ol class="measure-evidence">'
+                + (focusEvidence.length
+                    ? focusEvidence.map((e) => `<li>${escapeHtml(e)}</li>`).join('')
+                    : '<li class="cockpit-muted">暂无引用示意</li>')
+                + '</ol>',
+                '</aside>',
+                '</div>',
+
+                '<section class="measure-panel obs-matrix-panel">',
+                '<div class="measure-panel__head"><h3>平台 × 指标矩阵</h3><span class="cockpit-muted">全剧聚合 · 非实测</span></div>',
+                '<div class="obs-matrix-scroll"><table class="obs-matrix">',
+                '<thead><tr><th>平台</th><th>本品出现率</th><th>竞品出现率</th><th>证据密度</th><th>就绪度</th><th>样本</th></tr></thead>',
+                '<tbody>',
+                matrix.map((row) => `<tr>`
+                    + `<td>${escapeHtml(row.name)}</td>`
+                    + `<td><div class="obs-mini-bar"><i style="width:${asPct(row.entityRate)}%"></i></div>${asPct(row.entityRate)}%</td>`
+                    + `<td><div class="obs-mini-bar obs-mini-bar--comp"><i style="width:${asPct(row.competitorRate)}%"></i></div>${asPct(row.competitorRate)}%</td>`
+                    + `<td><div class="obs-mini-bar obs-mini-bar--dens"><i style="width:${asPct(row.evidenceDensity)}%"></i></div>${asPct(row.evidenceDensity)}%</td>`
+                    + `<td>${asPct(row.readiness)}%</td>`
+                    + `<td>${row.samples}</td></tr>`).join(''),
+                '</tbody></table></div>',
+                '</section>',
+
+                sourcePrefsPanelHtml(),
+
+                '<footer class="measure-monitor__foot">',
+                `<p class="suite-extra__meta">${escapeHtml(script.disclaimer || '演示剧本 · 非平台实测')}</p>`,
+                '<div class="suite-cta-row suite-cta-row--compact">',
+                '<button type="button" class="suite-btn suite-btn--primary" data-measure-done="1">标记观测完成</button>',
+                '</div></footer></div>',
+            ].join('');
+
+            container.querySelectorAll('[data-funnel-layer]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    layerIdx = Number(btn.getAttribute('data-funnel-layer')) || 0;
+                    qIdx = 0;
+                    paint();
+                });
+            });
+            container.querySelectorAll('[data-funnel-q]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    qIdx = Number(btn.getAttribute('data-funnel-q')) || 0;
+                    paint();
+                });
+            });
+            container.querySelectorAll('[data-focus-plat]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    focusPlat = btn.getAttribute('data-focus-plat') || focusPlat;
+                    paint();
+                });
+            });
+            const winSel = container.querySelector('#obs-window');
+            if (winSel) {
+                winSel.addEventListener('change', () => {
+                    windowLabel = winSel.value || windowLabel;
+                    paint();
+                });
+            }
+            const platSel = container.querySelector('#obs-platform');
+            if (platSel) {
+                platSel.addEventListener('change', () => {
+                    platformFilter = platSel.value || 'all';
+                    paint();
+                });
+            }
+            const doneBtn = container.querySelector('[data-measure-done]');
+            if (doneBtn && global.GEOrank?.SuiteWorkflow) {
+                doneBtn.addEventListener('click', () => {
+                    const Workflow = global.GEOrank.SuiteWorkflow;
+                    Workflow.markComplete('measure');
+                    Workflow.handoff?.('measure', {
+                        meta: {
+                            script_key: script.key,
+                            entity_appearance_rate: summary.entity_appearance_rate,
+                        },
+                    }).catch(() => null);
+                    doneBtn.textContent = '已标记完成';
+                    doneBtn.disabled = true;
+                });
+            }
+        }
+
+        paint();
+    }
+
+    let aiFocusCache = null;
+
+    async function loadAiFocusScript() {
+        if (aiFocusCache) return aiFocusCache;
+        try {
+            aiFocusCache = await fetchJson('/api/geo-runs/scripts/geo-ai-focus-dji');
+            if (aiFocusCache && aiFocusCache.items) return aiFocusCache;
+        } catch (_) {
+            /* fallback */
+        }
+        try {
+            aiFocusCache = await fetchJson('/pilot-demo/geo-ai-focus-dji.json');
+        } catch (_) {
+            aiFocusCache = null;
+        }
+        return aiFocusCache;
+    }
+
     async function renderMeasure(container) {
+        const Workflow = global.GEOrank?.SuiteWorkflow;
+        const runId = Workflow?.getRunId?.();
+        const aiFocus = await loadAiFocusScript().catch(() => null);
+        try {
+            if (runId) {
+                const preview = await fetchJson(`/api/geo-runs/${runId}/geo-preview`);
+                if (preview && preview.script) {
+                    renderFunnelObserve(container, preview.script, aiFocus);
+                    return;
+                }
+            }
+        } catch (error) {
+            console.warn('[suite-extra] geo-preview failed', error);
+        }
+        try {
+            const script = await fetchJson('/api/geo-runs/scripts/geo-observe-funnel-dji-vs-autel');
+            if (script && script.questions) {
+                renderFunnelObserve(container, script, aiFocus);
+                return;
+            }
+        } catch (error) {
+            console.warn('[suite-extra] script api failed', error);
+        }
+        try {
+            const script = await fetchJson('/pilot-demo/geo-observe-funnel-dji-vs-autel.json');
+            if (script && script.questions) {
+                renderFunnelObserve(container, script, aiFocus);
+                return;
+            }
+        } catch (error) {
+            console.warn('[suite-extra] static funnel failed', error);
+        }
         try {
             const latest = await fetchJson('/api/admin/trust-obs/runs/latest');
             if (latest && latest.run) {
@@ -665,7 +1003,7 @@
         // 同一步重复 refresh 时勿清空已渲染内容，避免「加载中」卡死
         if (!sameStepReady) {
             if (stepId === 'measure' || stepId === 'obs' || stepId === 'trustobs' || stepId === 'measurement') {
-                container.innerHTML = '<div class="measure-monitor measure-monitor--loading"><div class="measure-toolbar"><span class="suite-badge">加载中</span><span class="measure-toolbar__hint">正在拉取观测样例…</span></div><div class="measure-kpi-row"><div class="measure-kpi skeleton"></div><div class="measure-kpi skeleton"></div><div class="measure-kpi skeleton"></div></div></div>';
+                container.innerHTML = '<div class="measure-monitor measure-monitor--loading"><div class="measure-toolbar"><span class="suite-badge">加载中</span><span class="measure-toolbar__hint">正在加载观测数据…</span></div><div class="measure-kpi-row"><div class="measure-kpi skeleton"></div><div class="measure-kpi skeleton"></div><div class="measure-kpi skeleton"></div></div></div>';
             } else {
                 container.innerHTML = '<p class="suite-extra__lead">加载中…</p>';
             }

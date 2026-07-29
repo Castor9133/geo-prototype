@@ -10,19 +10,19 @@
     var STEPS = [
         {
             id: 'diagnostic',
-            label: '诊断',
-            title: '网站 SEO 排查测试',
-            desc: '内容工程 L1：查 Schema / H2 问句化 / Meta / 外链就绪，确认页面能进答案「候选池」。诊断就绪 ≠ 引用率。',
+            label: '检查',
+            title: '基础 SEO 检查',
+            desc: '输入网址，查看四类 SEO 就绪情况；可选查看 GEO 演示对比。',
             href: '/diagnostic',
-            cta: '开始诊断',
+            cta: '开始检查',
             icon: 'monitoring',
             next: 'knowledge',
         },
         {
             id: 'knowledge',
-            label: '知识库',
-            title: '事实卡 → 切片向量化',
-            desc: '内容工程 L2：推荐演示包 DJI Mini 5 Pro（docs/pilot-demo/cn-product-demo-v2/）。native-python 下走 Rank 内容引擎；导入事实卡并向量化后进拓词/分发。',
+            label: '知识',
+            title: '知识库与事实材料',
+            desc: '新建或导入示例库，沉淀事实材料后进入拓词与内容。',
             href: '/knowledge',
             cta: '打开知识库',
             icon: 'database',
@@ -33,20 +33,20 @@
         {
             id: 'keywords',
             label: '拓词',
-            title: '提示词扩词 / 问题图谱',
-            desc: '内容工程：围绕 Mini 5 Pro 扩成 Prompt Universe（了解/比较/选择/实施/风险），对齐 probe-questions.md；勿沿用旧「GEO 优化公司」词包作主演示。',
+            title: '选题清单',
+            desc: '生成选题，勾选后创建内容任务。',
             href: '/keywords',
-            cta: '开始拓词',
+            cta: '打开选题',
             icon: 'travel_explore',
             next: 'distribute',
         },
         {
             id: 'distribute',
-            label: '分发',
-            title: '任务 · 绑定 KB · 答案优先',
-            desc: 'native-python：在 Rank 内容引擎新建任务 → 中国生态提示词 → 绑定 DJI 演示知识库 → 生成草稿 → 登记渠道/模板 key。legacy-flow 才走 GEOFlow。',
+            label: '内容/分发',
+            title: '草稿与渠道预览',
+            desc: '生成草稿并预览渠道壳，标记就绪（预览·不外发）。',
             href: '/distribute',
-            cta: '打开分发任务',
+            cta: '打开内容/分发',
             icon: 'sync_alt',
             next: 'measure',
             external: false,
@@ -55,21 +55,30 @@
         {
             id: 'measure',
             label: '观测',
-            title: '观测结果',
-            desc: '内容工程闭环：用 Mini 5 Pro 探针题重复抽样，区分 mention / citation / absent 与错误归因，缺口回写事实卡与正文。',
+            title: '三层用户追问',
+            desc: '按认知 → 约束 → 推荐查看出现率与证据密度（演示数据）。',
             href: '/suite?step=measure',
-            cta: '查看观测结果',
+            cta: '查看观测',
             icon: 'monitoring',
             next: null,
             suitePanel: true,
         },
     ];
 
+    var DEFAULT_RUN = {
+        entity: 'DJI Mini 5 Pro',
+        competitor: 'Autel',
+        platforms: ['豆包', '元宝', 'Kimi', 'DeepSeek'],
+        observe_script_key: 'geo-observe-funnel-dji-vs-autel',
+    };
+
     function defaultState() {
         return {
             currentStep: 'diagnostic',
             completed: {},
             meta: {},
+            runId: null,
+            run: null,
             lastHandoff: null,
             updatedAt: null,
         };
@@ -146,6 +155,8 @@
                 if (parsed.lastHandoff && typeof parsed.lastHandoff === 'object') {
                     state.lastHandoff = parsed.lastHandoff;
                 }
+                if (parsed.runId) state.runId = String(parsed.runId);
+                if (parsed.run && typeof parsed.run === 'object') state.run = parsed.run;
                 state.updatedAt = parsed.updatedAt || null;
             }
             return state;
@@ -233,6 +244,109 @@
         return defaultState();
     }
 
+    function apiBase() {
+        try {
+            return (global.GEOrank && global.GEOrank.Auth && global.GEOrank.Auth.apiBase) || '';
+        } catch (e) {
+            return '';
+        }
+    }
+
+    function authHeaders() {
+        var headers = { 'Content-Type': 'application/json' };
+        try {
+            var token = global.GEOrank && global.GEOrank.Auth && global.GEOrank.Auth.getToken && global.GEOrank.Auth.getToken();
+            if (token) headers.Authorization = 'Bearer ' + token;
+        } catch (e) { /* ignore */ }
+        return headers;
+    }
+
+    function getRunId() {
+        try {
+            var params = new URLSearchParams(global.location.search);
+            var fromQuery = params.get('run_id') || params.get('runId');
+            if (fromQuery) return String(fromQuery);
+        } catch (e) { /* ignore */ }
+        var state = load();
+        return state.runId || null;
+    }
+
+    function setRun(run) {
+        var state = load();
+        if (run && run.id) {
+            state.runId = String(run.id);
+            state.run = run;
+        }
+        return save(state);
+    }
+
+    function ensureRun(options) {
+        options = options || {};
+        var existing = getRunId();
+        if (existing && !options.forceNew) {
+            return Promise.resolve(load().run || { id: existing }).then(function (cached) {
+                if (cached && cached.id && !options.refresh) return cached;
+                return fetch(apiBase() + '/api/geo-runs/' + existing, {
+                    headers: authHeaders(),
+                }).then(function (res) {
+                    if (!res.ok) throw new Error('load run failed');
+                    return res.json();
+                }).then(function (run) {
+                    setRun(run);
+                    return run;
+                }).catch(function () {
+                    return createRun(options);
+                });
+            });
+        }
+        return createRun(options);
+    }
+
+    function createRun(options) {
+        options = options || {};
+        var body = {
+            title: options.title || null,
+            entity: options.entity || DEFAULT_RUN.entity,
+            competitor: options.competitor || DEFAULT_RUN.competitor,
+            url: options.url || null,
+            platforms: options.platforms || DEFAULT_RUN.platforms,
+            knowledge_base_id: options.knowledge_base_id || null,
+            observe_script_key: options.observe_script_key || DEFAULT_RUN.observe_script_key,
+        };
+        return fetch(apiBase() + '/api/geo-runs/', {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify(body),
+        }).then(function (res) {
+            if (!res.ok) throw new Error('create run failed');
+            return res.json();
+        }).then(function (run) {
+            setRun(run);
+            return run;
+        });
+    }
+
+    function handoff(step, payload) {
+        var runId = getRunId();
+        if (!runId) {
+            return ensureRun({ url: payload && payload.url }).then(function (run) {
+                return handoff(step, payload);
+            });
+        }
+        var body = Object.assign({ step: step }, payload || {});
+        return fetch(apiBase() + '/api/geo-runs/' + runId + '/handoff', {
+            method: 'PATCH',
+            headers: authHeaders(),
+            body: JSON.stringify(body),
+        }).then(function (res) {
+            if (!res.ok) throw new Error('handoff failed');
+            return res.json();
+        }).then(function (run) {
+            setRun(run);
+            return run;
+        });
+    }
+
     function buildHref(stepOrId, extras) {
         var step = typeof stepOrId === 'string' ? getStep(stepOrId) : stepOrId;
         var url = new URL(step.href, global.location.origin);
@@ -241,6 +355,8 @@
             url.searchParams.set('workflow', '1');
             url.searchParams.set('step', step.id);
         }
+        var runId = (extras && extras.run_id) || getRunId();
+        if (runId) url.searchParams.set('run_id', String(runId));
         if (extras && typeof extras === 'object') {
             Object.keys(extras).forEach(function (key) {
                 if (extras[key] == null || extras[key] === '') return;
@@ -269,11 +385,15 @@
     }
 
     function ensureStyles() {
-        if (document.getElementById(STYLE_ID)) return;
-        var style = document.createElement('style');
-        style.id = STYLE_ID;
+        var style = document.getElementById(STYLE_ID);
+        if (!style) {
+            style = document.createElement('style');
+            style.id = STYLE_ID;
+            document.head.appendChild(style);
+        }
         style.textContent = [
-            '.suite-wf-bar{position:sticky;top:0;z-index:45;margin:0;padding:0.65rem 1rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.65rem;background:linear-gradient(135deg,rgba(31,111,91,0.96),rgba(47,157,130,0.94));color:#f4faf7;box-shadow:0 10px 28px rgba(16,35,31,0.18);font-family:Manrope,Inter,sans-serif}',
+            '.suite-wf-bar{position:sticky;top:4rem;z-index:45;margin:4rem 0 0;padding:0.65rem 1rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.65rem;background:linear-gradient(135deg,rgba(31,111,91,0.96),rgba(47,157,130,0.94));color:#f4faf7;box-shadow:0 10px 28px rgba(16,35,31,0.18);border-bottom:1px solid rgba(16,35,31,0.22);font-family:Manrope,Inter,sans-serif}',
+            'body:has(#suite-wf-bar) main{padding-top:1.25rem !important}',
             '.suite-wf-bar__left{display:flex;flex-wrap:wrap;align-items:center;gap:0.55rem;min-width:0}',
             '.suite-wf-bar__brand{font-weight:800;letter-spacing:-0.02em;font-size:0.82rem}',
             '.suite-wf-bar__chip{display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.55rem;border-radius:999px;background:rgba(255,255,255,0.14);font-size:0.72rem;font-weight:700}',
@@ -283,6 +403,10 @@
             '.suite-wf-bar__btn:hover{transform:translateY(-1px)}',
             '.suite-wf-bar__btn--ghost{color:#f4faf7;border-color:rgba(255,255,255,0.28);background:rgba(255,255,255,0.08)}',
             '.suite-wf-bar__btn--solid{color:#104036;background:#e7fff5}',
+            '.suite-wf-bar__steps{display:flex;flex-wrap:wrap;gap:0.28rem;width:100%}',
+            '.suite-wf-bar__step{display:inline-flex;align-items:center;padding:0.18rem 0.48rem;border-radius:999px;font-size:0.66rem;font-weight:700;color:rgba(244,250,247,0.82);text-decoration:none;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.08)}',
+            '.suite-wf-bar__step.is-active{background:#e7fff5;color:#104036;border-color:transparent}',
+            '.suite-wf-bar__step.is-done{opacity:0.95;border-color:rgba(231,255,245,0.45)}',
             '.suite-wf-next{margin:1rem 0 1.25rem;padding:1rem 1.1rem;border-radius:1.1rem;border:1px solid rgba(31,111,91,0.22);background:linear-gradient(180deg,#f7fcf9,#eef8f3);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.85rem}',
             '.suite-wf-next__copy h3{margin:0 0 0.25rem;font-size:0.95rem;font-weight:800;color:#10231f;font-family:Manrope,Inter,sans-serif}',
             '.suite-wf-next__copy p{margin:0;font-size:0.8rem;line-height:1.55;color:rgba(16,35,31,0.68)}',
@@ -291,71 +415,15 @@
             '.suite-wf-next__btn--primary{color:#fff;background:linear-gradient(135deg,#1f6f5b,#2f9d82)}',
             '.suite-wf-next__btn--ghost{color:#10231f;background:rgba(255,255,255,0.8);border:1px solid rgba(16,35,31,0.12)}',
         ].join('');
-        document.head.appendChild(style);
-    }
-
-    function shouldShowBar(options) {
-        if (options && options.force) return true;
-        try {
-            var params = new URLSearchParams(global.location.search);
-            if (params.get('from') === 'suite' || params.get('workflow') === '1') return true;
-            var state = load();
-            return Boolean(state.updatedAt || Object.keys(state.completed).length);
-        } catch (error) {
-            return false;
-        }
     }
 
     function mountBar(options) {
-        options = options || {};
-        var stepId = normalizeStepId(options.stepId) || 'diagnostic';
-        if (!shouldShowBar(options) && !options.force) return null;
-        ensureStyles();
-
         var existing = document.getElementById('suite-wf-bar');
         if (existing) existing.remove();
-
-        var state = load();
-        if (!state.completed[stepId]) {
-            state.currentStep = stepId;
-            save(state);
-        }
-        state = load();
-
-        var step = getStep(stepId);
-        var next = nextOf(stepId);
-        var idx = stepIndex(stepId) + 1;
-        var bar = document.createElement('div');
-        bar.id = 'suite-wf-bar';
-        bar.className = 'suite-wf-bar';
-        bar.setAttribute('role', 'region');
-        bar.setAttribute('aria-label', 'GEO Suite 工作流');
-
-        var nextHref = options.nextHref || (next ? buildHref(next) : '/suite?step=measure');
-        var nextLabel = options.nextLabel || (next ? '下一步：' + next.label : '回 Suite 观测');
-        var hint = options.hint || (state.completed[stepId]
-            ? '本步已完成，可继续全套工作流。'
-            : '你正在 GEO Suite 全套工作流 · 第 ' + idx + ' / ' + STEPS.length + ' 步');
-
-        bar.innerHTML = [
-            '<div class="suite-wf-bar__left">',
-            '  <span class="suite-wf-bar__brand">GEO Suite</span>',
-            '  <span class="suite-wf-bar__chip"><span class="material-symbols-outlined" style="font-size:14px">route</span>步骤 ' + idx + '/' + STEPS.length + ' · ' + step.label + '</span>',
-            '  <span class="suite-wf-bar__hint">' + hint + '</span>',
-            '</div>',
-            '<div class="suite-wf-bar__actions">',
-            '  <a class="suite-wf-bar__btn suite-wf-bar__btn--ghost" href="/suite?step=' + stepId + '">返回 Suite</a>',
-            '  <a class="suite-wf-bar__btn suite-wf-bar__btn--solid" href="' + nextHref + '">' + nextLabel + '</a>',
-            '</div>',
-        ].join('');
-
-        var header = document.getElementById('header-container');
-        if (header && header.parentNode) {
-            header.parentNode.insertBefore(bar, header.nextSibling);
-        } else {
-            document.body.insertBefore(bar, document.body.firstChild);
-        }
-        return bar;
+        // 顶栏五步条已下线：顶栏主导航已覆盖 Suite 路径；条在各页出现不一致，演示观感差。
+        // handoff / ensureRun / markComplete 仍可用，不依赖此 UI。
+        void options;
+        return null;
     }
 
     function mountNextCard(container, options) {
@@ -404,6 +472,12 @@
             var params = new URLSearchParams(global.location.search);
             var step = normalizeStepId(params.get('step'));
             var done = normalizeStepId(params.get('done'));
+            var runId = params.get('run_id') || params.get('runId');
+            if (runId) {
+                var state = load();
+                state.runId = String(runId);
+                save(state);
+            }
             if (done) markComplete(done);
             if (step) setCurrent(step);
             return load();
@@ -412,31 +486,31 @@
         }
     }
 
-    /** 按 CONTENT_BACKEND_MODE 切换知识库/分发步 CTA（native-python | legacy-flow） */
+    function shouldShowBar(options) {
+        void options;
+        return false;
+    }
+
+    /** 按 CONTENT_BACKEND_MODE 切换知识库/分发步链接（不覆盖产品短文案） */
     function applyContentBackendMode(mode, options) {
         var native = String(mode || 'native-python').toLowerCase() !== 'legacy-flow';
         var publicPath = (options && options.public_path) || '/knowledge';
-        var adminPath = (options && options.admin_path) || '/admin/content-engine';
         var flowBase = ((options && options.flow_base) || 'http://localhost:18080').replace(/\/$/, '');
         var knowledge = getStep('knowledge');
         var distribute = getStep('distribute');
         if (native) {
-            knowledge.desc = '内容工程 L2：DJI Mini 5 Pro 演示包走 Rank 内容引擎（切片/向量/RAG）。打开前台知识库导入或核对，再进拓词/分发。';
             knowledge.href = publicPath;
             knowledge.cta = '打开知识库';
             knowledge.external = false;
-            distribute.desc = '在前台分发页新建任务 → 中国生态提示词 → 绑定 DJI 知识库 → 生成草稿 → 渠道/模板 key。不经 Laravel。';
             distribute.href = '/distribute';
-            distribute.cta = '打开分发任务';
+            distribute.cta = '打开内容/分发';
             distribute.external = false;
         } else {
-            knowledge.desc = '内容工程 L2：推荐演示包 DJI Mini 5 Pro（GEOFlow KB #9）。打开 Flow 详情核对切片，再进拓词/分发。';
             knowledge.href = flowBase + '/geo_admin/knowledge-bases/9/detail';
-            knowledge.cta = '打开 DJI Mini 5 Pro KB';
+            knowledge.cta = '打开知识库';
             knowledge.external = true;
-            distribute.desc = '在 GEOFlow 任务中心新建任务 → 中国生态提示词 → 绑定 KB #9 → 答案优先正文 → 渠道/模板。';
             distribute.href = flowBase + '/geo_admin/tasks';
-            distribute.cta = '打开任务中心新建';
+            distribute.cta = '打开内容任务';
             distribute.external = true;
         }
         return native;
@@ -446,6 +520,7 @@
     global.GEOrank.SuiteWorkflow = {
         STORAGE_KEY: STORAGE_KEY,
         STEPS: STEPS,
+        DEFAULT_RUN: DEFAULT_RUN,
         load: load,
         save: save,
         clear: clear,
@@ -463,5 +538,10 @@
         syncFromQuery: syncFromQuery,
         shouldShowBar: shouldShowBar,
         applyContentBackendMode: applyContentBackendMode,
+        getRunId: getRunId,
+        setRun: setRun,
+        ensureRun: ensureRun,
+        createRun: createRun,
+        handoff: handoff,
     };
 })(window);

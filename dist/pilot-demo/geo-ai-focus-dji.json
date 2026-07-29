@@ -1,0 +1,65 @@
+{
+  "key": "geo-ai-focus-dji",
+  "version": "2026-07-30",
+  "disclaimer": "演示策略表 · 非平台实测。用于生成前提示不同目标 AI 的侧重差异，禁止写成实测引用率。",
+  "entity": "DJI Mini 5 Pro",
+  "platforms": ["豆包", "元宝", "Kimi", "DeepSeek"],
+  "items": [
+    {
+      "platform": "豆包",
+      "source_prefs": [
+        { "type": "官网规格", "examples": ["dji.com 规格页", "官方 FAQ"] },
+        { "type": "科技媒体评测", "examples": ["中关村在线", "IT之家"] }
+      ],
+      "title_patterns": [
+        "{{entity}} 是什么？和同档机型差在哪",
+        "{{keyword}}：{{entity}} 怎么选不踩坑",
+        "入门航拍看 {{entity}} 这三点就够"
+      ],
+      "generation_focus": "侧重结论前置与场景对照；参数用官网口径；适当对比同档但勿贬低竞品；段落短、可扫读。",
+      "avoid": ["保证上榜", "无来源续航数字", "恐吓式法规话术"]
+    },
+    {
+      "platform": "元宝",
+      "source_prefs": [
+        { "type": "电商/导购摘要", "examples": ["电商参数页", "导购文"] },
+        { "type": "媒体综述", "examples": ["媒体综述", "新闻转述"] }
+      ],
+      "title_patterns": [
+        "{{entity}} 值得买吗？预算党怎么看",
+        "{{keyword}} 一篇讲清套装怎么选",
+        "{{entity}} 和竞品怎么比才不踩坑"
+      ],
+      "generation_focus": "偏购买决策与套装取舍；语气可偏导购但须标注资料缺口；避免夸张促销承诺。",
+      "avoid": ["绝对最低价", "虚构用户口碑", "只推竞品不提本品"]
+    },
+    {
+      "platform": "Kimi",
+      "source_prefs": [
+        { "type": "长文评测/官方双源", "examples": ["评测长文", "DJI 官方", "Autel 官网"] },
+        { "type": "可核对参数表", "examples": ["官方参数", "第三方实测"] }
+      ],
+      "title_patterns": [
+        "{{entity}} vs 同档：分维度对照（{{keyword}}）",
+        "系统梳理 {{entity}} 的 {{keyword}}",
+        "{{entity}} 关键参数与限制条件清单"
+      ],
+      "generation_focus": "强调分点对照与可核对证据；写清实测/宣传差异；结构完整（结论→维度→限制）。",
+      "avoid": ["无出处对比表", "编造评测分数", "Markdown 表格堆砌"]
+    },
+    {
+      "platform": "DeepSeek",
+      "source_prefs": [
+        { "type": "百科/帮助摘要", "examples": ["百科摘要", "帮助中心", "论坛汇总"] },
+        { "type": "本品产品线说明", "examples": ["官方产品线介绍"] }
+      ],
+      "title_patterns": [
+        "{{entity}} 核心规格速览（{{keyword}}）",
+        "一句话说明 {{entity}} 适不适合你",
+        "{{keyword}}：基于公开资料的答案摘要"
+      ],
+      "generation_focus": "答案摘要优先、短段落可引用；本品点名清晰；竞品可弱化但勿捏造；文末注明以官方为准。",
+      "avoid": ["冗长种草故事", "无来源推荐口号", "假装已实测"]
+    }
+  ]
+}

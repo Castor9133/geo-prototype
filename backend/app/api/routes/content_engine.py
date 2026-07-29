@@ -511,11 +511,23 @@ async def mark_distributed(task_id: uuid.UUID, db: DbSession, _: AdminUser):
     task = await db.get(ContentTask, task_id)
     if not task:
         raise HTTPException(404, "任务不存在")
-    task.meta = {**(task.meta or {}), "distributed_at": datetime.utcnow().isoformat()}
+    now = datetime.utcnow().isoformat()
+    task.meta = {
+        **(task.meta or {}),
+        "distributed_at": now,
+        "ready_at": now,
+        "preview_only": True,
+        "publish_status": "ready_not_published",
+    }
     if task.status == "completed":
         task.status = "distributed"
     await db.commit()
-    return {"id": str(task.id), "status": task.status, "meta": task.meta}
+    return {
+        "id": str(task.id),
+        "status": task.status,
+        "meta": task.meta,
+        "message": "已标记渠道壳就绪（未真实发布）",
+    }
 
 
 @router.get("/channels")

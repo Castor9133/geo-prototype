@@ -53,9 +53,10 @@ class ContentEngineUnitTests(unittest.TestCase):
         self.assertGreaterEqual(len(list(demo.glob("*.md"))), 10)
 
     def test_china_prompts_seed_shape(self):
-        self.assertGreaterEqual(len(CHINA_PROMPTS), 7)
+        self.assertEqual(len(CHINA_PROMPTS), 10)
         for item in CHINA_PROMPTS:
             self.assertIn("{{Knowledge}}", item["body"])
+            self.assertIn("{{entity}}", item["body"])
             self.assertIn("title", item)
             self.assertIn("sort_order", item)
             self.assertIn("禁止", item["body"])

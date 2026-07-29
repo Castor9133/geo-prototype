@@ -231,17 +231,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         const drafts = tasks.filter((t) => t.has_draft).length;
         const map = {
             diagnostic: {
-                lines: done ? ['诊断记录 1', 'P0 清单待跟进'] : ['待开始诊断', 'Schema / H2 / Meta'],
+                lines: done ? ['检查记录 1', '可继续知识库'] : ['待开始检查', '四类 SEO 就绪'],
                 delta: done ? '已完成' : '待启动',
             },
             knowledge: {
                 lines: kb
                     ? [`文档 ${kb.doc_count ?? 0}`, `切片 ${kb.chunk_count ?? 0}`]
-                    : ['演示包待导入', 'DJI Mini 5 Pro'],
-                delta: kb ? `向量 ${kb.vectorized_count ?? 0}` : '样例',
+                    : ['可新建或导入', '示例库'],
+                delta: kb ? `向量 ${kb.vectorized_count ?? 0}` : '待就绪',
             },
             keywords: {
-                lines: done ? ['词包已生成', '可进分发'] : ['提示簇待扩展', '对齐探针题'],
+                lines: done ? ['词包已生成', '可进分发'] : ['选题待生成', '勾选后建任务'],
                 delta: done ? '+就绪' : '待执行',
             },
             distribute: {
@@ -249,8 +249,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 delta: drafts ? '+有产出' : '待生成',
             },
             measure: {
-                lines: done ? ['观测已标记', '回写事实卡'] : ['mention / citation', 'API 采样'],
-                delta: done ? '闭环' : '待观测',
+                lines: done ? ['观测已标记', '可回看对比'] : ['出现率对比', '证据密度'],
+                delta: done ? '完成' : '待观测',
             },
         };
         return map[step.id] || { lines: [active ? '进行中' : '未开始'], delta: '—' };
@@ -420,24 +420,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (stepNote) {
             if (step.id === 'diagnostic') {
                 stepNote.textContent = done
-                    ? '诊断完成：把 P0（FAQPage / 问句 H2 / 实体一致）记入 Backlog，再进知识库。'
-                    : '按内容工程：先确认「可被抓取与理解」，再谈引用；详见 docs/content-engineering-sop.md。';
+                    ? '检查完成，可继续沉淀知识材料。'
+                    : '先确认页面可被抓取与理解，再进入知识库。';
             } else if (step.id === 'knowledge') {
-                stepNote.textContent = isNative()
-                    ? `模式 native-python：${DEMO_KB.kbName} 走 Rank 内容引擎（${nativeAdminPath()}）。包路径 ${DEMO_KB.docsPath}`
-                    : `模式 legacy-flow：推荐 ${DEMO_KB.kbName}（KB #${DEMO_KB.kbId}）。下方看板读自 metrics.json。`;
+                stepNote.textContent = done
+                    ? '知识库已就绪，可继续拓词。'
+                    : '新建或导入示例库，沉淀事实材料后进入拓词。';
             } else if (step.id === 'keywords') {
                 stepNote.textContent = done
-                    ? '拓词完成：确认 P0 提示簇与 Mini 5 Pro 探针题已对齐事实卡 ID，再进分发。'
-                    : '按内容工程：扩展真实用户问题（非堆砌词）；主演示用 Mini 5 Pro 探针，勿沿用旧 GEO 公司词包。';
+                    ? '选题已就绪，可生成内容任务。'
+                    : '生成选题并勾选后创建内容任务。';
             } else if (step.id === 'distribute') {
-                stepNote.textContent = isNative()
-                    ? 'native-python：内容引擎新建任务 → 中国生态提示词 + 绑定 DJI KB → 草稿 → 渠道/模板 key。不经 Laravel。'
-                    : (integrationStatus?.configured
-                        ? `legacy-flow：任务中心新建 → 绑定 KB #${DEMO_KB.kbId} → 答案优先正文 → 渠道/模板。`
-                        : `可先打开任务中心；配置 Token 后可 live 移交。演示仍须手动绑定 KB #${DEMO_KB.kbId}。`);
+                stepNote.textContent = done
+                    ? '渠道预览已标记，可查看观测。'
+                    : '生成草稿并预览渠道壳（预览·不外发）。';
             } else if (step.id === 'measure') {
-                stepNote.textContent = '按内容工程：用 Mini 5 Pro 固定探针看 mention/citation/absent；缺口回写事实卡。非网页抓取。';
+                stepNote.textContent = done
+                    ? '观测已记录。'
+                    : '查看三层追问中的出现率与证据密度（演示数据）。';
             } else {
                 stepNote.textContent = done
                     ? '本步已完成。可进入下一步，或点步骤条回看。'
@@ -450,26 +450,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             const suitePanel = Boolean(step.suitePanel);
             if (step.id === 'distribute') {
                 actions.push(
-                    `<a class="suite-btn suite-btn--primary" href="${tasksUrl}"${linkTarget}><span class="material-symbols-outlined text-sm">sync_alt</span>${isNative() ? '打开内容引擎任务' : '打开任务中心新建'}</a>`
+                    `<a class="suite-btn suite-btn--primary" href="${tasksUrl}"${linkTarget}><span class="material-symbols-outlined text-sm">sync_alt</span>打开内容任务</a>`
                 );
                 actions.push(
-                    `<a class="suite-btn suite-btn--ghost" href="${kbUrl}"${linkTarget}><span class="material-symbols-outlined text-sm">database</span>${isNative() ? '核对知识库' : `核对 KB #${DEMO_KB.kbId}`}</a>`
-                );
-                actions.push(
-                    `<a class="suite-btn suite-btn--ghost" href="${channelUrl}"${linkTarget}><span class="material-symbols-outlined text-sm">share</span>${isNative() ? '渠道 / 模板' : '分发渠道'}</a>`
+                    `<a class="suite-btn suite-btn--ghost" href="${kbUrl}"${linkTarget}><span class="material-symbols-outlined text-sm">database</span>打开知识库</a>`
                 );
                 actions.push(
                     `<button type="button" class="suite-btn suite-btn--ghost" data-mark-done="${step.id}"><span class="material-symbols-outlined text-sm">check</span>标记完成并继续</button>`
                 );
             } else if (step.id === 'knowledge') {
                 actions.push(
-                    `<a class="suite-btn suite-btn--primary" href="${kbUrl}"${linkTarget}><span class="material-symbols-outlined text-sm">database</span>${isNative() ? '打开内容引擎' : '打开 DJI Mini 5 Pro KB'}</a>`
+                    `<a class="suite-btn suite-btn--primary" href="${kbUrl}"${linkTarget}><span class="material-symbols-outlined text-sm">database</span>打开知识库</a>`
                 );
-                if (!isNative()) {
-                    actions.push(
-                        `<a class="suite-btn suite-btn--ghost" href="${geoflowUrl('/geo_admin/knowledge-bases')}" target="_blank" rel="noreferrer"><span class="material-symbols-outlined text-sm">list</span>知识库列表</a>`
-                    );
-                }
                 actions.push(
                     `<button type="button" class="suite-btn suite-btn--ghost" data-mark-done="${step.id}"><span class="material-symbols-outlined text-sm">check</span>标记完成并继续</button>`
                 );
@@ -501,7 +493,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 );
             } else if (done && !next) {
                 actions.push(
-                    `<a class="suite-btn suite-btn--ghost" href="/admin/trust-obs"><span class="material-symbols-outlined text-sm">monitoring</span>打开观测后台</a>`
+                    `<a class="suite-btn suite-btn--ghost" href="/suite?step=measure"><span class="material-symbols-outlined text-sm">monitoring</span>查看观测</a>`
                 );
             }
 
@@ -550,7 +542,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (!extra.dataset.bootLoading) {
                     extra.dataset.bootLoading = '1';
                     extra.innerHTML = step.id === 'measure'
-                        ? '<div class="measure-monitor measure-monitor--loading"><div class="measure-toolbar"><span class="suite-badge">加载中</span><span class="measure-toolbar__hint">正在拉取观测样例…</span></div><div class="measure-kpi-row"><div class="measure-kpi skeleton"></div><div class="measure-kpi skeleton"></div><div class="measure-kpi skeleton"></div></div></div>'
+                        ? '<div class="measure-monitor measure-monitor--loading"><div class="measure-toolbar"><span class="suite-badge">加载中</span><span class="measure-toolbar__hint">正在加载观测数据…</span></div><div class="measure-kpi-row"><div class="measure-kpi skeleton"></div><div class="measure-kpi skeleton"></div><div class="measure-kpi skeleton"></div></div></div>'
                         : '<p class="suite-extra__lead">加载中…</p>';
                 }
             } else {
@@ -565,11 +557,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.body.classList.toggle('suite-view--measure', isMeasure);
         const title = document.getElementById('suite-cockpit-title');
         const sub = document.getElementById('suite-cockpit-sub');
-        if (title) title.textContent = isMeasure ? 'AI 答案监测' : '内容增长工厂';
+        if (title) title.textContent = isMeasure ? 'AI 答案监测' : 'GEO Suite';
         if (sub) {
             sub.textContent = isMeasure
                 ? '监测 AI 回答中的品牌提及与引用来源'
-                : 'GEO Suite · DJI Mini 5 Pro 演示主路径';
+                : '检查 → 知识 → 拓词 → 内容/分发预览 → 观测';
         }
         document.querySelectorAll('[data-suite-tab]').forEach((el) => {
             const tab = el.getAttribute('data-suite-tab');
@@ -596,7 +588,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (shortcuts) shortcuts.hidden = isMeasure;
         const startCtaEl = document.getElementById('suite-start-cta');
         if (startCtaEl && isMeasure) {
-            startCtaEl.textContent = '标记完成并回写';
+            startCtaEl.textContent = '标记观测完成';
             startCtaEl.href = '/suite?step=measure';
             startCtaEl.onclick = (event) => {
                 event.preventDefault();
@@ -604,8 +596,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 startCtaEl.textContent = '已标记完成';
             };
         } else if (startCtaEl && !isMeasure) {
-            startCtaEl.onclick = null;
-            startCtaEl.textContent = '从第 1 步开始';
+            startCtaEl.onclick = async (event) => {
+                event.preventDefault();
+                try {
+                    const run = await Workflow.ensureRun({
+                        forceNew: true,
+                        entity: 'DJI Mini 5 Pro',
+                        url: 'https://www.dji.com/mini-5-pro',
+                    });
+                    window.location.href = Workflow.buildHref('diagnostic', { run_id: run.id });
+                } catch (error) {
+                    window.location.href = Workflow.buildHref('diagnostic');
+                }
+            };
+            startCtaEl.textContent = '开始工作流';
             startCtaEl.href = Workflow.buildHref('diagnostic');
         }
     }
@@ -637,10 +641,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const state = Workflow.load();
     activeStepId = fromUrl || state.currentStep || 'diagnostic';
     writeStepToUrl(activeStepId, true);
+    Workflow.mountBar({
+        stepId: activeStepId,
+        force: true,
+        hint: '按步骤完成检查、知识、拓词、分发与观测。',
+    });
     refresh();
 
     resetBtn?.addEventListener('click', () => {
-        if (!window.confirm('确定重置本机工作流进度？最近移交记录也会清空。')) return;
+        if (!window.confirm('确定重置本机工作流进度？')) return;
         Workflow.clear();
         selectStep('diagnostic', { push: true });
     });
@@ -702,13 +711,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (isNative()) {
             if (statusEl) statusEl.dataset.mode = 'native-python';
             if (statusText) {
-                statusText.textContent = `native-python · 前台知识库`;
+                statusText.textContent = '就绪';
             }
             if (integrationCopy) {
-                integrationCopy.textContent = `当前 CONTENT_BACKEND_MODE=native-python。DJI 演示包在前台知识库一键导入；Laravel GEOFlow 仅 F2 对照（设为 legacy-flow）。包路径 ${DEMO_KB.docsPath}。`;
+                integrationCopy.textContent = '';
+                integrationCopy.hidden = true;
             }
             if (nextStepsEl) {
-                nextStepsEl.textContent = `本地裸跑：scripts/start-local.ps1（见 docs/本地裸跑-postgres-redis.md）。Compose / start-geo-suite.ps1 -UseCompose 为 legacy。`;
+                nextStepsEl.textContent = '';
+                nextStepsEl.hidden = true;
             }
             const handoffCard = document.getElementById('suite-last-handoff');
             if (handoffCard && !Workflow.load().lastHandoff) handoffCard.hidden = true;
@@ -725,29 +736,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             const mode = integrationStatus.mode || 'preview';
             if (statusEl) statusEl.dataset.mode = mode;
             if (statusText) {
-                statusText.textContent = integrationStatus.configured
-                    ? `legacy-flow · GEOFlow 已连接（live）：演示请绑定 KB #${DEMO_KB.kbId}`
-                    : 'legacy-flow · 预览模式；真实任务须配置 Token';
+                statusText.textContent = integrationStatus.configured ? '已连接' : '就绪';
             }
-            if (openGeoflow && integrationStatus.public_base_url) {
-                openGeoflow.href = `${String(integrationStatus.public_base_url).replace(/\/$/, '')}/geo_admin`;
-                openGeoflow.addEventListener('click', async (event) => {
-                    if (!integrationStatus?.sso_available) return;
-                    event.preventDefault();
-                    try {
-                        await window.GEOrank.GeoflowHandoff.openViaSso('/geo_admin/dashboard');
-                    } catch (error) {
-                        window.open(openGeoflow.href, '_blank', 'noopener');
-                    }
-                });
+            if (openGeoflow) {
+                openGeoflow.hidden = true;
             }
             if (integrationCopy) {
-                integrationCopy.textContent = integrationStatus.configured
-                    ? `已连接到 ${integrationStatus.public_base_url || 'GEOFlow'}。推荐演示 KB #${DEMO_KB.kbId}。`
-                    : `legacy-flow 预览模式。主演示入口：KB #${DEMO_KB.kbId}；包路径 ${DEMO_KB.docsPath}。`;
+                integrationCopy.textContent = '';
+                integrationCopy.hidden = true;
             }
             if (nextStepsEl) {
-                nextStepsEl.textContent = `legacy：scripts/start-geo-suite.ps1 -UseCompose；导入 DJI 包可用 Flow 脚本。`;
+                nextStepsEl.textContent = '';
+                nextStepsEl.hidden = true;
             }
             try {
                 const review = await window.GEOrank.GeoflowHandoff.fetchReview();
@@ -767,7 +767,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     } catch (error) {
         if (statusEl) statusEl.dataset.mode = 'native-python';
-        if (statusText) statusText.textContent = '内容后端默认 native-python；仍可使用 Suite 工作流与内容引擎';
+        if (statusText) statusText.textContent = '就绪';
         console.warn('[suite] content-backend / status failed', error);
         window.GEOrank._suiteExtraReady = true;
         refresh();

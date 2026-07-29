@@ -27,6 +27,7 @@ from app.services.content_engine_utils import (
     soften_markdown_prose,
     split_chunks,
 )
+from app.services.geo_observe_script import build_generation_focus_block, load_ai_focus
 
 # 兼容旧导入名
 _slugify = slugify
@@ -266,12 +267,24 @@ async def ensure_default_prompts(
         row.sort_order = item["sort_order"]
         row.is_active = True
         result.append(row)
-    if prune_custom:
-        for row in existing:
-            if row.title not in builtin_titles:
+    # 旧版内置标题（及 prune_custom 时的自定义项）停用，保证下拉只见细版 5 套
+    for row in existing:
+        if row.title not in builtin_titles:
+            if prune_custom or row.kind == "content":
                 row.is_active = False
     await db.flush()
     return result or existing
+
+
+def _task_entity(task: ContentTask) -> str:
+    meta = task.meta if isinstance(task.meta, dict) else {}
+    entity = str(meta.get("entity") or "").strip()
+    if entity:
+        return entity
+    title = (task.title or "").strip()
+    if "·" in title:
+        return title.split("·", 1)[0].strip() or title
+    return title or "产品"
 
 
 async def run_content_task(db: AsyncSession, task_id: uuid.UUID) -> ContentTask:
@@ -301,8 +314,25 @@ async def run_content_task(db: AsyncSession, task_id: uuid.UUID) -> ContentTask:
         filled = (
             prompt_body.replace("{{title}}", task.title)
             .replace("{{keyword}}", task.input_query or task.title)
+            .replace("{{entity}}", _task_entity(task))
             .replace("{{Knowledge}}", knowledge_block)
         )
+        meta = task.meta if isinstance(task.meta, dict) else {}
+        focus_block = ""
+        if meta.get("ai_focus_inject"):
+            platforms = meta.get("target_platforms") or meta.get("ai_platforms") or []
+            if isinstance(platforms, str):
+                platforms = [platforms]
+            try:
+                focus_script = load_ai_focus("geo-ai-focus-dji")
+                focus_block = build_generation_focus_block(
+                    focus_script,
+                    [str(p) for p in platforms if p],
+                )
+            except FileNotFoundError:
+                focus_block = ""
+            if focus_block:
+                filled = f"{focus_block}\n\n{filled}"
         messages = [
             {
                 "role": "system",
@@ -311,6 +341,7 @@ async def run_content_task(db: AsyncSession, task_id: uuid.UUID) -> ContentTask:
                     "输出像已排版的公众号/官网正文：纯中文、少符号。"
                     "禁止 Markdown 语法（不要用 #、**、---、反引号、[]()）。"
                     "用「一、二、三」或空行分段；FAQ 用「问：」「答：」。"
+                    "若用户消息含「目标 AI 生成侧重」，在不编造的前提下优先满足该侧重。"
                 ),
             },
             {"role": "user", "content": filled},
@@ -318,15 +349,21 @@ async def run_content_task(db: AsyncSession, task_id: uuid.UUID) -> ContentTask:
         try:
             draft = await chat_completion(messages, temperature=0.3, max_tokens=2500)
         except Exception:
+            focus_note = f"{focus_block}\n\n" if focus_block else ""
             draft = (
                 f"{task.title}\n\n"
                 f"（本地降级草稿：LLM 未配置或调用失败）\n\n"
+                f"{focus_note}"
                 f"答案摘要\n基于知识库检索整理如下要点。\n\n{knowledge_block[:1200]}\n"
             )
         task.draft_body = soften_markdown_prose(draft)
         task.status = "completed"
         task.finished_at = datetime.utcnow()
-        task.meta = {**(task.meta or {}), "knowledge_chars": len(knowledge_block)}
+        task.meta = {
+            **(task.meta or {}),
+            "knowledge_chars": len(knowledge_block),
+            "ai_focus_applied": bool(focus_block),
+        }
     except Exception as exc:  # noqa: BLE001
         task.status = "failed"
         task.error_message = str(exc)[:1000]

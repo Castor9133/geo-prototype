@@ -113,6 +113,20 @@ async def get_report(report_id: str, db: DbSession, current_user: OptionalUser):
     if report.user_id is not None and (not current_user or report.user_id != current_user.id):
         raise HTTPException(status_code=403, detail="无权访问此报告")
 
+    from app.services.seo_modules import build_seo_modules
+
+    recommendations = report.recommendations or {}
+    seo_modules = None
+    if isinstance(recommendations, dict):
+        seo_modules = recommendations.get("seo_modules")
+    if not seo_modules and report.status == DiagnosticStatus.COMPLETED:
+        seo_modules = build_seo_modules(
+            report.schema_analysis,
+            report.meta_analysis,
+            report.content_analysis,
+            report.citation_analysis,
+        )
+
     return {
         "report_id": str(report.id),
         "url": report.url,
@@ -123,7 +137,9 @@ async def get_report(report_id: str, db: DbSession, current_user: OptionalUser):
         "content_analysis": report.content_analysis,
         "meta_analysis": report.meta_analysis,
         "citation_analysis": report.citation_analysis,
-        "recommendations": report.recommendations,
+        "seo_modules": seo_modules or [],
+        "recommendations": recommendations,
         "error_message": report.error_message,
         "created_at": report.created_at.isoformat(),
+        "score_note": "overall_score 为 SEO 就绪合成分，不含品牌 GEO 演示漏斗。",
     }

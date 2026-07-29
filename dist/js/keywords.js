@@ -10,6 +10,114 @@
     const Auth = window.GEOrank?.Auth;
     const Workflow = window.GEOrank?.SuiteWorkflow;
     const PREVIEW_COUNT = 8;
+    const selectedKeywords = new Set();
+    const DEFAULT_AI_PLATFORMS = ['豆包', '元宝', 'Kimi', 'DeepSeek'];
+    let aiFocusScript = null;
+    let targetPlatforms = new Set(DEFAULT_AI_PLATFORMS);
+
+    async function loadAiFocusScript() {
+        if (aiFocusScript) return aiFocusScript;
+        const urls = [
+            '/api/geo-runs/scripts/geo-ai-focus-dji',
+            '/pilot-demo/geo-ai-focus-dji.json',
+        ];
+        for (const url of urls) {
+            try {
+                const res = await fetch(url, { credentials: 'same-origin' });
+                if (!res.ok) continue;
+                aiFocusScript = await res.json();
+                return aiFocusScript;
+            } catch (_) {
+                /* try next */
+            }
+        }
+        return null;
+    }
+
+    function fillPattern(pattern, entity, keyword) {
+        return String(pattern || '')
+            .replace(/\{\{entity\}\}/g, entity || '产品')
+            .replace(/\{\{keyword\}\}/g, keyword || entity || '选题')
+            .replace(/\{\{title\}\}/g, keyword || entity || '选题');
+    }
+
+    function renderAiPlatformChecks() {
+        const host = document.getElementById('kw-ai-platform-checks');
+        if (!host) return;
+        const platforms = (aiFocusScript && aiFocusScript.platforms) || DEFAULT_AI_PLATFORMS;
+        host.innerHTML = platforms
+            .map((p) => {
+                const on = targetPlatforms.has(p);
+                return `<label class="kw-ai-check"><input type="checkbox" data-ai-plat="${escapeHtml(p)}" ${on ? 'checked' : ''}> ${escapeHtml(p)}</label>`;
+            })
+            .join('');
+        host.querySelectorAll('[data-ai-plat]').forEach((input) => {
+            input.addEventListener('change', () => {
+                const name = input.getAttribute('data-ai-plat') || '';
+                if (!name) return;
+                if (input.checked) targetPlatforms.add(name);
+                else targetPlatforms.delete(name);
+                if (!targetPlatforms.size) {
+                    targetPlatforms = new Set(platforms);
+                    renderAiPlatformChecks();
+                }
+                renderTitleHints();
+            });
+        });
+    }
+
+    function renderTitleHints() {
+        const host = document.getElementById('kw-ai-title-hints');
+        if (!host) return;
+        const items = (aiFocusScript && aiFocusScript.items) || [];
+        const entity = (aiFocusScript && aiFocusScript.entity) || 'DJI Mini 5 Pro';
+        const selected = Array.from(selectedKeywords);
+        if (!selected.length) {
+            host.innerHTML = '<p class="kw-ai-focus__empty">勾选至少一个选题后显示建议。</p>';
+            return;
+        }
+        const keyword = selected[0];
+        const rows = items.filter((row) => targetPlatforms.has(row.platform));
+        if (!rows.length) {
+            host.innerHTML = '<p class="kw-ai-focus__empty">请至少选择一个目标 AI。</p>';
+            return;
+        }
+        host.innerHTML = rows
+            .map((row) => {
+                const patterns = (row.title_patterns || [])
+                    .map((pat) => {
+                        const title = fillPattern(pat, entity, keyword);
+                        return `<li><span>${escapeHtml(title)}</span>`
+                            + `<button type="button" class="btn btn-outline kw-ai-apply" data-apply-title="${escapeHtml(title)}">应用</button></li>`;
+                    })
+                    .join('');
+                return `<article class="kw-ai-hint-card"><h4>${escapeHtml(row.platform)}</h4>`
+                    + `<p class="kw-ai-focus__focus">${escapeHtml(row.generation_focus || '')}</p>`
+                    + `<ul>${patterns}</ul></article>`;
+            })
+            .join('');
+        host.querySelectorAll('[data-apply-title]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const title = btn.getAttribute('data-apply-title') || '';
+                if (!title) return;
+                if (selectedKeywords.size >= 5 && !selectedKeywords.has(title)) {
+                    setTaskFeedback('最多勾选 5 个选题，请先取消一条再应用。', true);
+                    return;
+                }
+                selectedKeywords.add(title);
+                updateSelectedCount();
+                setTaskFeedback(`已应用标题建议：${title}`);
+            });
+        });
+    }
+
+    function escapeHtml(value) {
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
     /** 演示默认：对齐知识库「中文产品演示包·DJI Mini 5 Pro」与 probe-questions.md */
     const DEMO_SEEDS = ['DJI Mini 5 Pro', '大疆 Mini 5 Pro', 'Mini 5 Pro 续航'];
     const SAMPLE_PAYLOAD = {
@@ -381,15 +489,22 @@
             const card = document.createElement('div');
             card.className = 'dim-card';
 
-            const renderRows = (rows) => rows.map((item) => `
+            const renderRows = (rows) => rows.map((item) => {
+                const kw = String(item.keyword || '');
+                const checked = selectedKeywords.has(kw) ? 'checked' : '';
+                return `
                 <div class="dim-table-row">
                     <div class="kw-name">
-                        <div>${esc(item.keyword)}</div>
+                        <label class="kw-select-row">
+                            <input type="checkbox" class="kw-select-box" data-keyword="${esc(kw)}" ${checked}>
+                            <div>${esc(kw)}</div>
+                        </label>
                     </div>
                     <div class="score-cell"><div class="score-bar"><div class="score-bar-fill rec" style="width:${item.recommendation_score}%"></div></div><span class="score-num rec">${item.recommendation_score}</span></div>
                     <div class="score-cell"><div class="score-bar"><div class="score-bar-fill biz" style="width:${item.business_score}%"></div></div><span class="score-num biz">${item.business_score}</span></div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
 
             const preview = items.slice(0, PREVIEW_COUNT);
             card.innerHTML = `
@@ -400,7 +515,7 @@
                     </div>
                     <span class="text-[10px] text-on-surface-variant">${esc(meta.desc || dimension.description || '')}</span>
                 </div>
-                <div class="dim-table-header"><div>关键词</div><div>推荐</div><div>商业</div></div>
+                <div class="dim-table-header"><div>选题（勾选）</div><div>推荐</div><div>商业</div></div>
                 <div class="dim-table-body">${renderRows(preview)}</div>
             `;
 
@@ -412,13 +527,59 @@
                 btn.addEventListener('click', () => {
                     expanded = !expanded;
                     card.querySelector('.dim-table-body').innerHTML = renderRows(expanded ? items : preview);
+                    bindKeywordChecks(card);
                     btn.textContent = expanded ? '收起' : `展开全部 ${items.length} 条`;
                 });
                 card.appendChild(btn);
             }
 
+            bindKeywordChecks(card);
             dimGrid.appendChild(card);
         });
+        updateSelectedCount();
+    }
+
+    function bindKeywordChecks(scope) {
+        (scope || document).querySelectorAll('.kw-select-box').forEach((box) => {
+            if (box.dataset.bound === '1') return;
+            box.dataset.bound = '1';
+            box.addEventListener('change', () => {
+                const kw = box.getAttribute('data-keyword') || '';
+                if (!kw) return;
+                if (box.checked) {
+                    if (selectedKeywords.size >= 5) {
+                        box.checked = false;
+                        setTaskFeedback('最多勾选 5 个选题。', true);
+                        return;
+                    }
+                    selectedKeywords.add(kw);
+                } else {
+                    selectedKeywords.delete(kw);
+                }
+                updateSelectedCount();
+            });
+        });
+    }
+
+    function updateSelectedCount() {
+        const countEl = document.getElementById('selected-kw-count');
+        if (countEl) countEl.textContent = String(selectedKeywords.size);
+        const btn = document.getElementById('create-content-tasks-btn');
+        if (btn) btn.disabled = selectedKeywords.size < 1;
+        renderTitleHints();
+    }
+
+    function setTaskFeedback(message, isError) {
+        const el = document.getElementById('kw-task-feedback');
+        if (!el) return;
+        if (!message) {
+            el.classList.add('hidden');
+            el.textContent = '';
+            return;
+        }
+        el.classList.remove('hidden');
+        el.className = `text-sm mb-4 ${isError ? 'text-rose-600' : 'text-emerald-700'}`;
+        el.textContent = message;
     }
 
     function renderResults(payload, options = {}) {
@@ -441,53 +602,102 @@
         Workflow.markComplete('keywords', {
             seed: seedLabel || '',
             count: flatList.length,
+            selected: Array.from(selectedKeywords),
         });
-        Workflow.setCurrent(contentBackendNative ? 'distribute' : 'handoff');
-        if (contentBackendNative) {
-            Workflow.mountBar({
-                stepId: 'keywords',
-                force: true,
-                hint: '拓词已完成：可打开内容引擎生成正文，或回 Suite 分发步。',
-                nextHref: '/suite?step=distribute',
-                nextLabel: '回 Suite · 分发',
-            });
-            Workflow.mountNextCard(resultsPanel, {
-                id: 'suite-wf-next-keywords',
-                prepend: true,
-                stepId: 'keywords',
-                title: '拓词完成 · 写入内容引擎',
-                copy: '词包已记入 GEO Suite。下一步在内容引擎绑定知识库与提示词生成草稿，再用五渠道壳预览。',
-                primaryHref: '/admin/content-engine?tab=tasks',
-                primaryLabel: '打开内容引擎',
-                secondaryHref: '/suite?step=distribute',
-                secondaryLabel: '返回 Suite · 分发',
-            });
-            return;
-        }
+        Workflow.setCurrent('distribute');
+        const distHref = Workflow.buildHref('distribute', { run_id: Workflow.getRunId() || '' });
         Workflow.mountBar({
             stepId: 'keywords',
             force: true,
-            hint: '拓词已完成：可发送到 GEOFlow，或回 Suite 查看进度。',
-            nextHref: '/suite?step=handoff',
-            nextLabel: '回 Suite · 移交',
+            hint: '勾选 3–5 个选题后点「去选模板生成」，在分发页选择提示词再出草稿。',
+            nextHref: distHref,
+            nextLabel: '下一步：内容/分发预览',
         });
         Workflow.mountNextCard(resultsPanel, {
             id: 'suite-wf-next-keywords',
             prepend: true,
             stepId: 'keywords',
-            title: '拓词完成 · 发送到 GEOFlow',
-            copy: '词包已记入 GEO Suite。点击「发送到 GEOFlow」创建内容任务（preview 也可演示），完成后回 Suite 回看。',
-            primaryHref: '#send-geoflow-btn',
-            primaryLabel: '发送到 GEOFlow',
-            secondaryHref: '/suite?step=review',
-            secondaryLabel: '返回 Suite',
+            title: '选题清单就绪',
+            copy: '勾选选题 → 去分发页选提示词模板 → 生成单篇草稿。',
+            primaryHref: '#create-content-tasks-btn',
+            primaryLabel: '去选模板生成',
+            secondaryHref: distHref,
+            secondaryLabel: '去分发预览',
         });
         const primary = document.querySelector('#suite-wf-next-keywords a.suite-wf-next__btn--primary');
         if (primary) {
             primary.addEventListener('click', (event) => {
                 event.preventDefault();
-                void sendToGeoflow();
+                void createContentTasksFromSelection();
             });
+        }
+    }
+
+    async function createContentTasksFromSelection() {
+        const keywords = Array.from(selectedKeywords);
+        if (!keywords.length) {
+            setTaskFeedback('请至少勾选 1 个选题。', true);
+            return;
+        }
+        if (Auth && !Auth.requireAuth({ reasonKey: 'auth.reasonKeywords' })) return;
+        setTaskFeedback('正在带入选题…');
+        try {
+            const run = await Workflow.ensureRun({ entity: 'DJI Mini 5 Pro' });
+            const platforms = Array.from(targetPlatforms);
+            const entity = (run && run.entity) || (aiFocusScript && aiFocusScript.entity) || 'DJI Mini 5 Pro';
+            const titleHints = ((aiFocusScript && aiFocusScript.items) || [])
+                .filter((row) => platforms.includes(row.platform))
+                .flatMap((row) =>
+                    (row.title_patterns || []).slice(0, 2).map((pat) => ({
+                        platform: row.platform,
+                        title: fillPattern(pat, entity, keywords[0]),
+                    }))
+                );
+            try {
+                sessionStorage.setItem(
+                    'georank_pending_keywords',
+                    JSON.stringify({
+                        keywords,
+                        entity,
+                        run_id: run.id || '',
+                        target_platforms: platforms,
+                        title_hints: titleHints,
+                        updated_at: Date.now(),
+                    })
+                );
+            } catch (_) {
+                /* ignore */
+            }
+            await Workflow.handoff('keywords', {
+                selected_keywords: keywords,
+                meta: {
+                    count: keywords.length,
+                    pending_template: true,
+                    target_platforms: platforms,
+                    title_hints: titleHints,
+                },
+            }).catch(() => null);
+            Workflow.markComplete('keywords', {
+                seed: tags.join('、'),
+                selected: keywords,
+                pending_template: true,
+                target_platforms: platforms,
+            });
+            setTaskFeedback(`已带入 ${keywords.length} 个选题与 ${platforms.length} 个目标 AI，请在分发页选择提示词后再生成。`);
+            const href = Workflow.buildHref('distribute', {
+                run_id: run.id || '',
+                from: 'keywords',
+            });
+            Workflow.mountBar({
+                stepId: 'keywords',
+                force: true,
+                hint: '选题已带入，去分发页选模板生成草稿。',
+                nextHref: href,
+                nextLabel: '去选模板生成',
+            });
+            window.location.href = href;
+        } catch (error) {
+            setTaskFeedback(error.message || '带入选题失败', true);
         }
     }
 
@@ -631,16 +841,23 @@
     downloadBtn.addEventListener('click', downloadCSV);
     refineBtn.addEventListener('click', generate);
     sendGeoflowBtn?.addEventListener('click', () => { void sendToGeoflow(); });
+    document.getElementById('create-content-tasks-btn')?.addEventListener('click', () => {
+        void createContentTasksFromSelection();
+    });
 
+    Workflow?.syncFromQuery?.();
     void resolveContentBackendMode().then(() => {
         Workflow?.mountBar({
             stepId: 'keywords',
-            nextHref: contentBackendNative ? '/suite?step=distribute' : '/suite?step=handoff',
-            nextLabel: contentBackendNative ? '下一步：分发' : '下一步：移交 Flow',
-            hint: contentBackendNative
-                ? '全套工作流第 3 步：围绕 Mini 5 Pro 生成词包后进入内容引擎 / Suite 分发。'
-                : '全套工作流第 3 步：围绕 Mini 5 Pro 生成词包后发送到 GEOFlow。',
+            nextHref: Workflow.buildHref('distribute'),
+            nextLabel: '下一步：内容/分发预览',
+            hint: '勾选选题 → 选目标 AI 看标题建议 → 去选模板生成。',
         });
+    });
+
+    void loadAiFocusScript().then(() => {
+        renderAiPlatformChecks();
+        renderTitleHints();
     });
 
     DEMO_SEEDS.forEach((seed) => addTag(seed));

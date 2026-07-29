@@ -1,0 +1,362 @@
+{
+  "key": "geo-observe-funnel-dji-vs-autel",
+  "version": "2026-07-30",
+  "disclaimer": "演示剧本 · 非平台实测。用于模拟 AI 答案监测产品界面，不是各平台真实采样引用率。",
+  "entity": "DJI Mini 5 Pro",
+  "competitor": "Autel EVO Lite / Nano 同档",
+  "platforms": [
+    "豆包",
+    "元宝",
+    "Kimi",
+    "DeepSeek"
+  ],
+  "scoring_rubric": {
+    "plus": [
+      "答案中稳定出现本品型号",
+      "给出可核对规格/禁飞事实",
+      "引用官方或权威媒体域"
+    ],
+    "minus": [
+      "只提竞品不提本品",
+      "编造法规或续航",
+      "无来源的推荐口号"
+    ]
+  },
+  "layers": [
+    {
+      "id": "awareness",
+      "label": "认知",
+      "order": 1,
+      "desc": "用户先问品牌与性能事实，评的是本品是否稳定出现在答案/引用里。"
+    },
+    {
+      "id": "constraint",
+      "label": "约束/禁飞",
+      "order": 2,
+      "desc": "用户追问法规与禁飞约束，评事实密度而非推销话术。"
+    },
+    {
+      "id": "recommend",
+      "label": "推荐",
+      "order": 3,
+      "desc": "用户进入选型推荐；评本品出现率与证据，不是「AI 认不认品牌」。"
+    }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "layer": "awareness",
+      "text": "现在入门航拍，Mini 级别无人机常见有哪些型号？主要差别在哪？",
+      "platforms": {
+        "豆包": {
+          "entity_mentioned": true,
+          "competitor_mentioned": true,
+          "evidence_density": 0.72,
+          "snippet": "答到 DJI Mini 5 Pro 与 Autel 同档机型，并对比重量与传感器。",
+          "evidence": [
+            "dji.com 规格页",
+            "中关村在线评测"
+          ],
+          "answer_excerpt": "答到 DJI Mini 5 Pro 与 Autel 同档机型，并对比重量与传感器。对本品「DJI Mini 5 Pro」：明确点名并给出可核对信息；对竞品「Autel EVO Lite / Nano 同档」：有对照提及。（豆包 · 演示摘录 · 证据密度约 72% · 引用示意：dji.com 规格页、中关村在线评测）"
+        },
+        "元宝": {
+          "entity_mentioned": true,
+          "competitor_mentioned": true,
+          "evidence_density": 0.58,
+          "snippet": "列出 Mini 5 Pro，顺带提到道通同级产品。",
+          "evidence": [
+            "电商参数页"
+          ],
+          "answer_excerpt": "列出 Mini 5 Pro，顺带提到道通同级产品。对本品「DJI Mini 5 Pro」：明确点名并给出可核对信息；对竞品「Autel EVO Lite / Nano 同档」：有对照提及。（元宝 · 演示摘录 · 证据密度约 58% · 引用示意：电商参数页）"
+        },
+        "Kimi": {
+          "entity_mentioned": true,
+          "competitor_mentioned": true,
+          "evidence_density": 0.8,
+          "snippet": "系统对比 DJI Mini 5 Pro 与 Autel Nano 系列传感器与避障。",
+          "evidence": [
+            "DJI 官方",
+            "Autel 官网"
+          ],
+          "answer_excerpt": "系统对比 DJI Mini 5 Pro 与 Autel Nano 系列传感器与避障。对本品「DJI Mini 5 Pro」：明确点名并给出可核对信息；对竞品「Autel EVO Lite / Nano 同档」：有对照提及。（Kimi · 演示摘录 · 证据密度约 80% · 引用示意：DJI 官方、Autel 官网）"
+        },
+        "DeepSeek": {
+          "entity_mentioned": true,
+          "competitor_mentioned": false,
+          "evidence_density": 0.45,
+          "snippet": "偏重大疆产品线介绍，竞品一带而过。",
+          "evidence": [
+            "百科摘要"
+          ],
+          "answer_excerpt": "偏重大疆产品线介绍，竞品一带而过。对本品「DJI Mini 5 Pro」：明确点名并给出可核对信息；对竞品「Autel EVO Lite / Nano 同档」：基本未展开。（DeepSeek · 演示摘录 · 证据密度约 45% · 引用示意：百科摘要）"
+        }
+      }
+    },
+    {
+      "id": "q2",
+      "layer": "awareness",
+      "text": "DJI Mini 5 Pro 的续航和图传大概什么水平？和同价位竞品怎么比？",
+      "platforms": {
+        "豆包": {
+          "entity_mentioned": true,
+          "competitor_mentioned": true,
+          "evidence_density": 0.76,
+          "snippet": "给出 Mini 5 Pro 续航区间，并对照 Autel 同档宣传值。",
+          "evidence": [
+            "DJI 规格",
+            "道通产品页"
+          ],
+          "answer_excerpt": "给出 Mini 5 Pro 续航区间，并对照 Autel 同档宣传值。对本品「DJI Mini 5 Pro」：明确点名并给出可核对信息；对竞品「Autel EVO Lite / Nano 同档」：有对照提及。（豆包 · 演示摘录 · 证据密度约 76% · 引用示意：DJI 规格、道通产品页）"
+        },
+        "元宝": {
+          "entity_mentioned": true,
+          "competitor_mentioned": true,
+          "evidence_density": 0.62,
+          "snippet": "本品出现；竞品用「道通某型号」笼统对比。",
+          "evidence": [
+            "媒体综述"
+          ],
+          "answer_excerpt": "本品出现；竞品用「道通某型号」笼统对比。对本品「DJI Mini 5 Pro」：明确点名并给出可核对信息；对竞品「Autel EVO Lite / Nano 同档」：有对照提及。（元宝 · 演示摘录 · 证据密度约 62% · 引用示意：媒体综述）"
+        },
+        "Kimi": {
+          "entity_mentioned": true,
+          "competitor_mentioned": true,
+          "evidence_density": 0.84,
+          "snippet": "分点列出续航/图传，并注明实测与宣传差异。",
+          "evidence": [
+            "评测长文",
+            "官方 FAQ"
+          ],
+          "answer_excerpt": "分点列出续航/图传，并注明实测与宣传差异。对本品「DJI Mini 5 Pro」：明确点名并给出可核对信息；对竞品「Autel EVO Lite / Nano 同档」：有对照提及。（Kimi · 演示摘录 · 证据密度约 84% · 引用示意：评测长文、官方 FAQ）"
+        },
+        "DeepSeek": {
+          "entity_mentioned": true,
+          "competitor_mentioned": true,
+          "evidence_density": 0.55,
+          "snippet": "本品与 Autel 均出现，证据偏摘要。",
+          "evidence": [
+            "论坛汇总"
+          ],
+          "answer_excerpt": "本品与 Autel 均出现，证据偏摘要。对本品「DJI Mini 5 Pro」：明确点名并给出可核对信息；对竞品「Autel EVO Lite / Nano 同档」：有对照提及。（DeepSeek · 演示摘录 · 证据密度约 55% · 引用示意：论坛汇总）"
+        }
+      }
+    },
+    {
+      "id": "q3",
+      "layer": "constraint",
+      "text": "在城市住宅区飞 Mini 级无人机，禁飞区和实名登记要注意什么？",
+      "platforms": {
+        "豆包": {
+          "entity_mentioned": true,
+          "competitor_mentioned": false,
+          "evidence_density": 0.7,
+          "snippet": "结合 Mini 5 Pro 重量档解释实名与电子围栏，未强推竞品。",
+          "evidence": [
+            "民航局科普",
+            "DJI 飞行安全"
+          ],
+          "answer_excerpt": "结合 Mini 5 Pro 重量档解释实名与电子围栏，未强推竞品。对本品「DJI Mini 5 Pro」：明确点名并给出可核对信息；对竞品「Autel EVO Lite / Nano 同档」：基本未展开。（豆包 · 演示摘录 · 证据密度约 70% · 引用示意：民航局科普、DJI 飞行安全）"
+        },
+        "元宝": {
+          "entity_mentioned": false,
+          "competitor_mentioned": false,
+          "evidence_density": 0.4,
+          "snippet": "只讲通用法规，未落到具体型号。",
+          "evidence": [
+            "法规摘要"
+          ],
+          "answer_excerpt": "只讲通用法规，未落到具体型号。对本品「DJI Mini 5 Pro」：未稳定点名型号；对竞品「Autel EVO Lite / Nano 同档」：基本未展开。（元宝 · 演示摘录 · 证据密度约 40% · 引用示意：法规摘要）"
+        },
+        "Kimi": {
+          "entity_mentioned": true,
+          "competitor_mentioned": true,
+          "evidence_density": 0.78,
+          "snippet": "Mini 5 Pro 与 Autel 同档均提示 UOM 实名与机场净空。",
+          "evidence": [
+            "UOM 说明",
+            "厂商安全页"
+          ],
+          "answer_excerpt": "Mini 5 Pro 与 Autel 同档均提示 UOM 实名与机场净空。对本品「DJI Mini 5 Pro」：明确点名并给出可核对信息；对竞品「Autel EVO Lite / Nano 同档」：有对照提及。（Kimi · 演示摘录 · 证据密度约 78% · 引用示意：UOM 说明、厂商安全页）"
+        },
+        "DeepSeek": {
+          "entity_mentioned": true,
+          "competitor_mentioned": false,
+          "evidence_density": 0.52,
+          "snippet": "提到大疆 App 地理围栏，竞品未展开。",
+          "evidence": [
+            "帮助中心"
+          ],
+          "answer_excerpt": "提到大疆 App 地理围栏，竞品未展开。对本品「DJI Mini 5 Pro」：明确点名并给出可核对信息；对竞品「Autel EVO Lite / Nano 同档」：基本未展开。（DeepSeek · 演示摘录 · 证据密度约 52% · 引用示意：帮助中心）"
+        }
+      }
+    },
+    {
+      "id": "q4",
+      "layer": "constraint",
+      "text": "250g 档无人机在景区/机场附近能不能飞？违规常见后果有哪些？",
+      "platforms": {
+        "豆包": {
+          "entity_mentioned": true,
+          "competitor_mentioned": true,
+          "evidence_density": 0.66,
+          "snippet": "以 Mini 5 Pro 为例说明重量档，并对比 Autel 同档合规提示。",
+          "evidence": [
+            "法规解读",
+            "厂商须知"
+          ],
+          "answer_excerpt": "以 Mini 5 Pro 为例说明重量档，并对比 Autel 同档合规提示。对本品「DJI Mini 5 Pro」：明确点名并给出可核对信息；对竞品「Autel EVO Lite / Nano 同档」：有对照提及。（豆包 · 演示摘录 · 证据密度约 66% · 引用示意：法规解读、厂商须知）"
+        },
+        "元宝": {
+          "entity_mentioned": true,
+          "competitor_mentioned": false,
+          "evidence_density": 0.48,
+          "snippet": "本品点名出现，证据偏短。",
+          "evidence": [
+            "新闻转述"
+          ],
+          "answer_excerpt": "本品点名出现，证据偏短。对本品「DJI Mini 5 Pro」：明确点名并给出可核对信息；对竞品「Autel EVO Lite / Nano 同档」：基本未展开。（元宝 · 演示摘录 · 证据密度约 48% · 引用示意：新闻转述）"
+        },
+        "Kimi": {
+          "entity_mentioned": true,
+          "competitor_mentioned": true,
+          "evidence_density": 0.81,
+          "snippet": "分场景列出禁飞与处罚口径，两品牌均作重量档示例。",
+          "evidence": [
+            "官方通告",
+            "律师科普"
+          ],
+          "answer_excerpt": "分场景列出禁飞与处罚口径，两品牌均作重量档示例。对本品「DJI Mini 5 Pro」：明确点名并给出可核对信息；对竞品「Autel EVO Lite / Nano 同档」：有对照提及。（Kimi · 演示摘录 · 证据密度约 81% · 引用示意：官方通告、律师科普）"
+        },
+        "DeepSeek": {
+          "entity_mentioned": false,
+          "competitor_mentioned": true,
+          "evidence_density": 0.44,
+          "snippet": "偏通用法规，举例落到 Autel 机型更多。",
+          "evidence": [
+            "百科"
+          ],
+          "answer_excerpt": "偏通用法规，举例落到 Autel 机型更多。对本品「DJI Mini 5 Pro」：未稳定点名型号；对竞品「Autel EVO Lite / Nano 同档」：有对照提及。（DeepSeek · 演示摘录 · 证据密度约 44% · 引用示意：百科）"
+        }
+      }
+    },
+    {
+      "id": "q5",
+      "layer": "recommend",
+      "text": "预算六千左右，想要小巧好带的航拍机，怎么在主流品牌里挑？",
+      "platforms": {
+        "豆包": {
+          "entity_mentioned": true,
+          "competitor_mentioned": true,
+          "evidence_density": 0.74,
+          "snippet": "候选含 Mini 5 Pro 与 Autel 同档，按场景给对照表。",
+          "evidence": [
+            "参数表",
+            "评测对比"
+          ],
+          "answer_excerpt": "候选含 Mini 5 Pro 与 Autel 同档，按场景给对照表。对本品「DJI Mini 5 Pro」：明确点名并给出可核对信息；对竞品「Autel EVO Lite / Nano 同档」：有对照提及。（豆包 · 演示摘录 · 证据密度约 74% · 引用示意：参数表、评测对比）"
+        },
+        "元宝": {
+          "entity_mentioned": true,
+          "competitor_mentioned": true,
+          "evidence_density": 0.6,
+          "snippet": "两品牌均出现；推荐语气偏电商。",
+          "evidence": [
+            "导购文"
+          ],
+          "answer_excerpt": "两品牌均出现；推荐语气偏电商。对本品「DJI Mini 5 Pro」：明确点名并给出可核对信息；对竞品「Autel EVO Lite / Nano 同档」：有对照提及。（元宝 · 演示摘录 · 证据密度约 60% · 引用示意：导购文）"
+        },
+        "Kimi": {
+          "entity_mentioned": true,
+          "competitor_mentioned": true,
+          "evidence_density": 0.86,
+          "snippet": "按旅行/创作场景拆解，本品与竞品证据并列。",
+          "evidence": [
+            "长文评测",
+            "官方规格"
+          ],
+          "answer_excerpt": "按旅行/创作场景拆解，本品与竞品证据并列。对本品「DJI Mini 5 Pro」：明确点名并给出可核对信息；对竞品「Autel EVO Lite / Nano 同档」：有对照提及。（Kimi · 演示摘录 · 证据密度约 86% · 引用示意：长文评测、官方规格）"
+        },
+        "DeepSeek": {
+          "entity_mentioned": true,
+          "competitor_mentioned": true,
+          "evidence_density": 0.57,
+          "snippet": "列表推荐含 DJI Mini 5 Pro 与 Autel。",
+          "evidence": [
+            "社区讨论"
+          ],
+          "answer_excerpt": "列表推荐含 DJI Mini 5 Pro 与 Autel。对本品「DJI Mini 5 Pro」：明确点名并给出可核对信息；对竞品「Autel EVO Lite / Nano 同档」：有对照提及。（DeepSeek · 演示摘录 · 证据密度约 57% · 引用示意：社区讨论）"
+        }
+      }
+    },
+    {
+      "id": "q6",
+      "layer": "recommend",
+      "text": "如果更看重夜景和避障，同价位里哪些机型会反复被提到？依据是什么？",
+      "platforms": {
+        "豆包": {
+          "entity_mentioned": true,
+          "competitor_mentioned": true,
+          "evidence_density": 0.69,
+          "snippet": "夜景/避障对比中本品与 Autel 同档均出现。",
+          "evidence": [
+            "传感器说明",
+            "避障评测"
+          ],
+          "answer_excerpt": "夜景/避障对比中本品与 Autel 同档均出现。对本品「DJI Mini 5 Pro」：明确点名并给出可核对信息；对竞品「Autel EVO Lite / Nano 同档」：有对照提及。（豆包 · 演示摘录 · 证据密度约 69% · 引用示意：传感器说明、避障评测）"
+        },
+        "元宝": {
+          "entity_mentioned": false,
+          "competitor_mentioned": true,
+          "evidence_density": 0.5,
+          "snippet": "更多篇幅给到竞品夜景案例。",
+          "evidence": [
+            "短视频转述"
+          ],
+          "answer_excerpt": "更多篇幅给到竞品夜景案例。对本品「DJI Mini 5 Pro」：未稳定点名型号；对竞品「Autel EVO Lite / Nano 同档」：有对照提及。（元宝 · 演示摘录 · 证据密度约 50% · 引用示意：短视频转述）"
+        },
+        "Kimi": {
+          "entity_mentioned": true,
+          "competitor_mentioned": true,
+          "evidence_density": 0.88,
+          "snippet": "用可核对参数说明 Mini 5 Pro 与 Autel 的夜景/避障差异。",
+          "evidence": [
+            "官方参数",
+            "第三方实测"
+          ],
+          "answer_excerpt": "用可核对参数说明 Mini 5 Pro 与 Autel 的夜景/避障差异。对本品「DJI Mini 5 Pro」：明确点名并给出可核对信息；对竞品「Autel EVO Lite / Nano 同档」：有对照提及。（Kimi · 演示摘录 · 证据密度约 88% · 引用示意：官方参数、第三方实测）"
+        },
+        "DeepSeek": {
+          "entity_mentioned": true,
+          "competitor_mentioned": false,
+          "evidence_density": 0.53,
+          "snippet": "本品出现较多，竞品证据不足。",
+          "evidence": [
+            "摘要卡片"
+          ],
+          "answer_excerpt": "本品出现较多，竞品证据不足。对本品「DJI Mini 5 Pro」：明确点名并给出可核对信息；对竞品「Autel EVO Lite / Nano 同档」：基本未展开。（DeepSeek · 演示摘录 · 证据密度约 53% · 引用示意：摘要卡片）"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "platform_readiness": {
+      "豆包": 0.78,
+      "元宝": 0.62,
+      "Kimi": 0.9,
+      "DeepSeek": 0.58
+    },
+    "entity_appearance_rate": 0.83,
+    "competitor_appearance_rate": 0.71,
+    "avg_evidence_density": 0.66,
+    "note": "占比来自本演示剧本聚合，禁止写成实测引用率。"
+  },
+  "meta": {
+    "window_label": "近 30 天",
+    "last_probe_at": "2026-07-29 18:40",
+    "question_count": 6,
+    "platform_count": 4,
+    "sample_count": 24,
+    "probe_cycle": "本轮 6 问 × 4 平台 = 24 样本",
+    "script_version": "2026-07-30"
+  }
+}

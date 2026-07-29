@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="/css/geo-ui.css?v=20260729-measure-tidy2">
     <link rel="stylesheet" href="/css/common.css?v=20260729-measure-tidy2">
     <link rel="stylesheet" href="/css/suite.css?v=20260729-measure-tidy2">
-    <link rel="stylesheet" href="/css/suite-cockpit.css?v=20260729-measure-tidy4">
+    <link rel="stylesheet" href="/css/suite-cockpit.css?v=20260730-evfix1">
     <link rel="stylesheet" href="/css/inner-shell.css?v=20260729-measure-tidy3">
     <script>
       (function () {
@@ -29,18 +29,18 @@
     <main class="cockpit">
         <header class="cockpit-top">
             <div class="cockpit-top__left">
-                <h1 id="suite-cockpit-title">内容增长工厂</h1>
-                <p class="cockpit-top__sub" id="suite-cockpit-sub">GEO Suite · DJI Mini 5 Pro 演示主路径</p>
+                <h1 id="suite-cockpit-title">GEO Suite</h1>
+                <p class="cockpit-top__sub" id="suite-cockpit-sub">检查 → 知识 → 拓词 → 内容/分发预览 → 观测</p>
             </div>
             <div class="cockpit-top__tabs" role="tablist" aria-label="Suite 视图">
                 <a class="cockpit-tab is-active" href="/suite" data-suite-tab="factory">概览</a>
                 <a class="cockpit-tab" href="/suite?step=measure" data-suite-tab="measure">观测</a>
-                <a class="cockpit-tab" href="/knowledge">知识中枢</a>
+                <a class="cockpit-tab" href="/knowledge">知识</a>
                 <a class="cockpit-tab" href="/settings">配置</a>
             </div>
             <div class="cockpit-top__actions">
-                <span class="cockpit-chip" id="suite-status-text">读取模式…</span>
-                <a class="cockpit-btn cockpit-btn--primary" id="suite-start-cta" href="/diagnostic?from=suite&amp;workflow=1&amp;step=diagnostic">从第 1 步开始</a>
+                <span class="cockpit-chip" id="suite-status-text">就绪</span>
+                <a class="cockpit-btn cockpit-btn--primary" id="suite-start-cta" href="/diagnostic?from=suite&amp;workflow=1&amp;step=diagnostic">开始工作流</a>
                 <a class="cockpit-btn" id="suite-open-content-engine" href="/knowledge" hidden>打开知识库</a>
                 <a class="cockpit-btn" id="suite-open-geoflow" href="/knowledge" hidden>GEOFlow</a>
             </div>
@@ -69,7 +69,7 @@
                         <div class="cockpit-progress-mini">
                             <span id="suite-progress-label">进度 0%</span>
                             <div class="suite-progress"><div class="suite-progress__bar" id="suite-progress-bar"></div></div>
-                            <button type="button" class="cockpit-link-btn" id="suite-reset-workflow">重置进度</button>
+                            <button type="button" class="cockpit-link-btn" id="suite-reset-workflow" hidden>重置进度</button>
                         </div>
                     </div>
                 </article>
@@ -80,7 +80,7 @@
                 <section class="cockpit-card board-section" id="suite-board-section">
                     <div class="board-section__head">
                         <h2>本周任务</h2>
-                        <span class="cockpit-muted" id="board-demo-note">演示看板 · 结合本机进度与内容引擎任务</span>
+                        <span class="cockpit-muted" id="board-demo-note">结合本机进度与内容任务</span>
                     </div>
                     <div class="task-board" id="suite-task-board">
                         <div class="task-col" data-col="running">
@@ -114,7 +114,7 @@
             <aside class="cockpit-side">
                 <section class="cockpit-card side-gauge">
                     <h3>质量门禁</h3>
-                    <p class="cockpit-muted">演示样例指标 · 可接观测/知识库 API</p>
+                    <p class="cockpit-muted">知识库与任务就绪概览</p>
                     <div class="gauge-row">
                         <div class="gauge" id="quality-gauge" style="--p: 72">
                             <span id="quality-score">72</span>
@@ -131,7 +131,7 @@
                 </section>
                 <section class="cockpit-card side-gauge">
                     <h3>渠道就绪</h3>
-                    <p class="cockpit-muted">五渠道静态壳 · Rank 原生</p>
+                    <p class="cockpit-muted">五渠道预览就绪度</p>
                     <div class="gauge-row">
                         <div class="gauge gauge--green" id="channel-gauge" style="--p: 60">
                             <span id="channel-score">60</span>
@@ -155,7 +155,7 @@
                         <a href="/keywords?from=suite&amp;workflow=1"><span>③ 拓词</span><span class="material-symbols-outlined text-sm">manage_search</span></a>
                         <a href="/distribute"><span>④ 分发</span><span class="material-symbols-outlined text-sm">send</span></a>
                     </div>
-                    <p class="suite-note" id="suite-next-steps">本地：scripts/start-local.ps1</p>
+                    <p class="suite-note" id="suite-next-steps" hidden></p>
                     <p class="suite-note" id="suite-integration-copy" hidden></p>
                     <div id="suite-status" data-mode="native-python" hidden></div>
                     <a id="suite-continue-cta" href="/suite?step=diagnostic" hidden>继续</a>
@@ -172,10 +172,10 @@
     </main>
 
     <div id="footer-container"></div>
-    <script src="/js/common.js?v=20260729-navfast1" defer></script>
+    <script src="/js/common.js?v=20260729-scaffold1" defer></script>
     <script src="/js/geoflow-handoff.js?v=20260729-measure-tidy2" defer></script>
-    <script src="/js/suite-workflow.js?v=20260729-measure-tidy2" defer></script>
-    <script src="/js/suite-extra.js?v=20260729-measure-fix2" defer></script>
-    <script src="/js/suite.js?v=20260729-measure-fix2" defer></script>
+    <script src="/js/suite-workflow.js?v=20260730-nobar1" defer></script>
+    <script src="/js/suite-extra.js?v=20260730-aifocus1" defer></script>
+    <script src="/js/suite.js?v=20260729-scaffold1" defer></script>
 </body>
 </html>

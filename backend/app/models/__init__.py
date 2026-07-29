@@ -28,6 +28,7 @@ from app.models.content_engine import (
     ContentTask,
     DistributionChannel,
 )
+from app.models.geo_run import GeoRun
 
 __all__ = [
     "Company",
@@ -60,4 +61,5 @@ __all__ = [
     "ContentPrompt",
     "ContentTask",
     "DistributionChannel",
+    "GeoRun",
 ]

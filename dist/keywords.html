@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <title>GEO 拓词工具 - GEORank</title>
-    <meta name="description" content="演示默认围绕 DJI Mini 5 Pro 知识库：从种子词扩展八维提示簇，对齐事实卡与探针题，再移交内容引擎。">
+    <meta name="description" content="从种子词扩展选题清单，勾选后创建内容任务。">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,16 +14,16 @@
 
     <link rel="stylesheet" href="/css/public-tailwind.css?v=20260729-dji-kw1">
     <link rel="stylesheet" href="/css/common.css?v=20260729-dji-kw1">
-    <link rel="stylesheet" href="/css/keywords.css?v=20260729-dji-kw1">
+    <link rel="stylesheet" href="/css/keywords.css?v=20260730-aifocus2">
 </head>
 <body class="keywords-page bg-white text-on-surface antialiased">
     <div id="header-container"></div>
 
     <main class="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pt-24 md:pt-32 pb-16 md:pb-24">
         <section class="kw-hero">
-            <h1>GEO 拓词工具</h1>
+            <h1>选题清单 · 拓词</h1>
             <p class="kw-hero__lead">
-                演示主路径：围绕 <strong>DJI Mini 5 Pro</strong> 知识库扩展查询词与提示词簇，对齐事实卡与探针题，再进入内容引擎分发。
+                生成选题清单，勾选后一键创建内容任务；默认种子可围绕当前产品场景预填。
             </p>
             <div class="kw-search">
                 <div id="tag-input-wrapper">
@@ -38,15 +38,34 @@
         <div id="results-panel" class="hidden">
             <div class="kw-results-head flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
                 <div>
-                    <h2 class="text-xl md:text-2xl tracking-tight">拓词结果</h2>
-                    <p class="text-sm text-on-surface-variant mt-1">为 "<span id="seed-kw-display" class="font-medium text-on-surface"></span>" 生成了 <span id="total-kw-count" class="font-bold text-on-surface">0</span> 个拓展关键词</p>
+                    <h2 class="text-xl md:text-2xl tracking-tight">选题清单</h2>
+                    <p class="text-sm text-on-surface-variant mt-1">为 "<span id="seed-kw-display" class="font-medium text-on-surface"></span>" 生成了 <span id="total-kw-count" class="font-bold text-on-surface">0</span> 个选题 · 已选 <span id="selected-kw-count">0</span></p>
                 </div>
                 <div class="flex flex-wrap gap-3">
+                    <button id="create-content-tasks-btn" class="btn btn-primary px-4 py-2 text-xs font-bold inline-flex items-center gap-1.5" type="button" disabled>
+                        <span class="material-symbols-outlined text-sm">edit_note</span>去选模板生成
+                    </button>
                     <button id="refine-btn" class="btn btn-outline px-4 py-2 text-xs font-bold inline-flex items-center gap-1.5"><span class="material-symbols-outlined text-sm">refresh</span>重新生成</button>
-                    <button id="send-geoflow-btn" class="btn btn-outline px-4 py-2 text-xs font-bold inline-flex items-center gap-1.5"><span class="material-symbols-outlined text-sm">sync_alt</span>发送到 GEOFlow</button>
+                    <button id="send-geoflow-btn" class="btn btn-outline px-4 py-2 text-xs font-bold inline-flex items-center gap-1.5" hidden><span class="material-symbols-outlined text-sm">sync_alt</span>发送到 GEOFlow</button>
                     <button id="download-csv-btn" class="btn btn-primary px-4 py-2 text-xs font-bold inline-flex items-center gap-1.5"><span class="material-symbols-outlined text-sm">download</span>批量导出</button>
                 </div>
             </div>
+            <p id="kw-task-feedback" class="hidden text-sm mb-4"></p>
+
+            <section id="kw-ai-focus" class="kw-ai-focus mb-6" aria-label="目标 AI 侧重">
+                <div class="kw-ai-focus__head">
+                    <strong>目标 AI</strong>
+                    <span class="kw-ai-focus__hint">演示策略表 · 生成前按平台提示标题侧重（非实测）</span>
+                </div>
+                <div id="kw-ai-platform-checks" class="kw-ai-focus__checks"></div>
+                <div class="kw-ai-focus__head kw-ai-focus__head--sub">
+                    <strong>标题 / 问法建议</strong>
+                    <span class="kw-ai-focus__hint">勾选题后按目标 AI 展开；可点「应用」写入选题</span>
+                </div>
+                <div id="kw-ai-title-hints" class="kw-ai-focus__hints">
+                    <p class="kw-ai-focus__empty">勾选至少一个选题后显示建议。</p>
+                </div>
+            </section>
 
             <div id="keyword-profile-card" class="kw-profile-card hidden mb-6 p-5 md:p-6">
                 <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -120,8 +139,8 @@
 
     <div id="footer-container"></div>
     <script src="/js/common.js?v=20260729-navfast1"></script>
-    <script src="/js/suite-workflow.js?v=20260729-dji-kw1"></script>
+    <script src="/js/suite-workflow.js?v=20260730-nobar1"></script>
     <script src="/js/geoflow-handoff.js?v=20260729-dji-kw1"></script>
-    <script src="/js/keywords.js?v=20260729-scene-human"></script>
+    <script src="/js/keywords.js?v=20260730-aifocus1"></script>
 </body>
 </html>
