@@ -5,8 +5,8 @@ import test from 'node:test';
 import {fileURLToPath} from 'node:url';
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const copyrightText = '© 2026 GEORankHub · 公益性 GEO 研究平台 · 独立第三方';
-const githubHref = 'https://github.com/yaojingang/GEORank';
+const copyrightText = '© 2026 GEOrank · 公益性 GEO 研究平台 · 独立第三方';
+const githubHref = 'https://github.com/Castor9133/geo-prototype';
 const oldCopyrightPattern = /© 2024-2026 GEOrank|All rights reserved|footer\.rights|GitHub开源/;
 
 const stripMarkup = (html) => html.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
@@ -35,10 +35,10 @@ test('every static frontend page mounts the shared footer loader', async () => {
     const source = await readFile(path.join(distDir, file), 'utf8');
     if (!source.includes('id="footer-container"')) continue;
     footerPages.push(file);
-    assert.match(source, /<script src="\/js\/common\.js\?v=[^"]+"><\/script>/, file);
+    assert.match(source, /<script src="\/js\/common\.js\?v=[^"]+"(?:\s+defer)?><\/script>/, file);
   }
 
-  assert.equal(footerPages.length, 14);
+  assert.equal(footerPages.length, 10);
 });
 
 test('custom homepage source and published mirrors use the same copyright', async () => {

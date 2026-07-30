@@ -6,11 +6,31 @@ import json
 from fastapi import APIRouter, HTTPException, Request
 
 from app.core.deps import DbSession, OptionalUser
-from app.schemas.keyword import KeywordExpandRequest, KeywordExpandResponse
+from app.schemas.keyword import KeywordExpandRequest, KeywordExpandResponse, KeywordAiFocusResponse
 from app.services.keyword_expansion import expand_keywords_with_status
 from app.services.ai_usage import record_ai_usage, release_ai_access, resolve_ai_access
+from app.services.runtime_settings import get_keyword_expansion_config
 
 router = APIRouter()
+
+
+@router.get("/ai-focus", response_model=KeywordAiFocusResponse)
+async def get_keyword_ai_focus(_: OptionalUser):
+    """目标 AI 平台侧重（来自后台 settings，供拓词页勾选；不含前端标题模板）。"""
+    config = await get_keyword_expansion_config()
+    items = [
+        {
+            "platform": row["platform"],
+            "generation_focus": row.get("generation_focus") or "",
+            "avoid": list(row.get("avoid") or []),
+        }
+        for row in (config.get("platforms") or [])
+    ]
+    return {
+        "disclaimer": config.get("disclaimer") or "",
+        "platforms": [row["platform"] for row in items],
+        "items": items,
+    }
 
 
 @router.post("/expand", response_model=KeywordExpandResponse)
@@ -41,6 +61,10 @@ async def expand_keyword_pack(payload: KeywordExpandRequest, request: Request, d
             metadata={
                 "seeds": result.get("seeds", []),
                 "fallback_generated": not provider_succeeded,
+                "title_hint_count": sum(
+                    len(row.get("titles") or [])
+                    for row in (result.get("platform_title_hints") or [])
+                ),
             },
         )
         await db.commit()

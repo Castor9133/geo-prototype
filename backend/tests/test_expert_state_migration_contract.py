@@ -34,7 +34,11 @@ SEED_MIGRATION_PATH = (
     REPO_ROOT / "backend" / "alembic" / "versions" / "012_seed_expert_profiles.py"
 )
 TARGET_SLUG = "yao-jingang"
-STATE_SNAPSHOT_PATH = "backend/alembic/snapshots/015_unpublish_yao_jingang.json"
+STATE_REVISION = "020_unpublish_yao_jingang"
+STATE_SNAPSHOT_PATH = f"backend/alembic/snapshots/{STATE_REVISION}.json"
+STATE_MIGRATION_PATH = (
+    REPO_ROOT / "backend" / "alembic" / "versions" / f"{STATE_REVISION}.py"
+)
 
 
 def _load_module(path: Path, name: str):
@@ -45,16 +49,28 @@ def _load_module(path: Path, name: str):
     return module
 
 
-def _build_dry_run():
+def _seed_only_published_fixture():
+    """Reconstruct the pre-tombstone published fixture for dry-run builder tests."""
     fixture = json.loads(CANONICAL_FIXTURE_PATH.read_text(encoding="utf-8"))
+    for expert in fixture["experts"]:
+        if expert["slug"] == TARGET_SLUG:
+            expert["status"] = "published"
+            expert["featured"] = True
+    fixture.pop("migration_chain", None)
+    fixture["migration_snapshot"] = SEED_SNAPSHOT_PATH.relative_to(REPO_ROOT).as_posix()
+    return fixture
+
+
+def _build_dry_run():
+    fixture = _seed_only_published_fixture()
     return fixture, build_tombstone_transition(
         fixture,
         target_slug=TARGET_SLUG,
-        revision="015_unpublish_yao_jingang",
-        down_revision="016_merge_platform_iterations",
-        effective_date="2026-07-16",
+        revision=STATE_REVISION,
+        down_revision="019_add_geo_runs",
+        effective_date="2026-07-30",
         snapshot_path=STATE_SNAPSHOT_PATH,
-        reason="verified rights or privacy request",
+        reason="maintainer fork cleanup: remove upstream author profile from public channel",
     )
 
 
@@ -66,6 +82,16 @@ class ExpertMigrationContractTests(unittest.TestCase):
             validate_expert_migration_snapshot(migration, snapshot),
             "seed",
         )
+
+    def test_canonical_fixture_loads_committed_tombstone_chain(self):
+        fixture = json.loads(CANONICAL_FIXTURE_PATH.read_text(encoding="utf-8"))
+        contracts = load_expert_fixture_contracts(fixture, REPO_ROOT)
+        self.assertEqual(len(contracts), 2)
+        target = next(item for item in fixture["experts"] if item["slug"] == TARGET_SLUG)
+        self.assertEqual(target["status"], "hidden")
+        self.assertFalse(target["featured"])
+        self.assertTrue(STATE_MIGRATION_PATH.is_file())
+        self.assertTrue((REPO_ROOT / STATE_SNAPSHOT_PATH).is_file())
 
     def test_builds_and_loads_temporary_exact_pair_tombstone_contract(self):
         original, plan = _build_dry_run()
@@ -91,9 +117,9 @@ class ExpertMigrationContractTests(unittest.TestCase):
         self.assertEqual(snapshot["operations"][0]["slug"], original_target["slug"])
 
         with tempfile.TemporaryDirectory() as temporary_directory:
-            migration_path = Path(temporary_directory) / "015_unpublish_yao_jingang.py"
+            migration_path = Path(temporary_directory) / f"{STATE_REVISION}.py"
             migration_path.write_text(render_state_migration(snapshot), encoding="utf-8")
-            migration = _load_module(migration_path, "temporary_tombstone_015")
+            migration = _load_module(migration_path, "temporary_tombstone_020")
             self.assertEqual(
                 validate_expert_migration_snapshot(migration, snapshot),
                 "state",
@@ -199,11 +225,6 @@ class ExpertMigrationContractTests(unittest.TestCase):
             with self.assertRaises(AssertionError):
                 render_state_migration(republish)
 
-        self.assertFalse(
-            (REPO_ROOT / "backend" / "alembic" / "versions" / "015_unpublish_yao_jingang.py").exists()
-        )
-        self.assertFalse((REPO_ROOT / STATE_SNAPSHOT_PATH).exists())
-
 
 class ExpertStateMigrationDryRunTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
@@ -222,9 +243,9 @@ class ExpertStateMigrationDryRunTests(unittest.IsolatedAsyncioTestCase):
         original, plan = _build_dry_run()
         schema = f"expert_tombstone_dry_run_{uuid.uuid4().hex}"
         with tempfile.TemporaryDirectory() as temporary_directory:
-            migration_path = Path(temporary_directory) / "015_unpublish_yao_jingang.py"
+            migration_path = Path(temporary_directory) / f"{STATE_REVISION}.py"
             migration_path.write_text(render_state_migration(plan.snapshot), encoding="utf-8")
-            migration = _load_module(migration_path, "temporary_tombstone_pg_015")
+            migration = _load_module(migration_path, "temporary_tombstone_pg_020")
             validate_expert_migration_snapshot(migration, plan.snapshot)
 
             try:
@@ -324,9 +345,9 @@ class ExpertStateMigrationDryRunTests(unittest.IsolatedAsyncioTestCase):
         schema = f"expert_tombstone_collision_{uuid.uuid4().hex}"
         operation = plan.snapshot["operations"][0]
         with tempfile.TemporaryDirectory() as temporary_directory:
-            migration_path = Path(temporary_directory) / "015_unpublish_yao_jingang.py"
+            migration_path = Path(temporary_directory) / f"{STATE_REVISION}.py"
             migration_path.write_text(render_state_migration(plan.snapshot), encoding="utf-8")
-            migration = _load_module(migration_path, "temporary_tombstone_collision_015")
+            migration = _load_module(migration_path, "temporary_tombstone_collision_020")
             try:
                 async with self.engine.begin() as connection:
                     await connection.execute(text(f'CREATE SCHEMA "{schema}"'))

@@ -172,6 +172,86 @@ DEFAULT_LLM_PROVIDER_CONFIG = {
     "strategy": "failover",
     "providers": [],
 }
+
+# 拓词 + 目标 AI 标题建议（可后台改；禁止把提示词/模板塞进前台）
+KEYWORD_EXPANSION_SETTING_KEY = "keyword_expansion"
+DEFAULT_KEYWORD_EXPANSION_CONFIG: dict[str, Any] = {
+    "system_prompt": (
+        "你是面向中文传媒与 GEO（生成式引擎优化）场景的关键词策略专家。\n"
+        "先理解种子词背后的业务画像与实体，再按 8 个意图维度输出可落地、可移交内容生产的词包，"
+        "并按给定平台侧重为种子实体生成标题/问法建议。\n\n"
+        "严格只返回 JSON（不要 markdown，不要解释）：\n"
+        "{\n"
+        '  "dimensions": [\n'
+        "    {\n"
+        '      "key": "semantic|scenario|commercial|ranking|review|brand|question|technical",\n'
+        '      "items": [\n'
+        "        {\n"
+        '          "keyword": "可检索、可写作的中文关键词或问题式查询",\n'
+        '          "recommendation_score": 0-100整数,\n'
+        '          "business_score": 0-100整数,\n'
+        '          "reason": "一句可审计理由：覆盖哪类意图/场景/实体"\n'
+        "        }\n"
+        "      ]\n"
+        "    }\n"
+        "  ],\n"
+        '  "platform_title_hints": [\n'
+        "    {\n"
+        '      "platform": "与输入 platforms 完全一致的平台名",\n'
+        '      "titles": ["标题1", "标题2", "标题3"]\n'
+        "    }\n"
+        "  ]\n"
+        "}\n\n"
+        "质量硬约束：\n"
+        "1. 每个维度输出 8-10 个词；八维意图必须可区分，禁止把同一说法换皮塞进多个维度。\n"
+        "2. 实体一致：词必须锚定种子实体/业务（品牌、栏目、产品、主题、机构），禁止漂移到无关行业。\n"
+        "3. 少空泛：禁止「XX平台/工具/系统/引擎/优化/推荐/榜单」式无信息堆砌；优先具体场景、角色、任务与长尾。\n"
+        "4. 维度细则：\n"
+        "   - semantic：同义近义、行业术语、实体别名、可检索变体（可含 1 个种子原词）\n"
+        "   - scenario：真实使用场景与任务语境，必须是完整人话短语；禁止「角色标签 + 空格 + 种子」硬拼接\n"
+        "   - commercial：采购、报价、选型、合作、预算等转化意图\n"
+        "   - ranking：推荐/对比/哪家好/清单类（需带比较对象或适用边界）\n"
+        "   - review：评测、优缺点、避坑、值不值、复盘\n"
+        "   - brand：品牌/栏目/竞品/替代方案关联\n"
+        "   - question：必须是问题式自然语言（如何/怎么/为什么/是否/有哪些/适合谁）\n"
+        "   - technical：落地方法、流程、指标、结构、工作流、实施清单\n"
+        "5. 长尾优先：至少一半词应像真实用户会搜/会问的完整短语（可含 6-20 字）。\n"
+        "6. 画像约束：严格遵守给定 profile。\n"
+        "7. 评分口径（代理信号，非实测）：recommendation_score=选题/内容生产优先级；"
+        "business_score=商业转化意图；禁止写成「AI 答案引用率」。\n"
+        "8. 去重：同一词包内禁止重复、近义重复。\n"
+        "9. 中文为主，自然可读。\n"
+        "10. platform_title_hints：必须覆盖输入中的每一个 platform；每平台恰好 titles_per_platform 条；"
+        "标题要贴合该平台的 generation_focus，并避开 avoid；围绕 entity 与 seeds 写，"
+        "通用站点可用（媒体/政务/品牌/电商等），禁止绑定某一垂类硬套话（如无人机续航/禁飞）。"
+        "标题可作独立选题，勿输出空串。"
+    ),
+    "titles_per_platform": 3,
+    "timeout_seconds": 20,
+    "disclaimer": "目标 AI 侧重来自后台配置 + 模型生成标题 · 非平台实测 · 禁止写成引用率",
+    "platforms": [
+        {
+            "platform": "豆包",
+            "generation_focus": "侧重结论前置与场景对照；关键事实用官方/可核对口径；适当对比同档但勿贬低竞品；段落短、可扫读。",
+            "avoid": ["保证上榜", "无来源关键数字", "恐吓式法规话术"],
+        },
+        {
+            "platform": "元宝",
+            "generation_focus": "偏购买/办理/取舍决策；语气可偏导购但须标注资料缺口；避免夸张促销承诺。",
+            "avoid": ["绝对最低价", "虚构用户口碑", "只推竞品不提本品"],
+        },
+        {
+            "platform": "Kimi",
+            "generation_focus": "强调分点对照与可核对证据；写清宣传与可核实信息的差异；结构完整（结论→维度→限制）。",
+            "avoid": ["无出处对比表", "编造评测分数", "Markdown 表格堆砌"],
+        },
+        {
+            "platform": "DeepSeek",
+            "generation_focus": "答案摘要优先、短段落可引用；主体点名清晰；竞品可弱化但勿捏造；文末注明以官方为准。",
+            "avoid": ["冗长种草故事", "无来源推荐口号", "假装已实测"],
+        },
+    ],
+}
 DEFAULT_FRONTEND_MODULES = {
     "default_module": "diagnostic",
     "modules": [
@@ -210,7 +290,7 @@ DEFAULT_HOMEPAGE_RUNTIME = {
     "updated_by": None,
 }
 DEFAULT_HOMEPAGE_RELEASE_ID = DEFAULT_HOMEPAGE_RUNTIME["active_release_id"]
-DEFAULT_HOMEPAGE_RELEASE_TITLE = "GEORankHub 导航与版权更新"
+DEFAULT_HOMEPAGE_RELEASE_TITLE = "GEOrank 导航与版权更新"
 VALID_AI_ACCESS_MODES = {
     "platform_unlimited",
     "daily_quota",
@@ -803,6 +883,76 @@ def _build_ai_usage_policy_config(values: dict[str, Any]) -> dict[str, Any]:
         "allowed_byok_providers": providers,
         "metered_modules": modules,
     }
+
+
+def get_default_keyword_expansion_config() -> dict[str, Any]:
+    return {
+        "system_prompt": DEFAULT_KEYWORD_EXPANSION_CONFIG["system_prompt"],
+        "titles_per_platform": int(DEFAULT_KEYWORD_EXPANSION_CONFIG["titles_per_platform"]),
+        "timeout_seconds": int(DEFAULT_KEYWORD_EXPANSION_CONFIG["timeout_seconds"]),
+        "disclaimer": DEFAULT_KEYWORD_EXPANSION_CONFIG["disclaimer"],
+        "platforms": [dict(item) for item in DEFAULT_KEYWORD_EXPANSION_CONFIG["platforms"]],
+    }
+
+
+def _normalize_keyword_platform(raw: Any) -> dict[str, Any] | None:
+    if not isinstance(raw, dict):
+        return None
+    platform = _pick_string(raw.get("platform"), raw.get("name"))
+    if not platform:
+        return None
+    avoid_raw = raw.get("avoid")
+    avoid: list[str] = []
+    if isinstance(avoid_raw, list):
+        avoid = [str(item).strip()[:80] for item in avoid_raw if str(item or "").strip()][:8]
+    elif isinstance(avoid_raw, str) and avoid_raw.strip():
+        avoid = [part.strip()[:80] for part in avoid_raw.replace("，", ",").split(",") if part.strip()][:8]
+    return {
+        "platform": platform[:40],
+        "generation_focus": _pick_string(raw.get("generation_focus"), raw.get("focus"))[:500]
+        or "按平台习惯输出可扫读、可核对的标题与问法。",
+        "avoid": avoid,
+    }
+
+
+def _build_keyword_expansion_config(values: dict[str, Any]) -> dict[str, Any]:
+    defaults = get_default_keyword_expansion_config()
+    raw = values.get(KEYWORD_EXPANSION_SETTING_KEY)
+    if not isinstance(raw, dict):
+        raw = {}
+
+    system_prompt = _pick_string(raw.get("system_prompt"), defaults["system_prompt"]) or defaults["system_prompt"]
+    titles_per = max(1, min(5, _pick_int(raw.get("titles_per_platform"), default=defaults["titles_per_platform"])))
+    timeout_seconds = max(8, min(60, _pick_int(raw.get("timeout_seconds"), default=defaults["timeout_seconds"])))
+    disclaimer = _pick_string(raw.get("disclaimer"), defaults["disclaimer"]) or defaults["disclaimer"]
+
+    platforms: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    raw_platforms = raw.get("platforms")
+    if isinstance(raw_platforms, list):
+        for item in raw_platforms[:12]:
+            normalized = _normalize_keyword_platform(item)
+            if not normalized or normalized["platform"] in seen:
+                continue
+            seen.add(normalized["platform"])
+            platforms.append(normalized)
+    if not platforms:
+        platforms = [dict(item) for item in defaults["platforms"]]
+
+    return {
+        "system_prompt": system_prompt[:12000],
+        "titles_per_platform": titles_per,
+        "timeout_seconds": timeout_seconds,
+        "disclaimer": disclaimer[:240],
+        "platforms": platforms,
+    }
+
+
+async def get_keyword_expansion_config(force_refresh: bool = False) -> dict[str, Any]:
+    if force_refresh:
+        await invalidate_runtime_settings_cache()
+    values = await _load_runtime_settings()
+    return _build_keyword_expansion_config(values)
 
 
 async def get_ai_runtime_config(force_refresh: bool = False) -> dict[str, Any]:

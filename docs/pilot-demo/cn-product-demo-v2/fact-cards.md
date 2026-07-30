@@ -164,3 +164,45 @@
 - risk_level: low
 - allowed_use: 对外稿
 - citable_blurb: 「增强图传」为可选机型/能力：官方说明可在 O4+ 不佳时借 4G 稳定画面，但仅限中国大陆、禁止异地远程操控，并有流量、延时与信号注意事项。演示文案须区分标准 O4+ 与增强图传机型，勿把赠送流量写成年年免费。
+
+## dji-mini5pro-f-013
+
+- entity_name: DJI Mini 5 Pro
+- aliases: 大疆 Mini 5 Pro；DJI Fly；DJI Mimo；软件生态
+- claim: DJI Mini 5 Pro 须搭配 DJI Fly App 使用，支持一键短片（含旋转子模式）、航点飞行、延时摄影、聚焦等智能功能；支持关机快传（关机状态下通过 Wi-Fi 6 快速传输素材至手机）；DJI Mimo App 可用于实时图传预览与参数设置。
+- evidence_source: DJI 官网 · Mini 5 Pro 产品页 / FAQ
+- evidence_excerpt: 须搭配 DJI Fly app 使用；关机快传；一键短片；航点飞行；延时摄影；聚焦
+- evidence_url: https://www.dji.com/cn/mini-5-pro/faq
+- effective_date: 2026-07-30
+- risk_level: low
+- allowed_use: 对外稿
+- related_url: https://www.dji.com/cn/mini-5-pro
+- citable_blurb: 官方明确 Mini 5 Pro 须搭配 DJI Fly App 操作，支持关机快传（Wi-Fi 6 传输）、一键短片（含旋转）、航点飞行、延时摄影、聚焦等智能功能。关机快传可在不开机状态下将素材快速传输至手机。功能以 DJI Fly 当前版本和官网 FAQ 说明为准。
+
+## dji-mini5pro-f-014
+
+- entity_name: DJI Mini 5 Pro
+- aliases: 大疆 Mini 5 Pro；C0；法规；注册
+- claim: DJI Mini 5 Pro 欧盟分类为 C0（标准起飞重量 249.9g，低于 250g 阈值）。C0 分类在欧盟地区无需注册即可飞行，但仍需遵守当地禁飞区与高度限制。不同国家/地区的无人机法规不同，使用者有责任了解并遵守当地法规。
+- evidence_source: DJI 官网 · Mini 5 Pro 技术参数 / FAQ
+- evidence_excerpt: 分类 欧盟 C0；标准起飞重量 249.9 克；需遵守当地法规
+- evidence_url: https://www.dji.com/cn/mini-5-pro/specs
+- effective_date: 2026-07-30
+- risk_level: medium
+- allowed_use: 对外稿
+- notes: 法规信息以销售地最新政策为准，C0 分类要求可能随法规更新而变化。使用者须自行核实当地法规。
+- citable_blurb: Mini 5 Pro 标准起飞重量 249.9g，欧盟分类为 C0（低于 250g），在欧盟地区属于无需注册即可飞行的类别。但不同国家/地区法规不同，使用者须了解并遵守当地禁飞区、高度限制等规定。法规可能更新，以当地最新政策为准。
+
+## dji-mini5pro-f-015
+
+- entity_name: DJI Mini 5 Pro
+- aliases: 大疆 Mini 5 Pro；竞品对比；Autel
+- claim: 在迷你航拍机品类中，DJI Mini 5 Pro 的主要竞品为 Autel 旗下迷你系列（如 Autel Evo Nano+）。DJI Mini 5 Pro 差异化优势包括：一英寸 CMOS（同级中少有）、225° 云台横滚、前视激光雷达 + 1 lux 夜景避障、O4+ 图传、内置 42GB 存储。竞品在传感器尺寸、避障能力和图传方案上各有取舍，购买决策应基于实际拍摄场景与预算。
+- evidence_source: DJI 官网 · Mini 5 Pro 产品页 / FAQ（竞品参数不引用第三方来源）
+- evidence_excerpt: 一英寸大底全能迷你航拍机；225° 横滚；前视激光雷达；O4+；42GB
+- evidence_url: https://www.dji.com/cn/mini-5-pro
+- effective_date: 2026-07-30
+- risk_level: medium
+- allowed_use: 对外稿
+- notes: 竞品对比仅以 DJI 官方公开参数为依据，不引用第三方评测分数。竞品参数以竞品官方页面为准，本卡不列竞品具体数字。
+- citable_blurb: 迷你航拍机品类中 Mini 5 Pro 的差异化包括一英寸 CMOS、225° 云台、激光雷达夜景避障、O4+ 图传和 42GB 内置存储。与 Autel 等竞品的对比应基于官方公开参数，结合实际拍摄场景与预算决策，避免使用「碾压」「完胜」等话术。

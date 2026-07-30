@@ -27,7 +27,7 @@ from app.services.content_engine_utils import (
     soften_markdown_prose,
     split_chunks,
 )
-from app.services.geo_observe_script import build_generation_focus_block, load_ai_focus
+from app.services.geo_observe_script import build_generation_focus_block, get_ai_focus_config
 
 # 兼容旧导入名
 _slugify = slugify
@@ -324,12 +324,12 @@ async def run_content_task(db: AsyncSession, task_id: uuid.UUID) -> ContentTask:
             if isinstance(platforms, str):
                 platforms = [platforms]
             try:
-                focus_script = load_ai_focus("geo-ai-focus-dji")
+                focus_script = await get_ai_focus_config()
                 focus_block = build_generation_focus_block(
                     focus_script,
                     [str(p) for p in platforms if p],
                 )
-            except FileNotFoundError:
+            except Exception:
                 focus_block = ""
             if focus_block:
                 filled = f"{focus_block}\n\n{filled}"
@@ -346,23 +346,29 @@ async def run_content_task(db: AsyncSession, task_id: uuid.UUID) -> ContentTask:
             },
             {"role": "user", "content": filled},
         ]
+        llm_error: str | None = None
         try:
             draft = await chat_completion(messages, temperature=0.3, max_tokens=2500)
-        except Exception:
+        except Exception as llm_exc:  # noqa: BLE001
+            llm_error = f"{type(llm_exc).__name__}: {llm_exc}"[:800]
             focus_note = f"{focus_block}\n\n" if focus_block else ""
             draft = (
                 f"{task.title}\n\n"
-                f"（本地降级草稿：LLM 未配置或调用失败）\n\n"
+                f"（本地降级草稿：LLM 未配置或调用失败）\n"
+                f"原因：{llm_error}\n\n"
                 f"{focus_note}"
                 f"答案摘要\n基于知识库检索整理如下要点。\n\n{knowledge_block[:1200]}\n"
             )
         task.draft_body = soften_markdown_prose(draft)
         task.status = "completed"
         task.finished_at = datetime.utcnow()
+        task.error_message = llm_error
         task.meta = {
             **(task.meta or {}),
             "knowledge_chars": len(knowledge_block),
             "ai_focus_applied": bool(focus_block),
+            "llm_ok": llm_error is None,
+            "llm_fallback_reason": llm_error,
         }
     except Exception as exc:  # noqa: BLE001
         task.status = "failed"

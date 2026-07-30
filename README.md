@@ -121,4 +121,4 @@ GEOrank/
 
 ## License
 
-软件代码采用 **Apache-2.0**。内置首页等内容的额外权利边界见 [DATA_LICENSE.md](DATA_LICENSE.md)。
+软件代码采用 **Apache-2.0**。内置首页等内容的额外权利边界见 [DATA_LICENSE.md](DATA_LICENSE.md) 与 [docs/public-data.md](docs/public-data.md)。

@@ -537,21 +537,26 @@
 
   async function loadAiFocusScript() {
     if (aiFocusScript) return aiFocusScript;
-    const urls = [
-      "/api/geo-runs/scripts/geo-ai-focus-dji",
-      "/pilot-demo/geo-ai-focus-dji.json",
-    ];
-    for (const url of urls) {
-      try {
-        const res = await fetch(url, { credentials: "same-origin" });
-        if (!res.ok) continue;
+    try {
+      const res = await fetch("/api/keywords/ai-focus", { credentials: "same-origin" });
+      if (res.ok) {
         aiFocusScript = await res.json();
         return aiFocusScript;
-      } catch (_) {
-        /* next */
       }
+    } catch (_) {
+      /* fall through */
     }
-    return null;
+    aiFocusScript = {
+      disclaimer: "目标 AI 侧重暂不可用",
+      platforms: DEFAULT_AI_PLATFORMS,
+      items: DEFAULT_AI_PLATFORMS.map((platform) => ({
+        platform,
+        generation_focus: "",
+        avoid: [],
+        source_prefs: [],
+      })),
+    };
+    return aiFocusScript;
   }
 
   function selectedTaskPlatforms() {

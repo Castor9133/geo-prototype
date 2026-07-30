@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/yaojingang/GEORank/blob/main/data/public/schemas/expert-state-transition.v1.schema.json",
+  "$id": "https://github.com/Castor9133/geo-prototype/blob/main/data/public/schemas/expert-state-transition.v1.schema.json",
   "title": "GEORank expert state transition v1",
   "type": "object",
   "additionalProperties": false,

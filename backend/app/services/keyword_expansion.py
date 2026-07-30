@@ -10,6 +10,7 @@ import asyncio
 import hashlib
 import json
 import re
+from typing import Any
 
 from app.services.ai_client import ai_client
 
@@ -745,53 +746,24 @@ def _sanitize_dimension_items(seed: str, dimension_key: str, raw_items: list[dic
     return items
 
 
-async def _ai_expand(seeds: list[str], profile: dict, provider_override=None) -> list[dict]:
-    system = """你是面向中文传媒与 GEO（生成式引擎优化）场景的关键词策略专家。
-先理解种子词背后的业务画像与实体，再按 8 个意图维度输出可落地、可移交 GEOFlow 内容生产的词包。
+async def _ai_expand(
+    seeds: list[str],
+    profile: dict,
+    provider_override=None,
+) -> tuple[list[dict], list[dict]]:
+    from app.services.runtime_settings import get_keyword_expansion_config
 
-严格只返回 JSON（不要 markdown，不要解释）：
-{
-  "dimensions": [
-    {
-      "key": "semantic|scenario|commercial|ranking|review|brand|question|technical",
-      "items": [
-        {
-          "keyword": "可检索、可写作的中文关键词或问题式查询",
-          "recommendation_score": 0-100整数,
-          "business_score": 0-100整数,
-          "reason": "一句可审计理由：覆盖哪类意图/场景/实体"
-        }
-      ]
-    }
-  ]
-}
-
-质量硬约束：
-1. 每个维度输出 8-10 个词；八维意图必须可区分，禁止把同一说法换皮塞进多个维度。
-2. 实体一致：词必须锚定种子实体/业务（品牌、栏目、产品、主题），禁止漂移到无关行业。
-3. 少空泛：禁止「XX平台/工具/系统/引擎/优化/推荐/榜单」式无信息堆砌；优先具体场景、角色、任务与长尾。
-4. 维度细则：
-   - semantic：同义近义、行业术语、实体别名、可检索变体（可含 1 个种子原词）
-   - scenario：真实使用场景与任务语境，必须是完整人话短语（如「旅行航拍选 Mini 5 Pro」「官网怎么介绍 GEO」）；禁止「角色标签 + 空格 + 种子」硬拼接（如「市场部 XXX」「品牌官网 XXX」）
-   - commercial：采购、报价、选型、合作、预算等转化意图
-   - ranking：推荐/对比/哪家好/清单类（需带比较对象或适用边界）
-   - review：评测、优缺点、避坑、值不值、复盘
-   - brand：品牌/栏目/竞品/替代方案关联
-   - question：必须是问题式自然语言（如何/怎么/为什么/是否/有哪些/适合谁）
-   - technical：落地方法、流程、指标、结构、工作流、实施清单
-5. 长尾优先：至少一半词应像真实用户会搜/会问的完整短语（可含 6-20 字），避免单字或过短标签。
-6. 画像约束：严格遵守给定 profile；教育/本地/内容媒体/消费电子画像下禁止 B2B、SaaS、市场部等错配表达。
-7. 评分口径（代理信号，非实测）：
-   - recommendation_score = 作为 GEO 选题/答案引擎问题覆盖与内容生产优先级的潜力
-   - business_score = 商业转化/采购/合作意图强度
-   - 禁止把分数解释成「AI 答案引用率」；页面就绪信号 ≠ 答案引用结果
-8. 可移交 GEOFlow：每个 keyword 应能直接作为一篇内容任务的种子（标题线索或事实卡主题），reason 写清用途。
-9. 去重：同一词包内禁止重复、近义重复（如「XX推荐」与「推荐XX」同时出现超过必要）。
-10. 中文为主，自然可读；像真实用户会搜/会问的句子，不要符号堆砌、英文乱码、标签式拼接或营销夸张词。"""
+    config = await get_keyword_expansion_config()
+    system = config["system_prompt"]
+    titles_per = int(config.get("titles_per_platform") or 3)
+    platforms = list(config.get("platforms") or [])
+    entity = str(profile.get("name") or seeds[0] or "主体").strip()
 
     user = json.dumps(
         {
             "seeds": seeds,
+            "entity": entity,
+            "titles_per_platform": titles_per,
             "profile": {
                 "name": profile["name"],
                 "company_hint": profile["company_hint"],
@@ -804,10 +776,18 @@ async def _ai_expand(seeds: list[str], profile: dict, provider_override=None) ->
                 {"key": item["key"], "name": item["name"], "description": item["description"]}
                 for item in DIMENSIONS
             ],
+            "platforms": [
+                {
+                    "platform": row["platform"],
+                    "generation_focus": row.get("generation_focus") or "",
+                    "avoid": row.get("avoid") or [],
+                }
+                for row in platforms
+            ],
             "handoff_hint": {
                 "consumer": "GEOFlow",
-                "expected_use": "每个关键词可独立生成知识约束正文/FAQ/榜单任务",
-                "avoid": "空泛词、跨维度重复、把页面 citation 就绪度说成答案引用率",
+                "expected_use": "每个关键词可独立生成知识约束正文/FAQ/榜单任务；标题建议可作选题",
+                "avoid": "空泛词、跨维度重复、把页面 citation 就绪度说成答案引用率、垂类硬套话",
             },
         },
         ensure_ascii=False,
@@ -826,10 +806,16 @@ async def _ai_expand(seeds: list[str], profile: dict, provider_override=None) ->
         raise ValueError("AI 返回的拓词结果不是有效 JSON")
     payload = json.loads(raw[start:end])
     result: list[dict] = []
-    mapping = {item.get("key"): item.get("items") for item in payload.get("dimensions", []) if isinstance(item, dict)}
+    mapping = {
+        item.get("key"): item.get("items")
+        for item in payload.get("dimensions", [])
+        if isinstance(item, dict)
+    }
 
     for dim in DIMENSIONS:
-        items = _sanitize_dimension_items(seeds[0], dim["key"], mapping.get(dim["key"]) or [], profile)
+        items = _sanitize_dimension_items(
+            seeds[0], dim["key"], mapping.get(dim["key"]) or [], profile
+        )
         if not items:
             items = _fallback_dimension_items(seeds[0], profile, dim["key"])
         if not items:
@@ -841,7 +827,60 @@ async def _ai_expand(seeds: list[str], profile: dict, provider_override=None) ->
                 "items": items,
             }
         )
-    return result
+
+    hints = _sanitize_platform_title_hints(
+        payload.get("platform_title_hints"),
+        platforms,
+        entity=entity,
+        titles_per=titles_per,
+    )
+    return result, hints
+
+
+def _sanitize_platform_title_hints(
+    raw_hints: Any,
+    platforms: list[dict],
+    *,
+    entity: str,
+    titles_per: int,
+) -> list[dict]:
+    by_platform: dict[str, list[str]] = {}
+    if isinstance(raw_hints, list):
+        for row in raw_hints:
+            if not isinstance(row, dict):
+                continue
+            name = str(row.get("platform") or "").strip()
+            if not name:
+                continue
+            titles_raw = row.get("titles") or row.get("title_hints") or []
+            cleaned: list[str] = []
+            if isinstance(titles_raw, list):
+                for title in titles_raw:
+                    text = str(title or "").strip()
+                    if not text or text in cleaned:
+                        continue
+                    cleaned.append(text[:120])
+                    if len(cleaned) >= titles_per:
+                        break
+            by_platform[name] = cleaned
+
+    out: list[dict] = []
+    for row in platforms:
+        name = str(row.get("platform") or "").strip()
+        if not name:
+            continue
+        titles = list(by_platform.get(name) or [])
+        # 不足时不补模板假标题（失败策略 A）；有部分则截断到 titles_per
+        titles = titles[:titles_per]
+        out.append(
+            {
+                "platform": name,
+                "generation_focus": row.get("generation_focus") or "",
+                "avoid": list(row.get("avoid") or []),
+                "titles": titles,
+            }
+        )
+    return out
 
 
 def _build_summary(dimensions: list[dict]) -> dict:
@@ -876,23 +915,46 @@ async def expand_keywords_with_status(
     seeds: list[str],
     provider_override=None,
 ) -> tuple[dict, bool]:
+    from app.services.runtime_settings import get_keyword_expansion_config
+
     normalized = normalize_seeds(seeds)
     if not normalized:
         raise ValueError("请至少输入一个关键词")
 
     profile = _infer_keyword_profile(normalized)
+    config = await get_keyword_expansion_config()
+    timeout = float(config.get("timeout_seconds") or 20)
+    platforms_meta = [
+        {
+            "platform": row["platform"],
+            "generation_focus": row.get("generation_focus") or "",
+            "avoid": list(row.get("avoid") or []),
+        }
+        for row in (config.get("platforms") or [])
+    ]
     provider_succeeded = True
+    platform_title_hints: list[dict] = []
 
     try:
-        dimensions = await asyncio.wait_for(
+        dimensions, platform_title_hints = await asyncio.wait_for(
             _ai_expand(normalized, profile, provider_override=provider_override),
-            timeout=8.0,
+            timeout=timeout,
         )
     except Exception:
         if provider_override is not None:
             raise
         provider_succeeded = False
         dimensions = _fallback_expand(normalized, profile)
+        # 失败策略 A：标题建议诚实为空，不回填前端模板
+        platform_title_hints = [
+            {
+                "platform": row["platform"],
+                "generation_focus": row.get("generation_focus") or "",
+                "avoid": list(row.get("avoid") or []),
+                "titles": [],
+            }
+            for row in platforms_meta
+        ]
 
     return {
         "seeds": normalized,
@@ -905,6 +967,12 @@ async def expand_keywords_with_status(
         },
         "dimensions": dimensions,
         "summary": _build_summary(dimensions),
+        "platform_title_hints": platform_title_hints,
+        "ai_focus": {
+            "disclaimer": config.get("disclaimer") or "",
+            "platforms": [row["platform"] for row in platforms_meta],
+            "items": platforms_meta,
+        },
     }, provider_succeeded
 
 

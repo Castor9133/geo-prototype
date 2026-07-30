@@ -4,16 +4,16 @@
     "kb_name":  "中文产品演示包·DJI Mini 5 Pro",
     "kb_id":  9,
     "demo_data":  false,
-    "label":  "Imported Flow KB #9; 13/13 chunks vectorized",
+    "label":  "Imported Flow KB #9; 16/16 chunks vectorized",
     "sources_note":  "事实来自大疆官网产品页/技术参数/FAQ，非官方合作包",
     "coverage":  {
-                     "approved_cards":  12,
-                     "checklist_total":  12,
+                     "approved_cards":  15,
+                     "checklist_total":  15,
                      "rate":  1.0
                  },
     "embedding":  {
-                      "chunk_total":  13,
-                      "chunk_embedded":  13,
+                      "chunk_total":  16,
+                      "chunk_embedded":  16,
                       "rate":  1
                   },
     "evidence_production":  {
@@ -22,7 +22,7 @@
                                 "rate":  0.0
                             },
     "prompt_library_count":  10,
-    "probe_question_count":  13,
+    "probe_question_count":  16,
     "admin_detail_url":  "http://localhost:18080/geo_admin/knowledge-bases/9/detail",
     "cards":  [
                   {
@@ -83,6 +83,21 @@
                   {
                       "fact_id":  "dji-mini5pro-f-012",
                       "claim":  "增强图传：1年/30GB；仅大陆；禁异地遥控。",
+                      "review_status":  "approved"
+                  },
+                  {
+                      "fact_id":  "dji-mini5pro-f-013",
+                      "claim":  "须搭配 DJI Fly App；支持关机快传；一键短片/航点/延时/聚焦。",
+                      "review_status":  "approved"
+                  },
+                  {
+                      "fact_id":  "dji-mini5pro-f-014",
+                      "claim":  "欧盟 C0 分类；249.9g 无需注册；须遵守当地法规。",
+                      "review_status":  "approved"
+                  },
+                  {
+                      "fact_id":  "dji-mini5pro-f-015",
+                      "claim":  "竞品差异化：一英寸 CMOS/225°云台/激光雷达/O4+/42GB。",
                       "review_status":  "approved"
                   }
               ]

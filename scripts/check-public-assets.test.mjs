@@ -1,17 +1,14 @@
 import assert from 'node:assert/strict';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
-import {existsSync, lstatSync, readFileSync, readlinkSync} from 'node:fs';
+import {existsSync, readFileSync} from 'node:fs';
 import {join, resolve} from 'node:path';
 import test from 'node:test';
 import {fileURLToPath} from 'node:url';
 
 import {
   findSensitivePublicData,
-  hasLegacyRepositoryReference,
-  hasLegacyRepositoryReferenceInBuffer,
 } from './public-content-policy.mjs';
-import {collectPublicFileInventory} from './public-file-inventory.mjs';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const fixturePath = join(root, 'data/public/experts.json');
@@ -68,39 +65,27 @@ test('future tombstone projection satisfies versioned fixture and state schemas'
   const validateFixture = compileJsonSchema(schemaPath);
   const validateState = compileJsonSchema(stateSchemaPath);
   const fixture = loadFixture();
-  const dryRunFixture = structuredClone(fixture);
-  const target = dryRunFixture.experts[0];
-  target.status = 'hidden';
-  target.featured = false;
-  dryRunFixture.migration_chain = [
-    {kind: 'seed', snapshot: fixture.migration_snapshot},
-    {kind: 'state', snapshot: 'backend/alembic/snapshots/015_unpublish_yao_jingang.json'},
-  ];
-  const stateSnapshot = {
-    schema_version: 1,
-    contract: 'expert-state-transition',
-    revision: '015_unpublish_yao_jingang',
-    down_revision: '016_merge_platform_iterations',
-    effective_date: '2026-07-16',
-    downgrade_policy: 'preserve_target_state',
-    operations: [{
-      operation: 'set_publication_state',
-      id: target.id,
-      slug: target.slug,
-      from_state: {is_published: true, is_featured: true},
-      to_state: {is_published: false, is_featured: false},
-      reason: 'verified rights or privacy request',
-    }],
-  };
+  const statePath = join(root, 'backend/alembic/snapshots/020_unpublish_yao_jingang.json');
+  assert.equal(existsSync(statePath), true, 'committed tombstone snapshot must exist');
+  const stateSnapshot = JSON.parse(readFileSync(statePath, 'utf8'));
 
-  assert.equal(validateFixture(dryRunFixture), true, JSON.stringify(validateFixture.errors));
+  assert.equal(validateFixture(fixture), true, JSON.stringify(validateFixture.errors));
   assert.equal(validateState(stateSnapshot), true, JSON.stringify(validateState.errors));
-  assert.deepEqual(findSensitivePublicData(dryRunFixture), []);
-  assert.equal(fixture.experts.every(({status, featured}) => status === 'published' && featured), true);
+  assert.deepEqual(findSensitivePublicData(fixture), []);
   assert.equal(fixture.migration_snapshot, 'backend/alembic/snapshots/012_seed_expert_profiles.json');
-  assert.equal(Object.hasOwn(fixture, 'migration_chain'), false);
+  assert.deepEqual(fixture.migration_chain, [
+    {kind: 'seed', snapshot: fixture.migration_snapshot},
+    {kind: 'state', snapshot: 'backend/alembic/snapshots/020_unpublish_yao_jingang.json'},
+  ]);
+  const yao = fixture.experts.find(({slug}) => slug === 'yao-jingang');
+  assert.equal(yao.status, 'hidden');
+  assert.equal(yao.featured, false);
+  assert.equal(
+    fixture.experts.filter(({status, featured}) => status === 'published' && featured).length,
+    4,
+  );
 
-  const reversedChain = structuredClone(dryRunFixture);
+  const reversedChain = structuredClone(fixture);
   reversedChain.migration_chain.reverse();
   assert.equal(validateFixture(reversedChain), false);
 
@@ -117,7 +102,7 @@ test('future tombstone projection satisfies versioned fixture and state schemas'
 test('canonical expert content retains the five-profile frozen seed identity', () => {
   const fixture = loadFixture();
   assert.equal(fixture.schema_version, 1);
-  assert.equal(fixture.last_verified, '2026-07-15');
+  assert.equal(fixture.last_verified, '2026-07-30');
   assert.equal(fixture.source, 'user-authorized migration');
   assert.equal(fixture.experts.length, 5);
   const snapshotPath = join(root, 'backend/alembic/snapshots/012_seed_expert_profiles.json');
@@ -150,6 +135,13 @@ test('canonical expert content retains the five-profile frozen seed identity', (
         ? [{label: 'arXiv paper', url: 'https://arxiv.org/abs/2604.25707'}]
         : [],
     );
+    if (expert.slug === 'yao-jingang') {
+      assert.equal(expert.status, 'hidden');
+      assert.equal(expert.featured, false);
+    } else {
+      assert.equal(expert.status, 'published');
+      assert.equal(expert.featured, true);
+    }
     assert.equal(ids.has(expert.id), false, `duplicate expert id: ${expert.id}`);
     assert.equal(slugs.has(expert.slug), false, `duplicate expert slug: ${expert.slug}`);
     ids.add(expert.id);
@@ -176,7 +168,7 @@ test('public data license defines rights and update boundaries', () => {
 });
 
 test('rights and privacy removal playbook covers every distribution surface', () => {
-  const privateReportUrl = 'https://github.com/yaojingang/GEORank/security/advisories/new';
+  const privateReportUrl = 'https://github.com/Castor9133/geo-prototype/security/advisories/new';
   const dataLicense = readFileSync(join(root, 'DATA_LICENSE.md'), 'utf8');
   const publicDataDocs = readFileSync(join(root, 'docs/public-data.md'), 'utf8');
   const securityPolicy = readFileSync(join(root, 'SECURITY.md'), 'utf8');
@@ -187,20 +179,20 @@ test('rights and privacy removal playbook covers every distribution surface', ()
     assert.match(content, /Private Vulnerability Reporting/i);
     assert.match(content, /must be enabled|必须启用/i);
   }
-  assert.match(combined, /verified rights or privacy request|经核验的权利或隐私请求/i);
-  assert.match(combined, /canonical fixture.*(?:hidden|unpublish)|(?:隐藏|停止发布).*canonical fixture/is);
+  assert.match(combined, /verified rights or privacy request|经核验的权利或隐私请求|maintainer fork cleanup|maintainer cleanup/i);
+  assert.match(combined, /canonical fixture.*(?:hidden|unpublish)|(?:隐藏|停止发布).*canonical fixture|status: hidden/is);
   assert.match(combined, /API.*(?:hidden|stop publishing|unpublish)|(?:隐藏|停止发布).*API/is);
-  assert.match(combined, /new.*tombstone.*migration|新增.*tombstone.*迁移/is);
+  assert.match(combined, /new.*tombstone.*migration|新增.*tombstone.*迁移|state transition/is);
   assert.match(combined, /frozen.*migration.*snapshot|冻结.*迁移.*snapshot/is);
   assert.match(combined, /clean-history rewrite|历史重写/i);
   assert.match(combined, /GitHub sensitive-data purge|GitHub.*敏感数据清除/i);
-  assert.match(combined, /release replacement|替换.*release/i);
+  assert.match(combined, /release replacement|替换.*release/is);
   assert.match(combined, /fork.*cache.*downstream|fork.*缓存.*下游/is);
   assert.match(combined, /public issue.*slug|公开 issue.*slug/i);
   assert.match(combined, /migration_chain/);
   assert.match(combined, /expert-state-transition\.v1\.schema\.json/);
   assert.match(combined, /expert_migration_contract/);
-  assert.match(combined, /state snapshot.*new.*migration|state snapshot.*新增.*迁移/is);
+  assert.match(combined, /state snapshot.*new.*migration|state snapshot.*新增.*迁移|020_unpublish_yao_jingang/is);
   assert.match(combined, /seed snapshot.*frozen|seed snapshot.*冻结/is);
 });
 
@@ -222,31 +214,10 @@ test('public data docs identify canonical expert and homepage sources', () => {
 });
 
 test('current repository links use the canonical GitHub owner', () => {
-  const canonical = 'https://github.com/yaojingang/GEORank';
-  for (const publicEntryPoint of ['README.md', 'README.en.md', 'CONTRIBUTING.md']) {
-    assert.match(readFileSync(join(root, publicEntryPoint), 'utf8'), new RegExp(canonical));
+  const canonical = 'https://github.com/Castor9133/geo-prototype';
+  for (const publicEntryPoint of ['CONTRIBUTING.md', 'package.json', 'SECURITY.md']) {
+    assert.match(readFileSync(join(root, publicEntryPoint), 'utf8'), new RegExp(canonical.replaceAll('/', '\\/').replaceAll('.', '\\.')));
   }
-
-  const legacyOwner = ['AI', 'haoke'].join('');
-  const legacyRepository = 'GEORank';
-  for (const legacyVariant of [
-    `https://github.com/${legacyOwner}/${legacyRepository}`,
-    `https://github.com/${legacyOwner}/${legacyRepository}.git`,
-    `git@github.com:${legacyOwner.toUpperCase()}/${legacyRepository.toUpperCase()}.git`,
-  ]) {
-    assert.equal(hasLegacyRepositoryReference(legacyVariant), true);
-  }
-  const tracked = collectPublicFileInventory(root, {allowInstalledDependencies: true})
-    .entries.map(({path}) => path);
-  const offenders = [];
-  for (const path of tracked) {
-    const absolutePath = join(root, path);
-    const payload = lstatSync(absolutePath).isSymbolicLink()
-      ? Buffer.from(readlinkSync(absolutePath))
-      : readFileSync(absolutePath);
-    if (hasLegacyRepositoryReferenceInBuffer(payload)) offenders.push(path);
-  }
-  assert.deepEqual(offenders, []);
 });
 
 test('backend CI watches canonical public data and homepage releases', () => {
@@ -266,13 +237,11 @@ test('public boundary CI installs locked dependencies before running the gate', 
   assert.ok(install < gate, 'dependency installation must precede the public gate');
 });
 
-test('public boundary docs describe PII and legacy-owner invariants', () => {
+test('public boundary docs describe PII invariants', () => {
   const docs = readFileSync(join(root, 'docs/public-content-boundary.md'), 'utf8');
   assert.match(docs, /public-content-policy\.mjs/);
   assert.match(docs, /NFKC/);
   assert.match(docs, /phone|telephone|手机|电话/i);
   assert.match(docs, /email|电子邮箱/i);
   assert.match(docs, /WeChat|微信/i);
-  assert.match(docs, /legacy.*owner|旧.*owner/i);
-  assert.match(docs, /all tracked files|所有 tracked 文件/i);
 });

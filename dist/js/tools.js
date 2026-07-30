@@ -23,7 +23,7 @@
     const KB_ALLOWED_EXTENSIONS = new Set(['txt', 'md', 'markdown', 'pdf', 'doc', 'docx']);
     const KB_TEXT_EXTENSIONS = new Set(['txt', 'md', 'markdown']);
     const KB_DOCX_EXTENSIONS = new Set(['docx']);
-    const DEFAULT_BRAND = 'BrandOrbit';
+    const DEFAULT_BRAND = 'DemoBrand';
     const GENERATE_DELAY = 720;
     const DIRECT_TIMEOUT_MS = 30000;
     const DIRECT_MAX_INPUT_CHARS = 12000;
@@ -264,34 +264,34 @@
   "@graph": [
     {
       "@type": "Organization",
-      "@id": "https://brandorbit.test#organization",
-      "name": "BrandOrbit",
-      "url": "https://brandorbit.test",
-      "logo": "https://brandorbit.test/logo.png",
-      "description": "BrandOrbit 是面向市场团队的 AI 搜索可见性管理平台。"
+      "@id": "https://demobrand.test#organization",
+      "name": "DemoBrand",
+      "url": "https://demobrand.test",
+      "logo": "https://demobrand.test/logo.png",
+      "description": "DemoBrand 是面向市场团队的 AI 搜索可见性管理平台。"
     },
     {
       "@type": "WebSite",
-      "@id": "https://brandorbit.test#website",
-      "name": "BrandOrbit",
-      "url": "https://brandorbit.test",
+      "@id": "https://demobrand.test#website",
+      "name": "DemoBrand",
+      "url": "https://demobrand.test",
       "publisher": {
-        "@id": "https://brandorbit.test#organization"
+        "@id": "https://demobrand.test#organization"
       }
     }
   ]
 }`,
-        llms: `# BrandOrbit
+        llms: `# DemoBrand
 
-> BrandOrbit helps marketing and content teams improve AI search visibility.
+> DemoBrand helps marketing and content teams improve AI search visibility.
 
 ## Site
-- https://brandorbit.test
+- https://demobrand.test
 
 ## Important Pages
-- https://brandorbit.test/docs
-- https://brandorbit.test/cases
-- https://brandorbit.test/pricing
+- https://demobrand.test/docs
+- https://demobrand.test/cases
+- https://demobrand.test/pricing
 
 ## AI Reading Notes
 - Prefer factual product, case and FAQ pages over broad marketing claims.
@@ -299,40 +299,40 @@
         title: `# GEO 标题建议
 
 - 核心关键词：GEO服务商
-- 品牌 / 产品：BrandOrbit
+- 品牌 / 产品：DemoBrand
 - 目标用户：B2B 市场负责人
 
 ## 推荐标题
 1. GEO服务商怎么选？B2B 市场负责人需要看的 9 个判断标准
-2. BrandOrbit GEO服务商方案：从诊断到 AI 可见性提升
+2. DemoBrand GEO服务商方案：从诊断到 AI 可见性提升
 3. GEO服务商对比指南：能力、交付、周期和验收方式
 4. 什么是 GEO 服务？AI 搜索时代的品牌可见性入门
 
 ## 使用建议
 - 标题里优先说明谁需要、解决什么问题、为什么可信。
 - 同一关键词建议覆盖解释型、对比型、采购型和执行型页面。`,
-        kb: `# BrandOrbit GEO 知识库
+        kb: `# DemoBrand GEO 知识库
 
 ## 来源清单
-- [URL-1] https://brandorbit.test/docs
-- [URL-2] https://brandorbit.test/cases
+- [URL-1] https://demobrand.test/docs
+- [URL-2] https://demobrand.test/cases
 
 ## 结构化内容梳理
 ### 品牌实体
-- 品牌 / 公司：BrandOrbit
+- 品牌 / 公司：DemoBrand
 - 产品 / 服务：AI 搜索可见性管理平台
 - 目标用户：市场团队、内容团队、增长团队
 
 ### 一句话定义
-BrandOrbit 是面向市场、内容和增长团队的 AI 搜索可见性管理平台，用于帮助品牌更容易被 AI 搜索理解、引用和推荐。
+DemoBrand 是面向市场、内容和增长团队的 AI 搜索可见性管理平台，用于帮助品牌更容易被 AI 搜索理解、引用和推荐。
 
 ## 原子化事实
-- F01：BrandOrbit 提供 AI 搜索可见性诊断能力。
-- F02：BrandOrbit 支持 JSON-LD、llms.txt、FAQ 和内容结构建议。
-- F03：BrandOrbit 适合需要提升 AI 搜索曝光和官网获客效率的团队。
+- F01：DemoBrand 提供 AI 搜索可见性诊断能力。
+- F02：DemoBrand 支持 JSON-LD、llms.txt、FAQ 和内容结构建议。
+- F03：DemoBrand 适合需要提升 AI 搜索曝光和官网获客效率的团队。
 
 ## AI 可引用问答
-### BrandOrbit 适合谁？
+### DemoBrand 适合谁？
 适合正在建设 GEO、AI 搜索可见性和官网内容结构的市场、内容与增长团队。`,
         score: `# AI 友好度评分
 
@@ -532,7 +532,7 @@ BrandOrbit 是面向市场、内容和增长团队的 AI 搜索可见性管理�
     }
 
     function buildJsonLdFromBrief() {
-        const brief = value('#jsonld-brief') || 'BrandOrbit，官网 https://brandorbit.test，AI 搜索可见性管理平台，Logo https://brandorbit.test/logo.png。';
+        const brief = value('#jsonld-brief') || 'DemoBrand，官网 https://demobrand.test，AI 搜索可见性管理平台，Logo https://demobrand.test/logo.png。';
         const brand = inferBrand(brief);
         const urls = extractUrls(brief);
         const siteUrl = rootUrl(urls[0]) || 'https://example.com';
@@ -568,7 +568,7 @@ BrandOrbit 是面向市场、内容和增长团队的 AI 搜索可见性管理�
     }
 
     function buildLlmsFromBrief() {
-        const brief = value('#llms-brief') || 'BrandOrbit helps teams improve AI search visibility. Core pages: https://brandorbit.test/docs and https://brandorbit.test/cases';
+        const brief = value('#llms-brief') || 'DemoBrand helps teams improve AI search visibility. Core pages: https://demobrand.test/docs and https://demobrand.test/cases';
         const brand = inferBrand(brief);
         const urls = extractUrls(brief);
         const siteUrl = rootUrl(urls[0]) || 'https://example.com';
@@ -594,7 +594,7 @@ BrandOrbit 是面向市场、内容和增长团队的 AI 搜索可见性管理�
     }
 
     function buildTitlesFromBrief() {
-        const brief = value('#title-brief') || '为 BrandOrbit 生成 GEO服务商 关键词标题，面向 B2B 市场负责人，重点是可执行的 AI 搜索优化方案。';
+        const brief = value('#title-brief') || '为 DemoBrand 生成 GEO服务商 关键词标题，面向 B2B 市场负责人，重点是可执行的 AI 搜索优化方案。';
         const brand = inferBrand(brief);
         const keyword = inferKeyword(brief);
         const audience = inferAudience(brief);
@@ -888,7 +888,7 @@ BrandOrbit 是面向市场、内容和增长团队的 AI 搜索可见性管理�
     }
 
     function buildKbFromBrief() {
-        const brief = value('#kb-brief') || 'BrandOrbit 是 AI 搜索可见性管理平台，服务市场团队、内容团队、增长团队。资料页：https://brandorbit.test/docs 和 https://brandorbit.test/cases。常见问题：BrandOrbit 适合谁？适合需要提升 AI 搜索可见性的团队。';
+        const brief = value('#kb-brief') || 'DemoBrand 是 AI 搜索可见性管理平台，服务市场团队、内容团队、增长团队。资料页：https://demobrand.test/docs 和 https://demobrand.test/cases。常见问题：DemoBrand 适合谁？适合需要提升 AI 搜索可见性的团队。';
         const brand = inferBrand(brief);
         const product = inferProduct(brief);
         const audience = inferAudience(brief);
@@ -950,7 +950,7 @@ BrandOrbit 是面向市场、内容和增长团队的 AI 搜索可见性管理�
     }
 
     function buildScoreFromBrief() {
-        const brief = value('#score-brief') || 'https://brandorbit.test 的页面标题是 BrandOrbit GEO Platform，首页首段说明它服务 marketing and content teams，页面包含 FAQ、JSON-LD、案例引用、作者和公司信息。';
+        const brief = value('#score-brief') || 'https://demobrand.test 的页面标题是 DemoBrand GEO Platform，首页首段说明它服务 marketing and content teams，页面包含 FAQ、JSON-LD、案例引用、作者和公司信息。';
         const brand = inferBrand(brief);
         const urls = extractUrls(brief);
         const signals = [

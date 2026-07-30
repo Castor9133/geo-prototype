@@ -58,19 +58,23 @@ from app.services.provider_url_security import (
 )
 from app.services.runtime_settings import (
     DEFAULT_HOMEPAGE_RELEASE_ID,
+    KEYWORD_EXPANSION_SETTING_KEY,
     get_diagnostic_rule_config,
     get_ai_usage_policy_config,
     get_default_ai_usage_policy_config,
     get_ai_runtime_config,
+    get_default_keyword_expansion_config,
     get_default_solution_channel_config,
     get_default_solution_template_config,
     get_frontend_module_config,
     get_homepage_runtime_config,
+    get_keyword_expansion_config,
     get_solution_channel_config,
     get_solution_template_config,
     invalidate_runtime_settings_cache,
     normalize_homepage_runtime_payload,
     normalize_frontend_module_payload,
+    _build_keyword_expansion_config,
 )
 from app.services.homepage_assets import (
     DEFAULT_LIMITS,
@@ -1539,6 +1543,117 @@ async def reset_solution_templates_admin(db: DbSession, _: AdminUser):
 
     config = await get_solution_template_config(force_refresh=True)
     return _serialize_solution_template_payload(config, None, None)
+
+
+class KeywordPlatformConfigItem(BaseModel):
+    platform: str
+    generation_focus: str = ""
+    avoid: list[str] = Field(default_factory=list)
+
+
+class KeywordExpansionConfigRequest(BaseModel):
+    system_prompt: str
+    titles_per_platform: int = 3
+    timeout_seconds: int = 20
+    disclaimer: str = ""
+    platforms: list[KeywordPlatformConfigItem] = Field(default_factory=list)
+
+
+def _serialize_keyword_expansion_payload(
+    config: dict[str, Any],
+    setting: Setting | None = None,
+    updated_by_user: User | None = None,
+) -> dict[str, Any]:
+    return {
+        "config": config,
+        "updated_at": setting.updated_at.isoformat() if setting and setting.updated_at else None,
+        "updated_by": (
+            {"id": str(updated_by_user.id), "username": updated_by_user.username}
+            if updated_by_user
+            else None
+        ),
+    }
+
+
+@router.get("/keywords/expansion-config")
+async def get_keyword_expansion_config_admin(db: DbSession, _: AdminUser):
+    config = await get_keyword_expansion_config()
+    result = await db.execute(select(Setting).where(Setting.key == KEYWORD_EXPANSION_SETTING_KEY))
+    setting = result.scalar_one_or_none()
+    updated_by_user = None
+    if setting and setting.updated_by:
+        user_result = await db.execute(select(User).where(User.id == setting.updated_by))
+        updated_by_user = user_result.scalar_one_or_none()
+    return _serialize_keyword_expansion_payload(config, setting, updated_by_user)
+
+
+@router.put("/keywords/expansion-config")
+async def update_keyword_expansion_config_admin(
+    data: KeywordExpansionConfigRequest,
+    db: DbSession,
+    admin: AdminUser,
+):
+    payload = {
+        "system_prompt": data.system_prompt.strip(),
+        "titles_per_platform": data.titles_per_platform,
+        "timeout_seconds": data.timeout_seconds,
+        "disclaimer": data.disclaimer.strip(),
+        "platforms": [item.model_dump() for item in data.platforms],
+    }
+    if not payload["system_prompt"]:
+        raise HTTPException(status_code=400, detail="拓词 system 提示词不能为空")
+    if not payload["platforms"]:
+        raise HTTPException(status_code=400, detail="至少配置一个目标 AI 平台")
+
+    normalized = _build_keyword_expansion_config({KEYWORD_EXPANSION_SETTING_KEY: payload})
+    result = await db.execute(select(Setting).where(Setting.key == KEYWORD_EXPANSION_SETTING_KEY))
+    setting = result.scalar_one_or_none()
+    if setting:
+        setting.value = normalized
+        setting.category = "geo_engine"
+        setting.is_public = False
+        setting.updated_by = admin.id
+    else:
+        db.add(
+            Setting(
+                key=KEYWORD_EXPANSION_SETTING_KEY,
+                value=normalized,
+                category="geo_engine",
+                is_public=False,
+                updated_by=admin.id,
+            )
+        )
+    await db.commit()
+    await invalidate_runtime_settings_cache()
+
+    config = await get_keyword_expansion_config(force_refresh=True)
+    result = await db.execute(select(Setting).where(Setting.key == KEYWORD_EXPANSION_SETTING_KEY))
+    setting = result.scalar_one_or_none()
+    updated_by_user = None
+    if setting and setting.updated_by:
+        user_result = await db.execute(select(User).where(User.id == setting.updated_by))
+        updated_by_user = user_result.scalar_one_or_none()
+    return _serialize_keyword_expansion_payload(config, setting, updated_by_user)
+
+
+@router.post("/keywords/expansion-config/reset")
+async def reset_keyword_expansion_config_admin(db: DbSession, _: AdminUser):
+    await db.execute(delete(Setting).where(Setting.key == KEYWORD_EXPANSION_SETTING_KEY))
+    await db.commit()
+    await invalidate_runtime_settings_cache()
+    # 重新写入默认，避免下次启动前读空
+    db.add(
+        Setting(
+            key=KEYWORD_EXPANSION_SETTING_KEY,
+            value=get_default_keyword_expansion_config(),
+            category="geo_engine",
+            is_public=False,
+        )
+    )
+    await db.commit()
+    await invalidate_runtime_settings_cache()
+    config = await get_keyword_expansion_config(force_refresh=True)
+    return _serialize_keyword_expansion_payload(config, None, None)
 
 
 class SolutionChannelItem(BaseModel):

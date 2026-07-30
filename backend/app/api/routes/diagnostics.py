@@ -116,10 +116,9 @@ async def get_report(report_id: str, db: DbSession, current_user: OptionalUser):
     from app.services.seo_modules import build_seo_modules
 
     recommendations = report.recommendations or {}
-    seo_modules = None
-    if isinstance(recommendations, dict):
-        seo_modules = recommendations.get("seo_modules")
-    if not seo_modules and report.status == DiagnosticStatus.COMPLETED:
+    # 始终按最新运营口径从分析字段重建四模块（含「影响」），避免旧报告锁死短文案
+    seo_modules = []
+    if report.status == DiagnosticStatus.COMPLETED:
         seo_modules = build_seo_modules(
             report.schema_analysis,
             report.meta_analysis,

@@ -48,7 +48,7 @@
     let activeCompanyId = initialCompanyId;
     const DEMO_REPORT = {
         report_id: 'demo-report',
-        url: 'https://www.brandorbit.ai',
+        url: 'https://www.demobrand.ai',
         company_id: '',
         status: 'completed',
         overall_score: 82,
@@ -56,34 +56,38 @@
             {
                 id: 'crawlability',
                 title: '可抓取与可达',
-                purpose: '确认页面可被打开并读到基础摘要信号。',
+                purpose: '先确认引擎能打开页面，并读到标题、摘要、语言等第一层介绍信息。',
                 score: 88,
-                result: 'Meta 就绪分 88。基础抓取信号较完整。',
-                advice: '补齐 og_locale，保持 title / description 完整。',
+                result: '基础摘要就绪分 88/100。标题、摘要等信号较完整，仍缺分享语言区。',
+                impact: '缺「分享语言区」时，跨区转发可能推错受众；其余基础信号完整，误拦收录风险较低。',
+                advice: '补齐分享语言区（og:locale）；运营继续用「主题+受众价值」写标题和摘要。',
             },
             {
                 id: 'parseable_structure',
                 title: '可解析结构',
-                purpose: '确认 Schema 与标题/FAQ 可被解析。',
+                purpose: '确认机构/站点身份、标题层级和 FAQ 能否被读成实体与问答块。',
                 score: 85,
-                result: '结构合成分 85；H1=1 · H2=7 · FAQ 样块=2。',
-                advice: '补 Schema：FAQPage；关键 H2 改为用户问句。',
+                result: '结构合成分 85；H1=1 · H2=7 · FAQ 样块=2。建议补 FAQPage。',
+                impact: '「问答页标记」缺失时，高频咨询问题不易被稳定摘成问答块，FAQ 文案也可能被当普通段落略过。',
+                advice: '补 FAQPage；关键 H2 保持用户问句；运营验收每个高频问题都有可复制短答。',
             },
             {
                 id: 'internal_discovery',
                 title: '内链与发现',
-                purpose: '确认内链发现与权威外链背书就绪。',
+                purpose: '确认栏目/专题/说明等关键页能被内链发现，并有权威外链作信任线索（≠ AI 引用率）。',
                 score: 71,
-                result: '外链 7 · 权威 2；发现/背书就绪分 71。',
-                advice: '用内链串起规格与对比页，并保留权威外链。',
+                result: '外链 7 · 权威线索 2；发现/背书就绪分 71。',
+                impact: '已有权威线索，发现就绪尚可；若栏目/专题页内链弱，关键内容仍可能埋在孤立页。',
+                advice: '用内链串起栏目与专题/说明页，并保留权威外链；从本页 2～3 次点击应能到达。',
             },
             {
                 id: 'performance_cost',
                 title: '性能与成本',
-                purpose: '页面体量对抓取/摘要成本的代理信号。',
+                purpose: '评估正文长短是否让引擎读得贵、摘得慢；把关键话放在更好被看见的位置。',
                 score: 72,
                 result: '正文体量适中；优先短直答段落降低上下文成本。',
-                advice: '把关键事实放在靠前、可独立摘录的段落。',
+                impact: '体量压力不大；若核心结论靠后，仍可能「读到了但摘不稳」（代理信号，非测速分）。',
+                advice: '把关键事实放在靠前、可独立摘录的段落，方便编辑与对外口径复用同一套答法。',
             },
         ],
         schema_analysis: {
@@ -153,8 +157,8 @@
                 'https://www.anthropic.com/engineering/building-effective-agents',
             ],
             social_links: [
-                'https://www.linkedin.com/company/brandorbit',
-                'https://github.com/brandorbit',
+                'https://www.linkedin.com/company/demobrand',
+                'https://github.com/demobrand',
             ],
         },
         recommendations: {
@@ -994,40 +998,87 @@
         const content = report.content_analysis || {};
         const citation = report.citation_analysis || {};
         const structure = Math.round((Number(schema.score || 0) * 0.55) + (Number(content.score || 0) * 0.45));
+        const missingMeta = (meta.missing || []).slice(0, 4);
+        const missingSchema = (schema.missing_recommended || []).slice(0, 4);
+        const metaLabel = {
+            html_lang: '页面语言',
+            canonical: '规范网址',
+            viewport: '移动端适配',
+            robots: '抓取许可',
+            meta_description: '页面摘要',
+            title: '页面标题',
+            og_image: '分享配图',
+            og_locale: '分享语言区',
+        };
+        const schemaLabel = {
+            Organization: '机构/主体身份',
+            WebSite: '站点实体',
+            FAQPage: '问答页标记',
+            Article: '文章实体',
+            Product: '商品/服务实体',
+        };
+        const namedMeta = missingMeta.map((k) => metaLabel[k] || k);
+        const namedSchema = missingSchema.map((k) => schemaLabel[k] || k);
+        const crawlImpact = missingMeta.length
+            ? `缺 ${namedMeta.join('、')} 不等于打不开站，但引擎打开后更难正确介绍你们：语言/收录/摘要信号不完整，结果列表和推荐易说不清主题或推错受众。`
+            : '基础抓取信号较完整；仍需防止 robots 被误改导致整页不可见。';
+        const structureImpactParts = [];
+        if (Number(content.h1_count || 0) !== 1) {
+            structureImpactParts.push(`主标题有 ${content.h1_count || 0} 个，本页重点不清晰。`);
+        }
+        if (Number(content.h2_count || 0) < 2) {
+            structureImpactParts.push('小节标题过少，用户问题对不上段落，难被摘成「一问一答」。');
+        }
+        if (Number(content.faq_like_sections || 0) < 1) {
+            structureImpactParts.push('缺少 FAQ 块，高频咨询问题在站内没有标准短答。');
+        }
+        if (namedSchema.length) {
+            structureImpactParts.push(`缺 ${namedSchema.join('、')} 时，主体身份或问答更难被稳定识别（就绪 ≠ 引用率）。`);
+        }
         return [
             {
                 id: 'crawlability',
                 title: '可抓取与可达',
-                purpose: '确认页面可被打开并读到基础摘要信号。',
+                purpose: '先确认引擎能打开页面，并读到标题、摘要、语言、是否允许收录等第一层介绍信息。',
                 score: Math.round(Number(meta.score || 0)),
-                result: `Meta 就绪分 ${Math.round(Number(meta.score || 0))}。`,
-                advice: (meta.missing || []).length ? `补齐：${(meta.missing || []).slice(0, 3).join('、')}` : '保持抓取信号完整。',
+                result: namedMeta.length
+                    ? `基础摘要就绪分 ${Math.round(Number(meta.score || 0))}/100。仍缺：${namedMeta.join('、')}。`
+                    : `基础摘要就绪分 ${Math.round(Number(meta.score || 0))}/100。基础信号较完整。`,
+                impact: crawlImpact,
+                advice: namedMeta.length
+                    ? `请技术补齐 ${namedMeta.join('、')}；运营核对标题/摘要是否写清主题、受众与一句话价值。`
+                    : '保持标题与摘要完整；发版前后抽查抓取许可，避免误拦。',
             },
             {
                 id: 'parseable_structure',
                 title: '可解析结构',
-                purpose: '确认 Schema 与标题/FAQ 可被解析。',
+                purpose: '确认机构/站点身份、标题层级和 FAQ 能否被读成实体与问答块，对上用户真实问题。',
                 score: structure,
-                result: `结构合成分 ${structure}；H1=${content.h1_count || 0} · H2=${content.h2_count || 0}。`,
-                advice: (schema.missing_recommended || []).length
-                    ? `补 Schema：${(schema.missing_recommended || []).slice(0, 3).join('、')}`
-                    : '继续强化问句化 H2 / FAQ。',
+                result: `结构合成分 ${structure}/100；H1=${content.h1_count || 0} · H2=${content.h2_count || 0} · FAQ=${content.faq_like_sections || 0}。`,
+                impact: structureImpactParts.join(' ') || '结构基本可用；继续把小节写成用户问句并维护 FAQ。',
+                advice: namedSchema.length
+                    ? `补 ${namedSchema.join('、')}；每页 1 个 H1，关键 H2 改成用户问句（怎么联系？开放/播出时间？），并加 FAQ 短答。`
+                    : '继续强化问句化 H2 / FAQ，把关键事实与规则写成可独立摘录的短段。',
             },
             {
                 id: 'internal_discovery',
                 title: '内链与发现',
-                purpose: '确认内链发现与权威外链背书就绪（≠ 引用率）。',
+                purpose: '确认栏目/专题/说明等关键页能被内链找到，并有权威外链作信任线索（≠ AI 引用率）。',
                 score: Math.round(Number(citation.score || 0)),
-                result: `外链 ${citation.external_link_count || 0} · 权威 ${citation.authority_link_count || 0}。`,
-                advice: '用内链串起规格/禁飞/对比页，并保留权威外链。',
+                result: `外链 ${citation.external_link_count || 0} · 权威线索 ${citation.authority_link_count || 0}；就绪分 ${Math.round(Number(citation.score || 0))}/100。`,
+                impact: Number(citation.authority_link_count || 0) < 1
+                    ? '权威外链偏少时，外部信任线索不足；内链弱则关键内容页不易被连带发现。'
+                    : '已有权威线索；注意这是页面背书就绪，不是答案面板提及率。',
+                advice: '用清晰锚文字串起栏目/专题/说明页，并保留权威外链；从本页 2～3 次点击应能到达。',
             },
             {
                 id: 'performance_cost',
                 title: '性能与成本',
-                purpose: '页面体量对抓取/摘要成本的代理信号。',
+                purpose: '评估正文长短是否让引擎读得贵、摘得慢；帮助把关键话放在更好被看见的位置。',
                 score: 72,
-                result: '演示代理分：优先短直答段落降低上下文成本。',
-                advice: '把关键事实放在靠前、可独立摘录的段落。',
+                result: '正文体量代理适中；优先短直答段落降低上下文成本（非 Lighthouse 实测）。',
+                impact: '体量压力通常不大；核心结论若靠后，仍可能读到了但摘不稳。',
+                advice: '把核心结论、规则、联系/入口放在靠前可摘录段落，方便编辑与对外口径复用。',
             },
         ];
     }
@@ -1048,6 +1099,7 @@
                     </div>
                     <p class="mt-3 text-xs text-on-surface-variant leading-6"><span class="font-bold text-on-surface">目的</span> ${escapeHtml(m.purpose || '')}</p>
                     <p class="mt-2 text-xs leading-6"><span class="font-bold">结果</span> ${escapeHtml(m.result || '')}</p>
+                    <p class="mt-2 text-xs leading-6 text-on-surface"><span class="font-bold text-primary">影响</span> ${escapeHtml(m.impact || '补齐缺口后，摘要更清晰、身份更易认、高频问题更有标准答法（就绪 ≠ 保证被引用）。')}</p>
                     <p class="mt-2 text-xs leading-6"><span class="font-bold">建议</span> ${escapeHtml(m.advice || '')}</p>
                 </article>
             `).join(''),
@@ -1058,18 +1110,29 @@
 
     function renderPriority(report, modules) {
         if (!summaryPriority) return;
-        const fromRec = report?.recommendations?.summary?.priority_action;
+        const fromRec = (report?.recommendations?.summary?.priority_action || '').trim();
+        const list = modules || [];
+        const worst = list.slice().sort((a, b) => Number(a.score || 0) - Number(b.score || 0))[0];
+        const impact = (worst?.impact || '').trim();
+        const advice = (worst?.advice || '').trim();
+        const fromModules = impact && advice ? `${impact} → ${advice}` : (advice || impact);
+
+        // 旧报告常只有「补字段」短句；有运营向「影响」时优先用模块文案
+        const recLooksThin = fromRec && !/影响|验收|运营|引擎难以|不等于/.test(fromRec)
+            && (fromRec.length < 80 || /JSON-LD|Schema|meta |og:|html_lang|canonical/.test(fromRec));
+        if (fromRec && !recLooksThin) {
+            summaryPriority.textContent = fromRec;
+            return;
+        }
+        if (fromModules) {
+            summaryPriority.textContent = fromModules;
+            return;
+        }
         if (fromRec) {
             summaryPriority.textContent = fromRec;
             return;
         }
-        const list = modules || [];
-        if (!list.length) {
-            summaryPriority.textContent = '完成检查后将给出优先修复建议。';
-            return;
-        }
-        const worst = list.slice().sort((a, b) => Number(a.score || 0) - Number(b.score || 0))[0];
-        summaryPriority.textContent = worst?.advice || '优先补齐低分模块中的关键缺口。';
+        summaryPriority.textContent = '完成检查后将给出优先修复建议（含业务影响与验收方式）。';
     }
 
     function renderGeoFunnel(script) {

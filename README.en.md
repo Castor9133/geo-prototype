@@ -10,4 +10,4 @@ It is **not** the legacy Q&A / action-plan portal, company directory, or expert 
 - **Docs**: [docs/README.md](docs/README.md) · [geo-suite.md](docs/geo-suite.md) · [content-engineering-sop.md](docs/content-engineering-sop.md) · [cn-product-demo-v2 (DJI Mini 5 Pro)](docs/pilot-demo/cn-product-demo-v2/)
 - **Caveat**: diagnostic “citation / endorsement readiness” ≠ AI answer citation rate; trust observation = **API sampling**, not web scraping.
 
-Product narrative (Chinese): [README.md](README.md). License: Apache-2.0; see [DATA_LICENSE.md](DATA_LICENSE.md).
+Product narrative (Chinese): [README.md](README.md). License: Apache-2.0; see [DATA_LICENSE.md](DATA_LICENSE.md) and [docs/public-data.md](docs/public-data.md).

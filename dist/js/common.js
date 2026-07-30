@@ -309,7 +309,6 @@
                     if (url === '/tutorial' || url.startsWith('/tutorial/')) return false;
                     if (url === '/solutions' || url.startsWith('/solutions/') || url === '/plans' || url.startsWith('/plans/') || url === '/qa' || url.startsWith('/qa/')) return false;
                     if (url === '/tools' || url.startsWith('/tools/')) return false;
-                    if (url.includes('github.com/yaojingang/georank')) return false;
                     return true;
                 });
             const fallback = this.defaults.navigation_menu.items.map(item => ({...item}));
@@ -883,7 +882,7 @@
 const FOOTER_HTML = `
 <footer class="w-full mt-auto border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950">
     <div class="max-w-7xl mx-auto px-6 md:px-8 py-6">
-        <p class="font-inter text-sm text-slate-400 dark:text-slate-500 text-center" data-footer-rights>© 2026 GEORankHub · 公益性 GEO 研究平台 · 独立第三方 · <strong>
+        <p class="font-inter text-sm text-slate-400 dark:text-slate-500 text-center" data-footer-rights>© 2026 GEOrank · 公益性 GEO 研究平台 · 独立第三方 · <strong>
 开源</strong></p>
     </div>
 </footer>`;

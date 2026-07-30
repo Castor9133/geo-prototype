@@ -496,14 +496,17 @@ Meta 评分: {meta['score']}/100，缺失: {meta['missing']}，预览得分: {me
 }
 要求：
 1. summary.overview 控制在 120 字内，适合直接展示在诊断报告顶部。
-2. strengths 和 gaps 各最多 3 条，强调可见的优劣势。
+2. strengths 和 gaps 各最多 3 条，强调可见的优劣势；用运营能听懂的话，少堆技术黑话。
 3. urgent / recommended / optional 各最多 3 条。
-4. action 必须给具体可执行步骤（改什么、放哪里、验收看什么），避免空泛表达。
-5. phase_plan 最多 3 条，分别对应 P0/P1/P2 的执行节奏；success_metric 必须可核查。
-6. 口径约束：输入中的「引用评分/citation」指页面外链与权威链就绪度，禁止写成「AI 答案引用率」；
+4. action 必须含三部分：①缺什么（人话名）②对曝光/信任/对外口径复用的影响 ③改什么、放哪里、如何验收。禁止只写字段名清单。
+5. summary.priority_action 面向运营：先说业务影响，再给可执行动作（1～3 句）。
+6. phase_plan 最多 3 条，分别对应 P0/P1/P2 的执行节奏；success_metric 必须可核查。
+7. 口径约束：输入中的「引用评分/citation」指页面外链与权威链就绪度，禁止写成「AI 答案引用率」；
    页面分、外链密度只是代理信号，不是答案面板中的提及/引用结果。
-7. 证据不足时用审慎表述，不要编造未出现在诊断数据中的结论。
-8. 严格返回 JSON。"""
+8. 文案必须通用：面向任意站点（媒体、政务、品牌、电商等），禁止绑定某一垂类示例
+   （如无人机续航/禁飞、某一消费品牌参数对比）；问句示例用「怎么联系？」「开放/播出时间？」「核心结论是什么？」这类中性说法。
+9. 证据不足时用审慎表述，不要编造未出现在诊断数据中的结论。
+10. 严格返回 JSON。"""
 
     provider_succeeded = False
     try:
@@ -515,34 +518,70 @@ Meta 评分: {meta['score']}/100，缺失: {meta['missing']}，预览得分: {me
     except Exception as e:
         logger.warning("LLM recommendations failed: %s", e)
 
-    # 降级：基于规则生成建议
+    # 降级：基于规则生成建议（运营口径：缺什么 → 影响 → 怎么改）
     urgent, recommended = [], []
     if not schema["has_org"]:
-        urgent.append({"item": "缺少 Organization/WebSite Schema", "action": "在 <head> 中添加 JSON-LD Organization Schema，包含 name、url、description、logo 字段"})
+        urgent.append({
+            "item": "缺少品牌/公司身份标记（Organization）",
+            "action": (
+                "影响：引擎难以确认「这是谁的官网」，同名主体多时来源易被认错，"
+                "被当作权威出处的机会变少。"
+                "动作：请技术在页面 <head> 增加 JSON-LD Organization，至少含 name、url、description、logo；"
+                "运营提供标准机构/品牌名、一句话简介与官方 Logo URL 后验收源码可见。"
+            ),
+        })
     if not schema["has_faq"] and content["h2_count"] >= 3:
-        recommended.append({"item": "建议添加 FAQPage Schema", "action": "将页面中的问答内容标记为 FAQPage Schema，提升 AI 搜索引擎摘要提取率"})
+        recommended.append({
+            "item": "建议增加问答页标记（FAQPage）",
+            "action": (
+                "影响：时间、入口、规则、怎么联系等常见问题，线上不易被摘成稳定问答块，"
+                "运营写了 FAQ 也可能被当普通段落略过。"
+                "动作：把页内问答挂成 FAQPage；运营验收——每个高频问题对应一段可直接复制的短答。"
+            ),
+        })
     if not meta["checks"].get("meta_description"):
-        urgent.append({"item": "缺少 meta description", "action": "添加 150-160 字符的 meta description，包含核心关键词"})
+        urgent.append({
+            "item": "缺少页面摘要（meta description）",
+            "action": (
+                "影响：结果列表里缺少一句话介绍，用户点进来前不知道本页价值。"
+                "动作：补 150–160 字摘要，写清主题/受众/价值；运营出文案，技术写入 meta description。"
+            ),
+        })
     if not meta["checks"].get("og_image"):
-        recommended.append({"item": "缺少 og:image", "action": "添加 1200×630px 的 og:image，提升社交分享和 AI 摘要图片展示"})
+        recommended.append({
+            "item": "缺少分享配图（og:image）",
+            "action": (
+                "影响：转发到社交/IM 时无配图，活动与专题页在信息流里不显眼。"
+                "动作：准备 1200×630 主视觉并由技术写入 og:image。"
+            ),
+        })
     if not content["has_single_h1"]:
-        urgent.append({"item": f"H1 标签数量异常（{content['h1_count']}个）", "action": "每页只保留一个 H1 标签，清晰表达页面主题"})
+        urgent.append({
+            "item": f"主标题过散（H1 有 {content['h1_count']} 个）",
+            "action": (
+                "影响：本页主讲什么不清晰，引擎和用户都更难抓住唯一重点。"
+                "动作：每页只留 1 个 H1，写清本页主题；其余改成 H2 问句小节。"
+            ),
+        })
 
     strengths = []
     if schema["score"] >= 80:
-        strengths.append("结构化 Schema 覆盖较完整，AI 更容易识别页面实体与上下文。")
+        strengths.append("机构/内容结构化标记较完整，引擎更容易认清「这是谁、讲什么」。")
     if meta["score"] >= 80:
-        strengths.append("Meta 与 Open Graph 信息较完整，有利于摘要抓取和结果展示。")
+        strengths.append("标题、摘要与分享信息较完整，结果列表和转发卡片更易说清本页价值。")
     if citation["authority_link_count"] >= 1:
-        strengths.append("页面已具备基础权威引用，能够增强答案可信度。")
+        strengths.append("已有权威外链线索，信任背书就绪更好（就绪 ≠ 答案引用率）。")
 
     gaps = []
     if schema["missing_recommended"]:
-        gaps.append(f"缺少 { '、'.join(schema['missing_recommended'][:3]) } 等关键 Schema 类型。")
+        gaps.append(
+            f"仍缺 {'、'.join(schema['missing_recommended'][:3])} 等身份/问答标记，"
+            "引擎更难稳定摘取主体身份与问答块。"
+        )
     if not content["first_para_quality"]:
-        gaps.append("首段缺少直达答案式表达，不利于 AI 快速生成摘要。")
+        gaps.append("首段缺少可直接摘录的短结论，对外口径与答案侧都更难「一句话讲清」。")
     if citation["score"] < 40:
-        gaps.append("权威引用密度偏低，页面缺少足够的外部信任背书。")
+        gaps.append("权威外链偏少，外部信任线索不足（指页面背书就绪，不是 AI 引用率）。")
 
     overall = _calculate_overall_score(
         schema["score"],
@@ -550,12 +589,15 @@ Meta 评分: {meta['score']}/100，缺失: {meta['missing']}，预览得分: {me
         meta["score"],
         citation["score"],
     )
-    headline = "页面具备一定 GEO 基础，但仍有明显优化空间。" if overall >= 60 else "页面 GEO 基础偏弱，建议先补齐结构化与内容要点。"
+    headline = "页面具备一定 GEO 基础，但仍有明显优化空间。" if overall >= 60 else "页面 GEO 基础偏弱，建议先补齐主体身份、摘要与问答结构。"
     if overall >= 80:
-        headline = "页面 GEO 基础较强，适合继续优化引用与高价值页面结构。"
+        headline = "页面 GEO 基础较强，适合继续强化问答复用与权威背书线索。"
 
     priority_action = urgent[0]["action"] if urgent else (
-        recommended[0]["action"] if recommended else "继续扩充 FAQ、案例与权威引用，提升 AI 引用概率。"
+        recommended[0]["action"] if recommended else (
+            "继续补 FAQ 短答、权威外链线索，让高频问题在站内有标准答法"
+            "（提升就绪度，不保证答案面板引用率）。"
+        )
     )
     phase_plan = []
     if urgent:

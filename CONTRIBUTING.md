@@ -2,7 +2,7 @@
 
 感谢你关注 GEOrank。这个项目仍处于早期开源阶段，欢迎围绕 GEO 诊断规则、前台体验、后台管理、AI 工具、部署文档和 demo 数据提交改进。
 
-Canonical repository: <https://github.com/yaojingang/GEORank>
+Canonical repository: <https://github.com/Castor9133/geo-prototype>
 
 提交前请确认：
 

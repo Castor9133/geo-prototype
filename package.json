@@ -4,10 +4,10 @@
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/yaojingang/GEORank.git"
+    "url": "https://github.com/Castor9133/geo-prototype.git"
   },
   "bugs": {
-    "url": "https://github.com/yaojingang/GEORank/issues"
+    "url": "https://github.com/Castor9133/geo-prototype/issues"
   },
   "packageManager": "pnpm@10.26.1",
   "pnpm": {

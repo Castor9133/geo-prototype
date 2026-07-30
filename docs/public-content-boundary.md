@@ -41,7 +41,7 @@ pnpm release:check
 
 Both modes reject forbidden paths, high-confidence secret formats, hard-coded seed administrator passwords, Feishu links, and GitHub Wiki links. Text candidates are checked as UTF-8, UTF-16LE, and UTF-16BE; a NUL byte in any path without an explicit binary extension fails closed. Database, dump, backup, spreadsheet, and Parquet extensions remain blocked inside public asset directories. Placeholders such as `replace-me`, `your-token-here`, and test-only values are accepted only when the complete value matches the approved sentinel form.
 
-`scripts/public-content-policy.mjs` supplies the shared public-content checks. It applies Unicode NFKC plus whitespace, hyphen, and parenthesis normalization before detecting phone and telephone numbers, email addresses, and WeChat account identifiers in public data and homepage content. The gate also rejects legacy repository-owner references across all tracked files, including history, release, and binary paths; there are no directory-level exceptions.
+`scripts/public-content-policy.mjs` supplies the shared public-content checks. It applies Unicode NFKC plus whitespace, hyphen, and parenthesis normalization before detecting phone and telephone numbers, email addresses, and WeChat account identifiers in public data and homepage content.
 
 The workflow in `.github/workflows/public-boundary.yml` runs the same command for pull requests and protected release branches.
 

@@ -13,32 +13,30 @@
     const selectedKeywords = new Set();
     const DEFAULT_AI_PLATFORMS = ['豆包', '元宝', 'Kimi', 'DeepSeek'];
     let aiFocusScript = null;
+    let platformTitleHints = [];
     let targetPlatforms = new Set(DEFAULT_AI_PLATFORMS);
 
     async function loadAiFocusScript() {
         if (aiFocusScript) return aiFocusScript;
-        const urls = [
-            '/api/geo-runs/scripts/geo-ai-focus-dji',
-            '/pilot-demo/geo-ai-focus-dji.json',
-        ];
-        for (const url of urls) {
-            try {
-                const res = await fetch(url, { credentials: 'same-origin' });
-                if (!res.ok) continue;
+        try {
+            const res = await fetch('/api/keywords/ai-focus', { credentials: 'same-origin' });
+            if (res.ok) {
                 aiFocusScript = await res.json();
                 return aiFocusScript;
-            } catch (_) {
-                /* try next */
             }
+        } catch (_) {
+            /* fall through */
         }
-        return null;
-    }
-
-    function fillPattern(pattern, entity, keyword) {
-        return String(pattern || '')
-            .replace(/\{\{entity\}\}/g, entity || '产品')
-            .replace(/\{\{keyword\}\}/g, keyword || entity || '选题')
-            .replace(/\{\{title\}\}/g, keyword || entity || '选题');
+        aiFocusScript = {
+            disclaimer: '目标 AI 侧重暂不可用',
+            platforms: DEFAULT_AI_PLATFORMS,
+            items: DEFAULT_AI_PLATFORMS.map((platform) => ({
+                platform,
+                generation_focus: '',
+                avoid: [],
+            })),
+        };
+        return aiFocusScript;
     }
 
     function renderAiPlatformChecks() {
@@ -69,31 +67,33 @@
     function renderTitleHints() {
         const host = document.getElementById('kw-ai-title-hints');
         if (!host) return;
-        const items = (aiFocusScript && aiFocusScript.items) || [];
-        const entity = (aiFocusScript && aiFocusScript.entity) || 'DJI Mini 5 Pro';
         const selected = Array.from(selectedKeywords);
         if (!selected.length) {
             host.innerHTML = '<p class="kw-ai-focus__empty">勾选至少一个选题后显示建议。</p>';
             return;
         }
-        const keyword = selected[0];
-        const rows = items.filter((row) => targetPlatforms.has(row.platform));
+        if (!platformTitleHints.length) {
+            const note = (aiFocusScript && aiFocusScript.disclaimer) || '';
+            host.innerHTML = `<p class="kw-ai-focus__empty">请先生成词包；标题建议由模型在拓词完成时一并产出（本轮若失败则留空，不使用前端模板）。${note ? `<br><span class="text-[11px]">${escapeHtml(note)}</span>` : ''}</p>`;
+            return;
+        }
+        const rows = platformTitleHints.filter((row) => targetPlatforms.has(row.platform));
         if (!rows.length) {
             host.innerHTML = '<p class="kw-ai-focus__empty">请至少选择一个目标 AI。</p>';
             return;
         }
         host.innerHTML = rows
             .map((row) => {
-                const patterns = (row.title_patterns || [])
-                    .map((pat) => {
-                        const title = fillPattern(pat, entity, keyword);
-                        return `<li><span>${escapeHtml(title)}</span>`
-                            + `<button type="button" class="btn btn-outline kw-ai-apply" data-apply-title="${escapeHtml(title)}">应用</button></li>`;
-                    })
-                    .join('');
+                const titles = Array.isArray(row.titles) ? row.titles.filter(Boolean) : [];
+                const list = titles.length
+                    ? titles.map((title) => (
+                        `<li><span>${escapeHtml(title)}</span>`
+                        + `<button type="button" class="btn btn-outline kw-ai-apply" data-apply-title="${escapeHtml(title)}">应用</button></li>`
+                    )).join('')
+                    : '<li class="text-on-surface-variant text-xs">本平台本轮未生成标题建议</li>';
                 return `<article class="kw-ai-hint-card"><h4>${escapeHtml(row.platform)}</h4>`
                     + `<p class="kw-ai-focus__focus">${escapeHtml(row.generation_focus || '')}</p>`
-                    + `<ul>${patterns}</ul></article>`;
+                    + `<ul>${list}</ul></article>`;
             })
             .join('');
         host.querySelectorAll('[data-apply-title]').forEach((btn) => {
@@ -584,12 +584,24 @@
 
     function renderResults(payload, options = {}) {
         currentDimensions = Array.isArray(payload.dimensions) ? payload.dimensions : [];
+        platformTitleHints = Array.isArray(payload.platform_title_hints)
+            ? payload.platform_title_hints
+            : [];
+        if (payload.ai_focus && typeof payload.ai_focus === 'object') {
+            aiFocusScript = payload.ai_focus;
+            const plats = payload.ai_focus.platforms || [];
+            if (plats.length) {
+                targetPlatforms = new Set(plats);
+                renderAiPlatformChecks();
+            }
+        }
         rebuildFlatList();
         renderProfile(payload.profile);
         updateStats(payload.summary || {}, {
             seedLabel: options.seedLabel || tags.join('、'),
         });
         renderGrid();
+        renderTitleHints();
         resultsPanel.classList.remove('hidden');
         refineBtn.disabled = Boolean(options.disableRefine);
         if (!options.isExample) {

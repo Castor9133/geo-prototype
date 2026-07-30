@@ -61,7 +61,6 @@
                 if (url === '/tutorial' || url.startsWith('/tutorial/')) return false;
                 if (url === '/solutions' || url.startsWith('/solutions/') || url === '/plans' || url.startsWith('/plans/') || url === '/qa' || url.startsWith('/qa/')) return false;
                 if (url === '/tools' || url.startsWith('/tools/')) return false;
-                if (url.includes('github.com/yaojingang/georank')) return false;
                 return true;
             });
         return ensureSuiteItem(items.length ? items : DEFAULT_MENU_ITEMS.map(item => ({...item})));

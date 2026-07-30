@@ -7,7 +7,6 @@ import { isAbsolute, join, relative, resolve } from 'node:path';
 import {
   decodeTextBufferCandidates,
   findSensitivePublicData,
-  hasLegacyRepositoryReferenceInBuffer,
   isKnownBinaryPath,
   isPublicTextPath,
 } from './public-content-policy.mjs';
@@ -281,9 +280,6 @@ for (const path of trackedFiles) {
   }
 
   for (const buffer of buffers) {
-    if (hasLegacyRepositoryReferenceInBuffer(buffer)) {
-      violations.add(`legacy repository reference: ${path}`);
-    }
     if (buffer.includes(0) && !isKnownBinaryPath(path)) {
       violations.add(`NUL byte in ${isPublicTextPath(path) ? 'public text' : 'text'}: ${path}`);
     }

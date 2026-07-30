@@ -24,7 +24,7 @@ PREVIOUS_RELEASE_ID = "43a461f6-6be2-4931-9dbb-f1d56576292a"
 MERGED_RELEASE_ID = "9fe4a087-42bc-423a-bc59-fc020018a6f9"
 MERGED_MANIFEST = {
     "id": MERGED_RELEASE_ID,
-    "title": "GEORankHub 导航与版权更新",
+    "title": "GEOrank 导航与版权更新",
     "source_type": "zip_package",
     "entry_path": "index.html",
     "storage_path": f"/app/runtime/homepages/releases/{MERGED_RELEASE_ID}",

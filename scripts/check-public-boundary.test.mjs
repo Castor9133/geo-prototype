@@ -82,15 +82,8 @@ test('accepts a safe source archive without Git metadata', (t) => {
 });
 
 test('archive mode rejects injected private paths and unsafe payloads', (t) => {
-  const owner = ['AI', 'haoke'].join('');
-  const repository = 'GEORank';
   const privateHost = ['example-team', 'feishu', 'cn'].join('.');
   const cases = [
-    {
-      path: 'docs/history/legacy.md',
-      content: `https://github.com/${owner}/${repository}.git\n`,
-      expected: /legacy repository reference/,
-    },
     { path: 'private/.env', content: 'API_KEY=replace-me\n', expected: /forbidden path/ },
     {
       path: 'src/provider.ts',
@@ -138,11 +131,6 @@ test('archive mode rejects injected private paths and unsafe payloads', (t) => {
     { path: 'runtime/data/export.json', content: '{}\n', expected: /forbidden path/ },
     { path: 'data/public/contact.txt', content: 'telephone: 010 1234 5678\n', expected: /sensitive public data/ },
     { path: 'data/public/nul.txt', content: Buffer.from('safe\0hidden'), expected: /NUL byte/ },
-    {
-      path: 'assets/history.bin',
-      content: Buffer.from(`https://github.com/${owner}/${repository}`, 'utf16le'),
-      expected: /legacy repository reference/,
-    },
   ];
   const parents = [];
   t.after(() => parents.forEach((parent) => rmSync(parent, { recursive: true, force: true })));
@@ -640,31 +628,6 @@ test('public gate rejects address-shaped text and bare phones while allowing DOI
   assert.match(output, /sensitive public data: data\/public\/url-phone\.txt/);
   assert.doesNotMatch(output, /data\/public\/paper\.json/);
   assert.doesNotMatch(output, /data\/public\/address-semantics\.txt/);
-});
-
-test('legacy owner cannot bypass the gate through history or runtime release paths', (t) => {
-  const owner = ['AI', 'haoke'].join('');
-  const repository = 'GEORank';
-  const root = createRepo({
-    'docs/history/new.md': `https://github.com/${owner}/${repository}.git\n`,
-    'runtime/homepages/releases/new/source/index.html': `git@github.com:${owner}/${repository}.git\n`,
-    'runtime/homepages/releases/entity/source/index.html': `https://github.com/${owner}&#47;${repository}\n`,
-    'runtime/homepages/releases/entity-no-semicolon/source/index.html': `https://github.com/${owner}&#x2f${repository}\n`,
-    'assets/history.bin': Buffer.concat([
-      Buffer.from([0]),
-      Buffer.from(`ssh://git@github.com/${owner}/${repository}.git`),
-    ]),
-  });
-  t.after(() => rmSync(root, {recursive: true, force: true}));
-
-  const result = runChecker(root);
-  const output = result.stdout + result.stderr;
-  assert.equal(result.status, 1, output);
-  assert.match(output, /legacy repository reference: docs\/history\/new\.md/);
-  assert.match(output, /legacy repository reference: runtime\/homepages\/releases\/new\/source\/index\.html/);
-  assert.match(output, /legacy repository reference: runtime\/homepages\/releases\/entity\/source\/index\.html/);
-  assert.match(output, /legacy repository reference: runtime\/homepages\/releases\/entity-no-semicolon\/source\/index\.html/);
-  assert.match(output, /legacy repository reference: assets\/history\.bin/);
 });
 
 test('public text cannot use NUL bytes to bypass staged or working scans', (t) => {

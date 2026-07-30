@@ -43,8 +43,35 @@ def script_summary(script: dict[str, Any]) -> dict[str, Any]:
 
 
 def load_ai_focus(key: str | None = None) -> dict[str, Any]:
-    """加载目标 AI 侧重/信源偏好演示表（与观测剧本同目录约定）。"""
+    """兼容旧调用：优先同步读文件；新路径请用 get_ai_focus_config()。"""
     return load_observe_script(key or "geo-ai-focus-dji")
+
+
+async def get_ai_focus_config() -> dict[str, Any]:
+    """目标 AI 侧重：后台 keyword_expansion settings（与拓词同源）。"""
+    from app.services.runtime_settings import get_keyword_expansion_config
+
+    config = await get_keyword_expansion_config()
+    items = []
+    for row in config.get("platforms") or []:
+        items.append(
+            {
+                "platform": row["platform"],
+                "generation_focus": row.get("generation_focus") or "",
+                "avoid": list(row.get("avoid") or []),
+                "source_prefs": [],
+                "title_patterns": [],
+            }
+        )
+    return {
+        "key": "keyword_ai_focus",
+        "version": "settings",
+        "disclaimer": config.get("disclaimer")
+        or "目标 AI 侧重来自后台配置 · 非平台实测",
+        "entity": "",
+        "platforms": [row["platform"] for row in items],
+        "items": items,
+    }
 
 
 def ai_focus_for_platforms(

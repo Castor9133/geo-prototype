@@ -1,4 +1,4 @@
-﻿"""Local static + demo API server for GEORank (no Docker required).
+"""Local static + demo API server for GEORank (no Docker required).
 
 Serves dist/ with nginx-like HTML fallbacks, and mocks the public APIs
 needed for the company directory homepage.
@@ -12,15 +12,15 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 from uuid import uuid4
 
-ROOT = Path(r"C:\Cursor local\GEORank\dist")
+ROOT = Path(r"C:\Cursor local\geo-prototype\dist")
 os.chdir(ROOT)
 
 DEMO_COMPANIES = [
     {
         "id": "11111111-1111-4111-8111-111111111111",
-        "path_key": "georankhub",
-        "name": "GEORankHub",
-        "url": "https://www.georankhub.com/",
+        "path_key": "georank",
+        "name": "GEOrank",
+        "url": "https://www.georank.com/",
         "logo_url": None,
         "short_description": "GEOrank 官方演示与 GEO 公益研究平台，覆盖网站诊断、问答、方案与拓词。",
         "category": "GEO 平台",
@@ -44,9 +44,9 @@ DEMO_COMPANIES = [
     },
     {
         "id": "22222222-2222-4222-8222-222222222222",
-        "path_key": "brandorbit",
-        "name": "BrandOrbit",
-        "url": "https://brandorbit.test",
+        "path_key": "demobrand",
+        "name": "DemoBrand",
+        "url": "https://demobrand.test",
         "logo_url": None,
         "short_description": "面向市场与增长团队的 AI 搜索可见性管理平台（演示样本）。",
         "category": "营销科技",

@@ -102,7 +102,7 @@ class NavigationSettingsTests(unittest.TestCase):
                     {"id": "companies", "label": "公司", "url": "/companies", "target": "_blank"},
                     {"id": "experts", "label": "专家", "url": "/experts", "target": "_blank"},
                     {"id": "tutorial", "label": "教程", "url": "/tutorial", "target": "_blank"},
-                    {"id": "github", "label": "GitHub", "url": "https://github.com/yaojingang/georank", "target": "_blank"},
+                    {"id": "github", "label": "GitHub", "url": "https://github.com/Castor9133/geo-prototype", "target": "_blank"},
                     {"id": "tools", "label": "工具", "url": "/tools", "target": "_blank"},
                     {"id": "diagnostic", "label": "诊断", "url": "/diagnostic", "target": "_blank"},
                 ]

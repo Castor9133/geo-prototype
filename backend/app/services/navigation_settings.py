@@ -281,7 +281,7 @@ def _is_removed_navigation_url(value: Any) -> bool:
         return True
     if url.startswith("/solutions/") or url.startswith("/plans/") or url.startswith("/qa/"):
         return True
-    return "github.com/yaojingang/georank" in url
+    return False
 
 
 def _is_hidden_navigation_url(value: Any) -> bool:

@@ -45,6 +45,8 @@ async def _seed_settings(db):
         get_default_llm_provider_config,
         get_default_frontend_module_config,
         get_default_homepage_runtime_config,
+        get_default_keyword_expansion_config,
+        KEYWORD_EXPANSION_SETTING_KEY,
         _build_frontend_module_config,
     )
     from app.services.navigation_settings import (
@@ -83,6 +85,12 @@ async def _seed_settings(db):
         {"key": "frontend_modules", "value": get_default_frontend_module_config(), "category": "frontend", "is_public": False},
         {"key": "homepage_runtime", "value": get_default_homepage_runtime_config(), "category": "frontend", "is_public": False},
         {"key": "navigation_menu", "value": get_default_navigation_menu(), "category": "frontend", "is_public": True},
+        {
+            "key": KEYWORD_EXPANSION_SETTING_KEY,
+            "value": get_default_keyword_expansion_config(),
+            "category": "geo_engine",
+            "is_public": False,
+        },
     ]
 
     for item in defaults:

@@ -2,8 +2,8 @@ import {Buffer} from 'node:buffer';
 
 const sensitiveKeyPattern = /(?:^|_)(?:address|contact|email|fax|mobile|phone|qq|tel|telephone|wechat|weixin|wxid)(?:_|$)/i;
 const sensitiveChineseKeyPattern = /(?:电子邮箱|微信(?:账号|号)?|联系电话|联系地址|手机(?:号|号码)?|电话号码|座机|传真|家庭住址|住址|家庭地址|居住地址|通讯地址|收件地址|详细地址)/;
-const legacyOwner = ['AI', 'haoke'].join('').toLowerCase();
-const legacyRepository = 'GEORank'.toLowerCase();
+const canonicalOwner = 'castor9133';
+const canonicalRepository = 'geo-prototype';
 const publicBinaryExtensions = new Set([
   '.gif', '.ico', '.jpeg', '.jpg', '.otf', '.png', '.ttf', '.webp', '.woff', '.woff2',
 ]);
@@ -162,9 +162,9 @@ export function findSensitivePublicData(value) {
   return violations;
 }
 
-export function hasLegacyRepositoryReference(value) {
+export function hasCanonicalRepositoryReference(value) {
   const normalized = normalizePublicText(value).toLowerCase();
-  return normalized.includes(`${legacyOwner}/${legacyRepository}`);
+  return normalized.includes(`${canonicalOwner}/${canonicalRepository}`);
 }
 
 function decodeUtf16BigEndian(buffer) {
@@ -184,12 +184,6 @@ export function decodeTextBufferCandidates(value) {
     candidates.add(decodeUtf16BigEndian(buffer));
   }
   return [...candidates];
-}
-
-export function hasLegacyRepositoryReferenceInBuffer(value) {
-  const buffer = Buffer.isBuffer(value) ? value : Buffer.from(value);
-  return [buffer.toString('utf8'), buffer.toString('utf16le'), decodeUtf16BigEndian(buffer)]
-    .some((decoded) => hasLegacyRepositoryReference(decoded));
 }
 
 export function isPublicContentPath(path) {

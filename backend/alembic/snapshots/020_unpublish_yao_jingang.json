@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "contract": "expert-state-transition",
+  "revision": "020_unpublish_yao_jingang",
+  "down_revision": "019_add_geo_runs",
+  "effective_date": "2026-07-30",
+  "downgrade_policy": "preserve_target_state",
+  "operations": [
+    {
+      "operation": "set_publication_state",
+      "id": "2dfd3c38-5c50-4e89-8a64-6be1db151e74",
+      "slug": "yao-jingang",
+      "from_state": {
+        "is_published": true,
+        "is_featured": true
+      },
+      "to_state": {
+        "is_published": false,
+        "is_featured": false
+      },
+      "reason": "maintainer fork cleanup: remove upstream author profile from public channel"
+    }
+  ]
+}

@@ -4870,6 +4870,97 @@ ${pages.map(p => p === '…'
             if (el && settings[key] !== undefined) el.checked = !!settings[key]?.value;
         });
 
+        // —— 拓词 / 目标 AI 配置（独立 API，不走通用 settings 批量保存）——
+        const kwPlatformsHost = document.getElementById('kw-exp-platforms');
+        const kwStatus = document.getElementById('kw-exp-status');
+        const renderKwPlatforms = (platforms) => {
+            if (!kwPlatformsHost) return;
+            const list = Array.isArray(platforms) && platforms.length
+                ? platforms
+                : [{ platform: '', generation_focus: '', avoid: [] }];
+            kwPlatformsHost.innerHTML = list.map((row, idx) => `
+                <div class="rounded-lg border border-slate-100 p-3 space-y-2" data-kw-plat="${idx}">
+                    <div class="flex gap-2 items-center">
+                        <input class="form-input flex-1" data-field="platform" placeholder="平台名" value="${escapeHtml(row.platform || '')}">
+                        <button type="button" class="btn btn-outline text-xs px-2 py-1" data-kw-remove="${idx}">删除</button>
+                    </div>
+                    <textarea class="form-input text-xs min-h-[64px]" data-field="generation_focus" placeholder="生成侧重">${escapeHtml(row.generation_focus || '')}</textarea>
+                    <input class="form-input text-xs" data-field="avoid" placeholder="避免项，逗号分隔" value="${escapeHtml((row.avoid || []).join('，'))}">
+                </div>
+            `).join('');
+            kwPlatformsHost.querySelectorAll('[data-kw-remove]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const idx = Number(btn.getAttribute('data-kw-remove'));
+                    const next = collectKwPlatforms().filter((_, i) => i !== idx);
+                    renderKwPlatforms(next.length ? next : [{ platform: '', generation_focus: '', avoid: [] }]);
+                });
+            });
+        };
+        const collectKwPlatforms = () => {
+            if (!kwPlatformsHost) return [];
+            return Array.from(kwPlatformsHost.querySelectorAll('[data-kw-plat]')).map((card) => {
+                const platform = card.querySelector('[data-field="platform"]')?.value?.trim() || '';
+                const focus = card.querySelector('[data-field="generation_focus"]')?.value?.trim() || '';
+                const avoidRaw = card.querySelector('[data-field="avoid"]')?.value || '';
+                const avoid = avoidRaw.split(/[,，]/).map((s) => s.trim()).filter(Boolean);
+                return { platform, generation_focus: focus, avoid };
+            }).filter((row) => row.platform);
+        };
+        const fillKwExpansion = (payload) => {
+            const cfg = payload?.config || payload || {};
+            const sys = document.getElementById('kw-exp-system-prompt');
+            const titles = document.getElementById('kw-exp-titles-per');
+            const timeout = document.getElementById('kw-exp-timeout');
+            const disclaimer = document.getElementById('kw-exp-disclaimer');
+            if (sys) sys.value = cfg.system_prompt || '';
+            if (titles) titles.value = cfg.titles_per_platform ?? 3;
+            if (timeout) timeout.value = cfg.timeout_seconds ?? 20;
+            if (disclaimer) disclaimer.value = cfg.disclaimer || '';
+            renderKwPlatforms(cfg.platforms || []);
+        };
+        try {
+            const kwPayload = await api('GET', '/api/admin/keywords/expansion-config');
+            fillKwExpansion(kwPayload);
+        } catch (err) {
+            console.warn('[admin] load keyword expansion config failed', err);
+            if (kwStatus) kwStatus.textContent = '拓词配置加载失败：' + err.message;
+        }
+        document.getElementById('kw-exp-add-platform')?.addEventListener('click', () => {
+            renderKwPlatforms([...collectKwPlatforms(), { platform: '', generation_focus: '', avoid: [] }]);
+        });
+        document.getElementById('kw-exp-save')?.addEventListener('click', async () => {
+            const btn = document.getElementById('kw-exp-save');
+            try {
+                if (btn) { btn.disabled = true; btn.textContent = '保存中...'; }
+                const body = {
+                    system_prompt: document.getElementById('kw-exp-system-prompt')?.value || '',
+                    titles_per_platform: Number(document.getElementById('kw-exp-titles-per')?.value || 3),
+                    timeout_seconds: Number(document.getElementById('kw-exp-timeout')?.value || 20),
+                    disclaimer: document.getElementById('kw-exp-disclaimer')?.value || '',
+                    platforms: collectKwPlatforms(),
+                };
+                const saved = await api('PUT', '/api/admin/keywords/expansion-config', body);
+                fillKwExpansion(saved);
+                if (kwStatus) kwStatus.textContent = '已保存';
+                toast('拓词配置已保存');
+            } catch (err) {
+                toast(err.message || '保存失败', 'error');
+                if (kwStatus) kwStatus.textContent = err.message || '保存失败';
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = '保存拓词配置'; }
+            }
+        });
+        document.getElementById('kw-exp-reset')?.addEventListener('click', async () => {
+            if (!await confirm('确认恢复拓词与目标 AI 默认配置？')) return;
+            try {
+                const reset = await api('POST', '/api/admin/keywords/expansion-config/reset');
+                fillKwExpansion(reset);
+                toast('已恢复默认拓词配置');
+            } catch (err) {
+                toast(err.message || '重置失败', 'error');
+            }
+        });
+
         // 显示/隐藏 API Key 按钮
         document.querySelectorAll('.btn-toggle-key').forEach(btn => {
             btn.addEventListener('click', () => {

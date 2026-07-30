@@ -5,7 +5,7 @@
   "provenance": "Migrated from the repository's public expert-channel seed and reviewed project history.",
   "distribution_basis": "Repository-maintainer approval for this open-source migration snapshot.",
   "verification_scope": "Reviewed for migration consistency, public-data boundaries, and link provenance; biographical claims were not independently fact-checked.",
-  "last_verified": "2026-07-15",
+  "last_verified": "2026-07-30",
   "migration_snapshot": "backend/alembic/snapshots/012_seed_expert_profiles.json",
   "experts": [
     {
@@ -46,8 +46,8 @@
         "AI 营销"
       ],
       "sort_order": 1,
-      "status": "published",
-      "featured": true,
+      "status": "hidden",
+      "featured": false,
       "source": "user-authorized migration",
       "authorization": "Repository maintainer approved distribution for the built-in public expert channel; subject authorization is not recorded in this repository.",
       "provenance": "Migrated from the repository's public expert-channel seed and reviewed project history.",
@@ -212,6 +212,16 @@
       "distribution_basis": "Repository-maintainer approval for this open-source migration snapshot.",
       "verification_scope": "Reviewed for migration consistency, public-data boundaries, and link provenance; biographical claims were not independently fact-checked.",
       "last_verified": "2026-07-15"
+    }
+  ],
+  "migration_chain": [
+    {
+      "kind": "seed",
+      "snapshot": "backend/alembic/snapshots/012_seed_expert_profiles.json"
+    },
+    {
+      "kind": "state",
+      "snapshot": "backend/alembic/snapshots/020_unpublish_yao_jingang.json"
     }
   ]
 }

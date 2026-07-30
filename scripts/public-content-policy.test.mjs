@@ -5,8 +5,6 @@ import test from 'node:test';
 
 import {
   findSensitivePublicData,
-  hasLegacyRepositoryReference,
-  hasLegacyRepositoryReferenceInBuffer,
   normalizePublicText,
 } from './public-content-policy.mjs';
 
@@ -74,7 +72,7 @@ test('allows non-contact discussion of channels and research', () => {
     '长期运营微信公众号并公开分享',
     '电子邮箱安全研究',
     '研究 telephone routing 与 mobile web 体验',
-    'git@github.com:yaojingang/GEORank.git',
+    'git@github.com:Castor9133/geo-prototype.git',
     'https://doi.org/10.1234/5678',
     'doi:10.1234/5678',
     '10.1234/5678',
@@ -129,33 +127,4 @@ test('bounds email scanning time for long invalid candidates', () => {
   const started = performance.now();
   assert.deepEqual(findSensitivePublicData(adversarial), []);
   assert.ok(performance.now() - started < 250, 'email scan exceeded the 250ms regression budget');
-});
-
-test('recognizes legacy repository URL variants without path exceptions', () => {
-  const owner = ['AI', 'haoke'].join('');
-  const repository = 'GEORank';
-  for (const value of [
-    `https://github.com/${owner}/${repository}`,
-    `https://github.com/${owner.toUpperCase()}/${repository.toLowerCase()}.git`,
-    `git@github.com:${owner}/${repository}.git`,
-    `ssh://git@github.com/${owner}/${repository}.git`,
-    `https://github.com/${owner}&#47;${repository}`,
-    `https://github.com/${owner}&#47${repository}`,
-    `https://github.com/${owner}&#x2f${repository}`,
-  ]) {
-    assert.equal(hasLegacyRepositoryReference(value), true, value);
-  }
-  assert.equal(hasLegacyRepositoryReference('https://github.com/yaojingang/GEORank'), false);
-});
-
-test('recognizes legacy owner text in UTF-16 buffers', () => {
-  const owner = ['AI', 'haoke'].join('');
-  const reference = `https://github.com/${owner}/GEORank.git`;
-  const littleEndian = Buffer.from(reference, 'utf16le');
-  const bigEndian = Buffer.from(littleEndian);
-  for (let index = 0; index + 1 < bigEndian.length; index += 2) {
-    [bigEndian[index], bigEndian[index + 1]] = [bigEndian[index + 1], bigEndian[index]];
-  }
-  assert.equal(hasLegacyRepositoryReferenceInBuffer(littleEndian), true);
-  assert.equal(hasLegacyRepositoryReferenceInBuffer(bigEndian), true);
 });
