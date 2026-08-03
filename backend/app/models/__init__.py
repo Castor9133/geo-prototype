@@ -29,6 +29,7 @@ from app.models.content_engine import (
     DistributionChannel,
 )
 from app.models.geo_run import GeoRun
+from app.models.real_obs import RealObsSample, RealObsSnapshot
 
 __all__ = [
     "Company",
@@ -62,4 +63,6 @@ __all__ = [
     "ContentTask",
     "DistributionChannel",
     "GeoRun",
+    "RealObsSnapshot",
+    "RealObsSample",
 ]

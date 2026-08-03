@@ -670,7 +670,10 @@
         });
     }
 
-    function renderFunnelObserve(container, script, aiFocus) {
+    function renderFunnelObserve(container, script, aiFocus, options) {
+        const opts = options || {};
+        const doneStep = opts.doneStep || 'measure';
+        const doneLabel = opts.doneLabel || '标记观测完成';
         const layers = script.layers || [];
         const questions = script.questions || [];
         const summary = script.summary || {};
@@ -859,9 +862,15 @@
                 sourcePrefsPanelHtml(),
 
                 '<footer class="measure-monitor__foot">',
-                `<p class="suite-extra__meta">${escapeHtml(script.disclaimer || '演示剧本 · 非平台实测')}</p>`,
+                `<p class="suite-extra__meta">${escapeHtml(
+                    opts.disclaimer
+                    || script.disclaimer
+                    || (doneStep === 'diagnostic'
+                        ? '初诊观测 · 演示剧本 · 与 Suite「观测」同一套漏斗（非平台实测）'
+                        : '演示剧本 · 非平台实测'),
+                )}</p>`,
                 '<div class="suite-cta-row suite-cta-row--compact">',
-                '<button type="button" class="suite-btn suite-btn--primary" data-measure-done="1">标记观测完成</button>',
+                `<button type="button" class="suite-btn suite-btn--primary" data-measure-done="1">${escapeHtml(doneLabel)}</button>`,
                 '</div></footer></div>',
             ].join('');
 
@@ -902,11 +911,12 @@
             if (doneBtn && global.GEOrank?.SuiteWorkflow) {
                 doneBtn.addEventListener('click', () => {
                     const Workflow = global.GEOrank.SuiteWorkflow;
-                    Workflow.markComplete('measure');
-                    Workflow.handoff?.('measure', {
+                    Workflow.markComplete(doneStep);
+                    Workflow.handoff?.(doneStep, {
                         meta: {
                             script_key: script.key,
                             entity_appearance_rate: summary.entity_appearance_rate,
+                            observation_kind: doneStep === 'diagnostic' ? 'initial_geo' : 'measure',
                         },
                     }).catch(() => null);
                     doneBtn.textContent = '已标记完成';
@@ -936,15 +946,18 @@
         return aiFocusCache;
     }
 
-    async function renderMeasure(container) {
+    async function mountGeoObserve(container, options) {
+        if (!container) return;
+        const opts = options || {};
+        container.innerHTML = '<div class="measure-monitor measure-monitor--loading"><div class="measure-toolbar"><span class="suite-badge">加载中</span><span class="measure-toolbar__hint">正在加载观测剧本…</span></div><div class="measure-kpi-row"><div class="measure-kpi skeleton"></div><div class="measure-kpi skeleton"></div><div class="measure-kpi skeleton"></div></div></div>';
         const Workflow = global.GEOrank?.SuiteWorkflow;
-        const runId = Workflow?.getRunId?.();
+        const runId = opts.runId || Workflow?.getRunId?.();
         const aiFocus = await loadAiFocusScript().catch(() => null);
         try {
             if (runId) {
                 const preview = await fetchJson(`/api/geo-runs/${runId}/geo-preview`);
                 if (preview && preview.script) {
-                    renderFunnelObserve(container, preview.script, aiFocus);
+                    renderFunnelObserve(container, preview.script, aiFocus, opts);
                     return;
                 }
             }
@@ -954,7 +967,7 @@
         try {
             const script = await fetchJson('/api/geo-runs/scripts/geo-observe-funnel-dji-vs-autel');
             if (script && script.questions) {
-                renderFunnelObserve(container, script, aiFocus);
+                renderFunnelObserve(container, script, aiFocus, opts);
                 return;
             }
         } catch (error) {
@@ -963,23 +976,352 @@
         try {
             const script = await fetchJson('/pilot-demo/geo-observe-funnel-dji-vs-autel.json');
             if (script && script.questions) {
-                renderFunnelObserve(container, script, aiFocus);
+                renderFunnelObserve(container, script, aiFocus, opts);
                 return;
             }
         } catch (error) {
             console.warn('[suite-extra] static funnel failed', error);
         }
+        container.innerHTML = '<p class="suite-extra__lead">观测剧本加载失败。</p>';
+    }
+
+    function platformLabel(key) {
+        const map = { doubao: '豆包', yuanbao: '元宝', deepseek: 'DeepSeek' };
+        return map[key] || key;
+    }
+
+    function fmtPct(rate) {
+        const n = Number(rate);
+        if (!Number.isFinite(n)) return '—';
+        return `${Math.round(n * 1000) / 10}%`;
+    }
+
+    async function postJson(url, body) {
+        const response = await fetch(url, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body || {}),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            const detail = data.detail || data.message || response.statusText;
+            throw new Error(typeof detail === 'string' ? detail : JSON.stringify(detail));
+        }
+        return data;
+    }
+
+    async function patchJson(url, body) {
+        const response = await fetch(url, {
+            method: 'PATCH',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body || {}),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(data.detail || response.statusText || '请求失败');
+        }
+        return data;
+    }
+
+    async function mountRealObs(container, options) {
+        if (!container) return;
+        const opts = options || {};
+        const Workflow = global.GEOrank?.SuiteWorkflow;
+        let runId = opts.runId || Workflow?.getRunId?.();
+        if (!runId && Workflow?.ensureRun) {
+            try {
+                const run = await Workflow.ensureRun({});
+                runId = run && (run.id || run.run_id);
+            } catch (error) {
+                console.warn('[suite-extra] ensureRun failed', error);
+            }
+        }
+        if (!runId) {
+            container.innerHTML = '<p class="suite-extra__lead">请先创建 GEO 回合，再开始真实点名。</p>';
+            return;
+        }
+
+        const state = {
+            runId,
+            snapshots: [],
+            activeSnapshotId: null,
+            detail: null,
+            compare: null,
+        };
+
+        async function reload() {
+            const list = await fetchJson(`/api/geo-runs/${runId}/real-obs/snapshots`);
+            state.snapshots = list.items || [];
+            if (!state.activeSnapshotId && state.snapshots[0]) {
+                state.activeSnapshotId = state.snapshots[0].id;
+            }
+            if (state.activeSnapshotId) {
+                state.detail = await fetchJson(
+                    `/api/geo-runs/${runId}/real-obs/snapshots/${state.activeSnapshotId}`
+                );
+            } else {
+                state.detail = null;
+            }
+            try {
+                state.compare = await fetchJson(`/api/geo-runs/${runId}/real-obs/compare`);
+            } catch (_) {
+                state.compare = null;
+            }
+            paint();
+        }
+
+        function paint() {
+            const snap = state.detail && state.detail.snapshot;
+            const samples = (state.detail && state.detail.samples) || [];
+            const compare = state.compare || {};
+            const afterStats = compare.after_stats || {};
+            const delta = compare.delta;
+            const cards = compare.action_cards || [];
+            const hours = snap && snap.hours_since_publish;
+            const hoursHint = (hours != null && hours >= 2)
+                ? `距确认外发已约 ${hours} 小时（可点名；非自动爬虫）。`
+                : (hours != null
+                    ? `距确认外发约 ${hours} 小时（流程图建议满 2h 再采，仍可立即点名）。`
+                    : '');
+
+            const snapOptions = state.snapshots.map((s) => (
+                `<option value="${escapeHtml(s.id)}"${s.id === state.activeSnapshotId ? ' selected' : ''}>`
+                + `${escapeHtml(s.phase)} · ${escapeHtml(s.status)} · ${(s.created_at || '').slice(0, 19)}`
+                + `</option>`
+            )).join('');
+
+            const sampleRows = samples.length
+                ? samples.map((s) => (
+                    `<tr data-sample-id="${escapeHtml(s.id)}">`
+                    + `<td>${escapeHtml(platformLabel(s.platform))}</td>`
+                    + `<td><code>${escapeHtml(s.question_id)}</code>`
+                    + `<div class="real-obs-q">${escapeHtml((s.question_text || '').slice(0, 72))}</div></td>`
+                    + `<td>${s.ok ? '是' : '否'}</td>`
+                    + `<td>${s.mention ? '是' : '否'}</td>`
+                    + `<td>${s.owned_citation ? '是' : '否'}</td>`
+                    + `<td><strong class="${s.strong_adopted ? 'real-obs-yes' : 'real-obs-no'}">`
+                    + `${s.strong_adopted ? '强采纳' : '未强采纳'}</strong></td>`
+                    + `<td class="real-obs-actions">`
+                    + `<button type="button" class="suite-btn suite-btn--ghost real-obs-toggle" data-field="mention" data-val="${s.mention ? '0' : '1'}">改提及</button>`
+                    + `<button type="button" class="suite-btn suite-btn--ghost real-obs-toggle" data-field="owned_citation" data-val="${s.owned_citation ? '0' : '1'}">改自有源</button>`
+                    + `</td></tr>`
+                    + `<tr class="real-obs-detail-row"><td colspan="7">`
+                    + `<details><summary>答案 / 引用</summary>`
+                    + `<pre class="real-obs-pre">${escapeHtml((s.answer_text || s.error_message || '').slice(0, 2000))}</pre>`
+                    + `<div class="real-obs-cites">${(s.citations || []).map((c) => (
+                        `<span class="measure-cite-tag">${escapeHtml(c.domain || c.url || '')}</span>`
+                    )).join(' ') || '<span class="suite-extra__meta">无引用</span>'}</div>`
+                    + `</details></td></tr>`
+                )).join('')
+                : '<tr><td colspan="7">暂无样本。创建快照后用 scripts/browser-probe 半自动回传。</td></tr>';
+
+            const cardHtml = cards.length
+                ? cards.map((c) => (
+                    `<article class="real-obs-card">`
+                    + `<h4>${escapeHtml(c.title || '')}</h4>`
+                    + `<p>${escapeHtml(c.synopsis || '')}</p>`
+                    + `<div class="suite-cta-row">${(c.cta || []).map((a) => (
+                        `<a class="suite-btn suite-btn--ghost" href="${escapeHtml(a.href || '#')}">${escapeHtml(a.label || '打开')}</a>`
+                    )).join('')}</div></article>`
+                )).join('')
+                : '<p class="suite-extra__meta">暂无归因卡。</p>';
+
+            container.innerHTML = [
+                '<div class="real-obs">',
+                '<div class="real-obs__banner">',
+                '<span class="suite-badge">约定账号网页端点名抽样</span>',
+                '<p>不等于全网引用率，也拿不到模型内部检索台账。强采纳 = 本品提及 + 自有域/事实源命中。</p>',
+                hoursHint ? `<p class="suite-extra__meta">${escapeHtml(hoursHint)}</p>` : '',
+                '</div>',
+                '<div class="real-obs__controls">',
+                '<label>阶段 <select id="real-obs-phase"><option value="after">改版后 after</option><option value="baseline">改版前 baseline</option></select></label>',
+                '<label>已外发时间 <input type="datetime-local" id="real-obs-published"></label>',
+                '<label>自有域（逗号分隔） <input type="text" id="real-obs-domains" placeholder="dji.com,example.com" value="dji.com"></label>',
+                '<button type="button" class="suite-btn" id="real-obs-start">内容已外发，开始点名</button>',
+                '</div>',
+                '<div class="real-obs__meta-row">',
+                `<label>快照 <select id="real-obs-snap">${snapOptions || '<option value="">（无）</option>'}</select></label>`,
+                '<button type="button" class="suite-btn suite-btn--ghost" id="real-obs-refresh">刷新</button>',
+                snap
+                    ? `<span class="suite-extra__meta">状态 ${escapeHtml(snap.status)} · 平台 ${(snap.platforms || []).map(platformLabel).join(' / ')}</span>`
+                    : '',
+                '</div>',
+                '<section class="measure-kpi-row" aria-label="真实点名 KPI">',
+                `<article class="measure-kpi"><span>提及率</span><strong>${fmtPct(afterStats.mention_rate)}</strong>`
+                + `<small>after · n=${afterStats.sample_count || 0}</small></article>`,
+                `<article class="measure-kpi"><span>自有源命中率</span><strong>${fmtPct(afterStats.owned_citation_rate)}</strong></article>`,
+                `<article class="measure-kpi"><span>强采纳率</span><strong>${fmtPct(afterStats.strong_adopted_rate)}</strong>`
+                + (delta ? `<small>Δ提及 ${fmtPct(delta.mention_rate)}</small>` : '')
+                + '</article>',
+                '</section>',
+                '<div class="real-obs__table-wrap"><table class="real-obs-table"><thead><tr>',
+                '<th>平台</th><th>问法</th><th>成功</th><th>提及</th><th>自有源</th><th>强采纳</th><th>改标</th>',
+                '</tr></thead><tbody>',
+                sampleRows,
+                '</tbody></table></div>',
+                snap
+                    ? `<p class="suite-extra__meta">CLI：<code>python scripts/browser-probe/run_probe.py --api http://127.0.0.1:8010 --run-id ${escapeHtml(runId)} --snapshot-id ${escapeHtml(snap.id)}</code></p>`
+                    : '',
+                '<section class="real-obs__cards"><h3>归因卡</h3>',
+                cardHtml,
+                '</section>',
+                opts.doneStep && Workflow
+                    ? `<div class="suite-cta-row"><button type="button" class="suite-btn" data-measure-done>${escapeHtml(opts.doneLabel || '标记观测完成')}</button></div>`
+                    : '',
+                '</div>',
+            ].join('');
+
+            container.querySelector('#real-obs-refresh')?.addEventListener('click', () => {
+                reload().catch((e) => {
+                    container.innerHTML = `<p class="suite-extra__lead">刷新失败：${escapeHtml(e.message || e)}</p>`;
+                });
+            });
+            container.querySelector('#real-obs-snap')?.addEventListener('change', (ev) => {
+                state.activeSnapshotId = ev.target.value || null;
+                reload().catch(() => null);
+            });
+            container.querySelector('#real-obs-start')?.addEventListener('click', async () => {
+                const phase = container.querySelector('#real-obs-phase')?.value || 'after';
+                const domainsRaw = container.querySelector('#real-obs-domains')?.value || '';
+                const domains = domainsRaw.split(/[,，\s]+/).map((s) => s.trim()).filter(Boolean);
+                const pubInput = container.querySelector('#real-obs-published')?.value;
+                let published_at = null;
+                if (pubInput) {
+                    const d = new Date(pubInput);
+                    if (!Number.isNaN(d.getTime())) published_at = d.toISOString();
+                }
+                try {
+                    const created = await postJson(`/api/geo-runs/${runId}/real-obs/snapshots`, {
+                        phase,
+                        platforms: ['doubao', 'yuanbao', 'deepseek'],
+                        owned_domains: domains.length ? domains : undefined,
+                        published_at,
+                    });
+                    state.activeSnapshotId = created.snapshot && created.snapshot.id;
+                    await reload();
+                } catch (err2) {
+                    alert('创建快照失败：' + (err2.message || err2));
+                }
+            });
+
+            container.querySelectorAll('.real-obs-toggle').forEach((btn) => {
+                btn.addEventListener('click', async () => {
+                    const tr = btn.closest('tr[data-sample-id]');
+                    const sampleId = tr && tr.getAttribute('data-sample-id');
+                    if (!sampleId) return;
+                    const field = btn.getAttribute('data-field');
+                    const val = btn.getAttribute('data-val') === '1';
+                    const body = {};
+                    body[field] = val;
+                    try {
+                        await patchJson(`/api/geo-runs/${runId}/real-obs/samples/${sampleId}`, body);
+                        await reload();
+                    } catch (error) {
+                        alert(error.message || error);
+                    }
+                });
+            });
+
+            const doneBtn = container.querySelector('[data-measure-done]');
+            if (doneBtn && Workflow) {
+                doneBtn.addEventListener('click', () => {
+                    Workflow.markComplete(opts.doneStep || 'measure');
+                    Workflow.handoff?.(opts.doneStep || 'measure', {
+                        meta: {
+                            observation_kind: 'real_obs',
+                            snapshot_id: state.activeSnapshotId,
+                        },
+                    }).catch(() => null);
+                    doneBtn.textContent = '已标记完成';
+                    doneBtn.disabled = true;
+                });
+            }
+        }
+
+        container.innerHTML = '<p class="suite-extra__lead">加载真实点名…</p>';
         try {
-            const latest = await fetchJson('/api/admin/trust-obs/runs/latest');
-            if (latest && latest.run) {
-                renderMeasurePayload(container, latest);
-                return;
+            await reload();
+        } catch (error) {
+            container.innerHTML = `<p class="suite-extra__lead">真实点名加载失败：${escapeHtml(error.message || error)}</p>`;
+        }
+    }
+
+    async function renderMeasure(container) {
+        const Workflow = global.GEOrank?.SuiteWorkflow;
+        const runId = Workflow?.getRunId?.();
+        container.innerHTML = [
+            '<div class="measure-tabs" data-measure-tabs>',
+            '<div class="measure-tabs__bar" role="tablist">',
+            '<button type="button" class="measure-tabs__btn is-active" data-measure-tab="demo" role="tab">演示观测</button>',
+            '<button type="button" class="measure-tabs__btn" data-measure-tab="real" role="tab">真实点名</button>',
+            '</div>',
+            '<p class="suite-extra__meta measure-tabs__hint">演示视图为方法剧本（非实测）；真实点名为约定账号网页端抽样。</p>',
+            '<div class="measure-tabs__pane" data-measure-pane="demo"></div>',
+            '<div class="measure-tabs__pane" data-measure-pane="real" hidden></div>',
+            '</div>',
+        ].join('');
+
+        const demoPane = container.querySelector('[data-measure-pane="demo"]');
+        const realPane = container.querySelector('[data-measure-pane="real"]');
+        let realMounted = false;
+
+        async function showTab(name) {
+            container.querySelectorAll('.measure-tabs__btn').forEach((b) => {
+                b.classList.toggle('is-active', b.getAttribute('data-measure-tab') === name);
+            });
+            if (demoPane) demoPane.hidden = name !== 'demo';
+            if (realPane) realPane.hidden = name !== 'real';
+            if (name === 'real' && realPane && !realMounted) {
+                realMounted = true;
+                await mountRealObs(realPane, {
+                    runId,
+                    doneStep: 'measure',
+                    doneLabel: '标记观测完成',
+                });
+            }
+        }
+
+        container.querySelectorAll('.measure-tabs__btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                showTab(btn.getAttribute('data-measure-tab') || 'demo').catch((e) => {
+                    console.warn('[suite-extra] tab switch failed', e);
+                });
+            });
+        });
+
+        try {
+            await mountGeoObserve(demoPane, {
+                runId,
+                doneStep: 'measure',
+                doneLabel: '标记观测完成',
+            });
+            if (demoPane && !demoPane.querySelector('.obs-monitor, .measure-monitor')) {
+                try {
+                    const latest = await fetchJson('/api/admin/trust-obs/runs/latest');
+                    if (latest && latest.run) {
+                        renderMeasurePayload(demoPane, latest);
+                    } else {
+                        const demo = await fetchJson('/pilot-demo/geo-demo-column/measure-demo.json');
+                        renderMeasurePayload(demoPane, demo);
+                    }
+                } catch (_) {
+                    const demo = await fetchJson('/pilot-demo/geo-demo-column/measure-demo.json');
+                    renderMeasurePayload(demoPane, demo);
+                }
             }
         } catch (error) {
-            console.warn('[suite-extra] latest run failed', error);
+            console.warn('[suite-extra] mountGeoObserve failed', error);
+            try {
+                const demo = await fetchJson('/pilot-demo/geo-demo-column/measure-demo.json');
+                renderMeasurePayload(demoPane, demo);
+            } catch (err2) {
+                if (demoPane) {
+                    demoPane.innerHTML = `<p class="suite-extra__lead">演示观测加载失败：${escapeHtml(err2.message || err2)}</p>`;
+                }
+            }
         }
-        const demo = await fetchJson('/pilot-demo/geo-demo-column/measure-demo.json');
-        renderMeasurePayload(container, demo);
     }
 
     var _extraRenderGen = 0;
@@ -999,7 +1341,7 @@
         const gen = ++_extraRenderGen;
         container.hidden = false;
         const sameStepReady = container.dataset.renderedStep === stepId
-            && container.querySelector('.measure-monitor:not(.measure-monitor--loading), .suite-extra__lead, .suite-cta-row');
+            && container.querySelector('.measure-tabs, .measure-monitor:not(.measure-monitor--loading), .suite-extra__lead, .suite-cta-row');
         // 同一步重复 refresh 时勿清空已渲染内容，避免「加载中」卡死
         if (!sameStepReady) {
             if (stepId === 'measure' || stepId === 'obs' || stepId === 'trustobs' || stepId === 'measurement') {
@@ -1025,6 +1367,8 @@
     global.GEOrank = global.GEOrank || {};
     global.GEOrank.SuiteExtra = {
         renderExtraPanel: renderExtraPanel,
+        mountGeoObserve: mountGeoObserve,
+        mountRealObs: mountRealObs,
         DEMO_KB: DEMO_KB,
         geoflowBase: geoflowBase,
         geoflowUrl: geoflowUrl,

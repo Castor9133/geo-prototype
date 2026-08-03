@@ -20,6 +20,7 @@ from app.api.routes import (
     trust_obs,
     content_engine,
     geo_runs,
+    real_obs,
 )
 
 router = APIRouter()
@@ -32,5 +33,6 @@ router.include_router(integrations.router, prefix="/integrations", tags=["集成
 router.include_router(trust_obs.router,   prefix="/admin/trust-obs", tags=["可信观测"])
 router.include_router(content_engine.router, prefix="/content-engine", tags=["内容引擎"])
 router.include_router(geo_runs.router,     prefix="/geo-runs",    tags=["GEO 回合"])
+router.include_router(real_obs.router,     prefix="/geo-runs",    tags=["真实点名观测"])
 router.include_router(admin.router,        prefix="/admin",       tags=["后台管理"])
 router.include_router(settings.router,     prefix="/settings",    tags=["站点配置"])

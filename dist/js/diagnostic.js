@@ -1135,57 +1135,20 @@
         summaryPriority.textContent = '完成检查后将给出优先修复建议（含业务影响与验收方式）。';
     }
 
-    function renderGeoFunnel(script) {
-        const body = document.getElementById('geo-funnel-body');
-        if (!body || !script) return;
-        const layers = script.layers || [];
-        const questions = script.questions || [];
-        const summary = script.summary || {};
-        const entityRate = Math.round((summary.entity_appearance_rate || 0) * 100);
-        const compRate = Math.round((summary.competitor_appearance_rate || 0) * 100);
-        const dens = Math.round((summary.avg_evidence_density || 0) * 100);
-        body.innerHTML = [
-            '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">',
-            `<div class="p-3 rounded-lg border" style="border-color:var(--border)"><p class="text-[11px] text-on-surface-variant">本品出现率</p><p class="text-2xl font-black">${entityRate}%</p></div>`,
-            `<div class="p-3 rounded-lg border" style="border-color:var(--border)"><p class="text-[11px] text-on-surface-variant">竞品出现率</p><p class="text-2xl font-black">${compRate}%</p></div>`,
-            `<div class="p-3 rounded-lg border" style="border-color:var(--border)"><p class="text-[11px] text-on-surface-variant">证据密度</p><p class="text-2xl font-black">${dens}%</p></div>`,
-            '</div>',
-            layers.map((layer) => {
-                const qs = questions.filter((q) => q.layer === layer.id);
-                return `
-                    <section class="geo-layer-card border rounded-xl p-4" style="border-color:var(--border)">
-                        <h4 class="text-sm font-bold">${escapeHtml(layer.label)}</h4>
-                        <ul class="mt-3 space-y-2">
-                            ${qs.map((q) => {
-                                const hit = Object.values(q.platforms || {}).filter((r) => r.entity_mentioned).length;
-                                const total = Object.keys(q.platforms || {}).length || 4;
-                                return `<li class="text-sm"><span class="font-semibold">${escapeHtml(q.text)}</span><br><span class="text-xs text-on-surface-variant">本品出现 ${hit}/${total} 平台</span></li>`;
-                            }).join('')}
-                        </ul>
-                    </section>
-                `;
-            }).join(''),
-        ].join('');
-    }
-
-    async function loadGeoDemo() {
-        const runId = Workflow?.getRunId?.();
-        const url = runId
-            ? `/api/geo-runs/${runId}/geo-preview`
-            : '/api/geo-runs/scripts/geo-observe-funnel-dji-vs-autel';
-        try {
-            const data = await request(url);
-            const script = data.script || data;
-            renderGeoFunnel(script);
-        } catch (error) {
-            try {
-                const res = await fetch('/pilot-demo/geo-observe-funnel-dji-vs-autel.json');
-                if (res.ok) renderGeoFunnel(await res.json());
-            } catch (e) {
-                const body = document.getElementById('geo-funnel-body');
-                if (body) body.innerHTML = '<p class="text-sm text-rose-600">演示剧本加载失败。</p>';
-            }
+    function loadGeoObserve() {
+        const root = document.getElementById('geo-observe-root');
+        if (!root) return;
+        const Extra = window.GEOrank?.SuiteExtra;
+        if (!Extra?.mountGeoObserve) {
+            root.innerHTML = '<p class="text-sm text-rose-600">观测组件未加载。</p>';
+            return;
         }
+        Extra.mountGeoObserve(root, {
+            doneStep: 'diagnostic',
+            doneLabel: '确认初诊观测',
+        }).catch((error) => {
+            root.innerHTML = `<p class="text-sm text-rose-600">观测加载失败：${escapeHtml(String(error.message || error))}</p>`;
+        });
     }
 
     function bindDiagTabs() {
@@ -1204,7 +1167,7 @@
                     if (on) panel.removeAttribute('hidden');
                     else panel.setAttribute('hidden', 'hidden');
                 });
-                if (id === 'geo') loadGeoDemo();
+                if (id === 'geo') loadGeoObserve();
             });
         });
     }

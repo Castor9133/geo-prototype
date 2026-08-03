@@ -12,9 +12,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="/css/public-tailwind.css?v=20260729-seoslim1">
-    <link rel="stylesheet" href="/css/common.css?v=20260729-seoslim1">
-    <link rel="stylesheet" href="/css/diagnostic.css?v=20260729-seoslim1">
+        <link rel="stylesheet" href="/css/public-tailwind.css?v=20260729-seoslim1">
+        <link rel="stylesheet" href="/css/common.css?v=20260729-seoslim1">
+        <link rel="stylesheet" href="/css/suite-cockpit.css?v=20260730-diagobs1">
+        <link rel="stylesheet" href="/css/diagnostic.css?v=20260730-diagobs1">
 </head>
 <body class="diagnostic-page bg-white text-on-surface antialiased">
     <div id="header-container"></div>
@@ -23,7 +24,7 @@
         <section class="diag-hero">
             <p class="diag-hero__eyebrow">GEO Hub · 检查</p>
             <h1>SEO 检查</h1>
-            <p class="diag-hero__lead">输入网址，查看基础 SEO 就绪情况。</p>
+            <p class="diag-hero__lead">输入网址做 SEO 就绪检查；GEO Tab 为初诊观测，与 Suite「观测」同一套漏斗。</p>
             <div class="diag-search">
                 <div class="diag-search__field">
                     <span class="material-symbols-outlined text-lg" aria-hidden="true">language</span>
@@ -61,8 +62,8 @@
 
             <div class="diag-tabs" role="tablist" aria-label="检查类型">
                 <button type="button" class="diag-tab is-active" role="tab" aria-selected="true" data-diag-tab="seo" id="diag-tab-seo">SEO</button>
-                <button type="button" class="diag-tab" role="tab" aria-selected="false" data-diag-tab="geo" id="diag-tab-geo">GEO 演示</button>
-                <span class="diag-demo-badge">演示</span>
+                <button type="button" class="diag-tab" role="tab" aria-selected="false" data-diag-tab="geo" id="diag-tab-geo">GEO 观测</button>
+                <span class="diag-demo-badge">初诊=观测</span>
             </div>
 
             <div id="diag-panel-seo" class="diag-tab-panel" data-diag-panel="seo" role="tabpanel">
@@ -85,11 +86,7 @@
             </div>
 
             <div id="diag-panel-geo" class="diag-tab-panel hidden" data-diag-panel="geo" role="tabpanel" hidden>
-                <div id="geo-funnel-root" class="diag-card diag-zone-blue p-6 md:p-7">
-                    <h3 class="diag-section-title text-xl">DJI Mini 5 Pro · 引用出现演示</h3>
-                    <p class="mt-2 text-sm text-on-surface-variant">本品 vs Autel 出现率（演示数据，非实测）。</p>
-                    <div id="geo-funnel-body" class="mt-6 space-y-4"></div>
-                </div>
+                <div id="geo-observe-root" class="diag-observe-host"></div>
             </div>
         </section>
     </main>
@@ -98,6 +95,7 @@
 
     <script src="/js/common.js?v=20260729-navfast1" defer></script>
     <script src="/js/suite-workflow.js?v=20260730-nobar1" defer></script>
-    <script src="/js/diagnostic.js?v=20260730-generic1" defer></script>
+    <script src="/js/suite-extra.js?v=20260730-diagobs1" defer></script>
+    <script src="/js/diagnostic.js?v=20260730-diagobs1" defer></script>
 </body>
 </html>

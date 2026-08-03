@@ -12,7 +12,7 @@
             id: 'diagnostic',
             label: '检查',
             title: '基础 SEO 检查',
-            desc: '输入网址，查看四类 SEO 就绪情况；可选查看 GEO 演示对比。',
+            desc: '输入网址，查看四类 SEO 就绪情况；GEO Tab 为初诊观测（与 Suite「观测」同一漏斗）。',
             href: '/diagnostic',
             cta: '开始检查',
             icon: 'monitoring',
