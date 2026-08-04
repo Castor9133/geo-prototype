@@ -922,8 +922,7 @@
 const FOOTER_HTML = `
 <footer class="w-full mt-auto border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950">
     <div class="max-w-7xl mx-auto px-6 md:px-8 py-6">
-        <p class="font-inter text-sm text-slate-400 dark:text-slate-500 text-center" data-footer-rights>© 2026 GEOrank · 公益性 GEO 研究平台 · 独立第三方 · <strong>
-开源</strong></p>
+        <p class="font-inter text-sm text-slate-400 dark:text-slate-500 text-center" data-footer-rights>© 2026 GEOrank · @szmg</p>
     </div>
 </footer>`;
 

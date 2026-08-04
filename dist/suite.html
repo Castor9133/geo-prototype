@@ -78,12 +78,8 @@
             </div>
         </section>
 
-        <details class="cockpit-card suite-flow-fold" id="suite-flow-fold" style="margin-bottom:1rem;padding:0.85rem 1.15rem">
-            <summary style="cursor:pointer;font-weight:600;color:#003460">了解作业顺序（可选）</summary>
-            <p class="cockpit-muted" style="margin:0.5rem 0 0.75rem">查页面 → 摸底 → 定策过审 → 拓词确认 → 备知识 → 写稿 → 登记发布 → 复测留档。日常请以上方「进行中选题」为准。</p>
-            <!-- 旧五步流水线：收折后仍可供熟悉流程的人查看 -->
-            <section class="pipe-row" id="suite-pipeline" aria-label="五步工作流指标"></section>
-        </details>
+        <!-- 供 suite.js 复用结构，不展示 -->
+        <section class="pipe-row" id="suite-pipeline" aria-hidden="true" hidden></section>
 
         <div class="cockpit-grid">
             <div class="cockpit-main">
@@ -220,9 +216,8 @@
       .suite-active-card__body { flex: 1 1 16rem; min-width: 0; }
       .suite-active-card h3 { margin: 0; font-size: 1rem; color: #003460; }
       .suite-active-card__meta, .suite-active-card__progress { margin: 0.25rem 0 0; font-size: 0.85rem; color: #5c6570; }
-      .suite-flow-fold summary::-webkit-details-marker { display: none; }
     </style>
-    <script src="/js/common.js?v=20260729-scaffold1" defer></script>
+    <script src="/js/common.js?v=20260804-foot1" defer></script>
     <script src="/js/geoflow-handoff.js?v=20260729-measure-tidy2" defer></script>
     <script src="/js/suite-workflow.js?v=20260730-nobar1" defer></script>
     <script src="/js/suite-extra.js?v=20260803-realobs1" defer></script>

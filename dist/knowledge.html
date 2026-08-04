@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="/css/public-tailwind.css?v=20260804-kb2">
   <link rel="stylesheet" href="/css/common.css?v=20260804-kb2">
   <link rel="stylesheet" href="/css/channel-shells.css?v=20260804-kb2">
-  <link rel="stylesheet" href="/css/content-engine.css?v=20260804-kb2">
+  <link rel="stylesheet" href="/css/content-engine.css?v=20260804-full1">
   <link rel="stylesheet" href="/css/inner-shell.css?v=20260804-kb2">
   <style>
     .kb-ctx {
@@ -66,26 +66,83 @@
 
       <section class="panel active" id="panel-hub">
         <div class="kpi-row">
-          <div class="kpi"><strong id="kpi-docs">—</strong><span>知识资产（文档）</span><small id="kpi-docs-note">示例库 / 自建库</small></div>
-          <div class="kpi"><strong id="kpi-chunks">—</strong><span>切片证据</span><small id="kpi-chunks-note">可检索单元</small></div>
-          <div class="kpi"><strong id="kpi-vec">—</strong><span>已向量化</span><small id="kpi-vec-note">召回就绪</small></div>
-          <div class="kpi"><strong id="kpi-tasks">—</strong><span>近期任务</span><small id="kpi-tasks-note">含草稿</small></div>
+          <div class="kpi">
+            <strong id="kpi-docs">—</strong>
+            <div class="kpi__meta">
+              <span>知识资产（文档）</span>
+              <small id="kpi-docs-note">示例库 / 自建库</small>
+            </div>
+          </div>
+          <div class="kpi">
+            <strong id="kpi-chunks">—</strong>
+            <div class="kpi__meta">
+              <span>切片证据</span>
+              <small id="kpi-chunks-note">可检索单元</small>
+            </div>
+          </div>
+          <div class="kpi">
+            <strong id="kpi-vec">—</strong>
+            <div class="kpi__meta">
+              <span>已向量化</span>
+              <small id="kpi-vec-note">召回就绪</small>
+            </div>
+          </div>
+          <div class="kpi">
+            <strong id="kpi-tasks">—</strong>
+            <div class="kpi__meta">
+              <span>近期任务</span>
+              <small id="kpi-tasks-note">含草稿</small>
+            </div>
+          </div>
         </div>
         <div class="hub-grid">
-          <div class="hub-card">
-            <h3>知识链路示意</h3>
-            <div class="flow-graph" aria-hidden="true">
-              <span class="flow-node flow-node--src">来源文档<br>官网 / FAQ</span>
-              <span class="flow-arrow">→</span>
-              <span class="flow-node flow-node--chunk">切片<br>向量化</span>
-              <span class="flow-arrow">→</span>
-              <span class="flow-node flow-node--claim">事实主张<br>Mini 5 Pro</span>
-              <span class="flow-arrow">→</span>
-              <span class="flow-node flow-node--ans">任务草稿<br>渠道预览</span>
+          <div class="hub-card hub-card--flow">
+            <div class="flow-head">
+              <h3>知识怎么变成可用素材</h3>
+              <p class="flow-lead">从入库到写稿引用，四步串起来看。</p>
             </div>
-            <p class="sub" style="margin:0">非交互图谱；真检索请用「知识库」页。</p>
+            <ol class="flow-graph" aria-label="知识链路">
+              <li>
+                <button type="button" class="flow-node flow-node--src" data-goto-tab="kb">
+                  <em>1</em>
+                  <strong>来源文档</strong>
+                  <span>官网 · FAQ · 通稿</span>
+                </button>
+              </li>
+              <li class="flow-arrow" aria-hidden="true"></li>
+              <li>
+                <button type="button" class="flow-node flow-node--chunk" data-goto-tab="kb">
+                  <em>2</em>
+                  <strong>切片入库</strong>
+                  <span>切段 · 可检索</span>
+                </button>
+              </li>
+              <li class="flow-arrow" aria-hidden="true"></li>
+              <li>
+                <button type="button" class="flow-node flow-node--claim" data-goto-tab="kb">
+                  <em>3</em>
+                  <strong>事实主张</strong>
+                  <span>栏目口径 · 证据</span>
+                </button>
+              </li>
+              <li class="flow-arrow" aria-hidden="true"></li>
+              <li>
+                <a class="flow-node flow-node--ans" href="/strategies?tab=write">
+                  <em>4</em>
+                  <strong>写稿引用</strong>
+                  <span>选题工作台出稿</span>
+                </a>
+              </li>
+            </ol>
+            <div class="flow-foot-row">
+              <p class="flow-foot">点前三步去「知识库」管理；写稿在选题工作台完成。</p>
+              <div class="flow-actions">
+                <button type="button" class="btn primary" data-goto-tab="kb">打开知识库</button>
+                <a class="btn" href="/strategies?tab=write">去写稿</a>
+              </div>
+            </div>
           </div>
-          <div class="hub-card">
+          <div class="hub-card hub-card--side">
             <h3>来源追溯 / 审核壳</h3>
             <ul class="side-list">
               <li><span>知识库</span><b id="side-kb">—</b></li>
@@ -216,7 +273,7 @@
   </main>
 
   <div id="footer-container"></div>
-  <script src="/js/common.js?v=20260729-navfast1"></script>
+  <script src="/js/common.js?v=20260804-foot1"></script>
   <script src="/js/suite-workflow.js?v=20260730-nobar1"></script>
   <script src="/js/content-engine-admin.js?v=20260804-kb2"></script>
   <script>

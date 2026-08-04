@@ -181,9 +181,9 @@ def compute_next_action(s: GeoStrategy, *, task_summary: dict | None = None) -> 
     return {
         "key": "done",
         "label": "查看本条选题",
-        "href": _strategy_href(sid, tab="overview"),
-        "tab": "overview",
-        "pipe": None,
+        "href": _strategy_href(sid, tab="publish", pipe="after"),
+        "tab": "publish",
+        "pipe": "after",
     }
 
 

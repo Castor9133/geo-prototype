@@ -35,14 +35,18 @@
     }
     .st-lead { color: var(--st-muted); margin: 0.45rem 0 1rem; max-width: 46rem; line-height: 1.55; }
     .st-pipe {
-      display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.35rem;
+      display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.4rem;
       margin: 1rem 0 1rem; padding: 0.75rem; border: 1px solid var(--st-line);
       border-radius: var(--st-radius-sm); background: var(--st-paper); box-shadow: var(--st-shadow);
+      align-items: stretch;
     }
     .st-pipe a, .st-pipe button.pipe-step {
-      display: block; width: 100%; text-align: center; font-size: 0.68rem; line-height: 1.25; color: var(--st-muted);
-      padding: 0.35rem 0.15rem; border-radius: 6px; background: #f6f3f2;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 0.15rem; width: 100%; min-height: 3.1rem; text-align: center;
+      font-size: 0.72rem; line-height: 1.2; color: var(--st-muted);
+      padding: 0.4rem 0.2rem; border-radius: 6px; background: #f6f3f2;
       text-decoration: none; border: 1px solid transparent; cursor: pointer; font: inherit;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .st-pipe a:hover, .st-pipe button.pipe-step:hover {
       border-color: #b7c9e8; color: var(--st-accent-deep); background: #eef4fc;
@@ -51,9 +55,12 @@
       border-color: var(--st-accent); background: #e8f1ff; color: var(--st-accent-deep); font-weight: 600;
     }
     .st-pipe a em, .st-pipe button.pipe-step em {
-      display: block; font-style: normal; font-weight: 600; color: var(--st-ink); font-size: 0.78rem;
+      display: block; font-style: normal; font-weight: 600; color: var(--st-ink); font-size: 0.8rem; line-height: 1;
     }
-    @media (max-width: 900px) { .st-pipe { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 900px) {
+      .st-pipe { grid-template-columns: repeat(4, 1fr); }
+      .st-pipe a, .st-pipe button.pipe-step { white-space: normal; min-height: 3.4rem; }
+    }
     .st-ctx {
       display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center;
       margin: 0 0 1rem; padding: 0.65rem 0.9rem; border-radius: var(--st-radius-sm);
@@ -141,13 +148,13 @@
       <h1>选题策略工作台</h1>
       <p class="st-lead">一次只盯<strong>一个问题</strong>、<strong>一个问答平台</strong>（豆包 / 元宝 / DeepSeek）。先摸清现状，再写稿发布，最后看有没有被提到、有没有被引到前面。</p>
       <div class="st-pipe" aria-label="工作步骤">
-        <a href="/diagnostic"><em>1</em>查页面问题</a>
-        <a href="/observe"><em>2</em>投放前摸底</a>
-        <button type="button" class="pipe-step" data-tab="craft"><em>3</em>定选题策略</button>
-        <a href="/knowledge"><em>4</em>备好素材</a>
-        <button type="button" class="pipe-step" data-tab="write"><em>5</em>写稿过审</button>
-        <button type="button" class="pipe-step" data-tab="publish" data-pipe="register"><em>6</em>登记已发布</button>
-        <button type="button" class="pipe-step" data-tab="publish" data-pipe="after" data-pipe-primary="publish"><em>7</em>复测·看效果·留档</button>
+        <a href="/diagnostic" title="查页面问题"><em>1</em>查页面</a>
+        <a href="/observe" title="投放前摸底"><em>2</em>摸底</a>
+        <button type="button" class="pipe-step" data-tab="craft" title="定选题策略"><em>3</em>定策</button>
+        <a href="/knowledge" title="备好素材"><em>4</em>备素材</a>
+        <button type="button" class="pipe-step" data-tab="write" title="写稿过审"><em>5</em>写稿</button>
+        <button type="button" class="pipe-step" data-tab="publish" data-pipe="register" title="登记已发布"><em>6</em>登记发布</button>
+        <button type="button" class="pipe-step" data-tab="publish" data-pipe="after" data-pipe-primary="publish" title="复测 · 看效果 · 留档"><em>7</em>复测留档</button>
       </div>
     </header>
 
@@ -261,7 +268,7 @@
     </section>
   </main>
 
-  <script src="/js/common.js?v=20260804-st5"></script>
+  <script src="/js/common.js?v=20260804-foot1"></script>
   <script>
   (function () {
     const msgEl = document.getElementById('st-msg');
@@ -430,10 +437,15 @@
       }
       ctxEl.hidden = false;
       ctxEl.innerHTML =
-        '<span>当前策略：<strong>' + escapeHtml(s.title || s.question_class || s.id) +
+        '<span>当前选题：<strong>' + escapeHtml(s.title || s.question_class || s.id) +
         '</strong> · ' + escapeHtml(labelPlatform(s.platform)) +
         ' · <span class="' + badgeClass(s.status) + '">' + escapeHtml(labelStatus(s.status)) + '</span></span>' +
-        '<button type="button" class="btn" id="btn-clear-strategy">更换</button>';
+        '<span class="st-actions" style="margin:0">' +
+          '<a class="btn" href="' + escapeHtml(buildStrategyHref(s, 'craft')) + '">定策</a>' +
+          '<a class="btn" href="' + escapeHtml(buildStrategyHref(s, 'write')) + '">写稿</a>' +
+          '<a class="btn primary" href="' + escapeHtml(buildStrategyHref(s, 'publish', 'after')) + '">发布与复测</a>' +
+          '<button type="button" class="btn" id="btn-clear-strategy">更换</button>' +
+        '</span>';
       document.getElementById('btn-clear-strategy').onclick = function () {
         setCurrentId('');
         switchTab('overview');
@@ -477,14 +489,28 @@
       return { label: '打开定策', tab: 'craft', pipe: null, href: null, key: 'craft' };
     }
 
+    function buildStrategyHref(s, tab, pipe) {
+      var url = '/strategies?strategy=' + encodeURIComponent(s.id) + '&tab=' + encodeURIComponent(tab || 'overview');
+      if (pipe) url += '&pipe=' + encodeURIComponent(pipe);
+      return url;
+    }
+
     function goNextAction(s) {
       const next = nextAction(s);
+      // 外页（拓词/知识库/观测）：直接跳
       if (next.href && next.href.indexOf('/strategies') !== 0) {
-        location.href = next.href;
+        location.assign(next.href);
         return;
       }
-      setCurrentId(s.id);
-      switchTab(next.tab || 'overview', next.pipe || undefined);
+      // 本页：用完整地址跳转，保证一定选中策略并切到对应页（避免“点了没反应”）
+      var tab = next.tab || 'overview';
+      var pipe = next.pipe || '';
+      if (next.key === 'done' || /查看/.test(next.label || '')) {
+        tab = 'publish';
+        pipe = 'after';
+      }
+      try { sessionStorage.setItem(strategyKey, s.id); } catch (_) {}
+      location.assign(buildStrategyHref(s, tab, pipe));
     }
 
     function kbSelectHtml(selectedId, nameAttr) {
@@ -603,15 +629,30 @@
         '</div>' +
         '<p class="st-progress">' + escapeHtml(progressLine(s)) + '</p>' +
         '<div class="st-actions">' +
-          '<button type="button" class="btn primary" data-next>' + escapeHtml(next.label) + '</button>' +
+          '<a class="btn primary" data-next href="' + escapeHtml(
+            (next.key === 'done' || /查看/.test(next.label || ''))
+              ? buildStrategyHref(s, 'publish', 'after')
+              : (next.href || buildStrategyHref(s, next.tab || 'craft', next.pipe))
+          ) + '">' + escapeHtml(
+            (next.key === 'done' || /查看/.test(next.label || '')) ? '查看效果与留档' : next.label
+          ) + '</a>' +
           '<button type="button" class="btn" data-select>设为当前</button>' +
         '</div>';
-      card.querySelector('[data-next]').onclick = function () {
-        goNextAction(s);
-      };
+      // 外链（拓词等）走 goNextAction；本页用 <a href> 原生跳转，最稳
+      var nextEl = card.querySelector('[data-next]');
+      if (nextEl && next.href && next.href.indexOf('/strategies') !== 0) {
+        nextEl.addEventListener('click', function (ev) {
+          ev.preventDefault();
+          goNextAction(s);
+        });
+      }
       card.querySelector('[data-select]').onclick = function () {
         setCurrentId(s.id);
-        showMsg('已设为当前策略', 'ok');
+        showMsg('已设为当前策略。可点上方「定策 / 写稿 / 发布与复测」查看详情。', 'ok');
+        try {
+          var ctx = document.getElementById('st-ctx');
+          if (ctx) ctx.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } catch (_) {}
       };
       return card;
     }
@@ -1192,14 +1233,21 @@
         const tab = params.get('tab');
         const pipe = params.get('pipe');
         if (tab) switchTab(tab, pipe || undefined);
-        if (pipe === 'register') {
-          const el = document.getElementById('pub-register');
-          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (params.get('strategy') && currentStrategy()) {
+          showMsg('已打开：' + (currentStrategy().title || currentStrategy().question_class || '本条选题'), 'ok');
         }
-        if (pipe === 'after') {
-          const el = document.getElementById('pub-after');
-          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+        setTimeout(function () {
+          if (pipe === 'register') {
+            const el = document.getElementById('pub-register');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          } else if (pipe === 'after' || tab === 'publish') {
+            const el = document.getElementById('pub-after') || document.getElementById('panel-publish');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          } else if (tab && tab !== 'overview') {
+            const panel = document.getElementById('panel-' + tab);
+            if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 80);
       });
   })();
   </script>
