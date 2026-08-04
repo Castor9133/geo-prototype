@@ -44,6 +44,16 @@ def run_service_e2e() -> int:
     return subprocess.call([sys.executable, str(script)], cwd=str(ROOT))
 
 
+def run_six_strategies() -> int:
+    """W6–W7：2 问题类 × 三平台闸门闭环。"""
+    script = ROOT / "scripts" / "smoke_geo_strategy_six.py"
+    if not script.is_file():
+        print(">> skip six: missing", script)
+        return 0
+    print(">> six strategies:", script)
+    return subprocess.call([sys.executable, str(script)], cwd=str(ROOT))
+
+
 def api_json(base: str, path: str, token: str | None, method: str = "GET", body: dict | None = None):
     data = None if body is None else json.dumps(body).encode("utf-8")
     req = urllib.request.Request(
@@ -82,11 +92,14 @@ def main() -> int:
     p.add_argument("--api", default="", help="如 http://127.0.0.1:8010")
     p.add_argument("--token", default="", help="JWT")
     p.add_argument("--e2e", action="store_true", help="再跑服务层全流程 E2E（需本机 Postgres）")
+    p.add_argument("--six", action="store_true", help="再跑 6 条策略闸门（2类×3平台）")
     p.add_argument("--skip-unit", action="store_true", help="跳过 unittest")
     args = p.parse_args()
     code = 0 if args.skip_unit else run_offline_tests()
     if args.e2e:
         code = code or run_service_e2e()
+    if args.six:
+        code = code or run_six_strategies()
     if args.api and args.token:
         api_code = run_api_smoke(args.api, args.token)
         return code or api_code

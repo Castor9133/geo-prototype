@@ -4,106 +4,133 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <title>选题策略 · 党建党媒快速落地</title>
+  <title>选题策略工作台</title>
   <meta name="description" content="围绕一个问题、一个平台定选题策略：摸底、出稿、发布、复测、看效果。">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/public-tailwind.css?v=20260803-st2">
-  <link rel="stylesheet" href="/css/common.css?v=20260803-st2">
-  <link rel="stylesheet" href="/css/inner-shell.css?v=20260803-st2">
+  <link rel="stylesheet" href="/css/public-tailwind.css?v=20260804-st5">
+  <link rel="stylesheet" href="/css/common.css?v=20260804-st5">
+  <link rel="stylesheet" href="/css/inner-shell.css?v=20260804-st5">
   <style>
     :root {
-      --st-ink: #1a2332;
-      --st-muted: #5c6570;
-      --st-line: #d5dde6;
-      --st-paper: rgba(255,255,255,0.92);
+      --st-ink: #1c1b1b;
+      --st-muted: #42474f;
+      --st-line: #d8d2c6;
+      --st-paper: #ffffff;
+      --st-bg: #fcf9f8;
       --st-ok: #146c2e;
       --st-warn: #8a5a00;
-      --st-bad: #8a1f11;
+      --st-bad: #b91c1c;
       --st-accent: #1f4b7a;
+      --st-accent-deep: #003460;
       --st-accent-2: #2a6f6a;
+      --st-radius: 16px;
+      --st-radius-sm: 10px;
+      --st-shadow: 0 4px 16px rgba(26, 26, 26, 0.08);
     }
-    body.inner-page {
-      background:
-        radial-gradient(1200px 500px at 10% -10%, #dce8f4 0%, transparent 55%),
-        radial-gradient(900px 420px at 100% 0%, #d8ebe6 0%, transparent 50%),
-        linear-gradient(180deg, #eef2f6 0%, #f7f8fa 40%, #f3f5f7 100%);
-      color: var(--st-ink);
+    body.inner-page { background: var(--st-bg); color: var(--st-ink); }
+    .st-page { max-width: 1120px; margin: 0 auto; padding: 5.75rem 1rem 3.5rem; }
+    .st-hero h1 {
+      font-family: "Noto Serif SC", serif; font-size: clamp(1.55rem, 2.4vw, 1.9rem);
+      margin: 0.2rem 0; letter-spacing: -0.01em; color: var(--st-accent-deep);
     }
-    .st-page { max-width: 1120px; margin: 0 auto; padding: 1.25rem 1rem 3.5rem; }
-    .st-hero h1 { font-family: "Noto Serif SC", serif; font-size: clamp(1.55rem, 2.4vw, 1.9rem); margin: 0.2rem 0; letter-spacing: 0.02em; }
     .st-lead { color: var(--st-muted); margin: 0.45rem 0 1rem; max-width: 46rem; line-height: 1.55; }
     .st-pipe {
-      display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 0.35rem;
-      margin: 1rem 0 1.25rem; padding: 0.75rem; border: 1px solid var(--st-line);
-      border-radius: 10px; background: var(--st-paper); backdrop-filter: blur(6px);
+      display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.35rem;
+      margin: 1rem 0 1rem; padding: 0.75rem; border: 1px solid var(--st-line);
+      border-radius: var(--st-radius-sm); background: var(--st-paper); box-shadow: var(--st-shadow);
     }
-    .st-pipe span {
-      text-align: center; font-size: 0.68rem; line-height: 1.25; color: var(--st-muted);
-      padding: 0.35rem 0.15rem; border-radius: 6px; background: #f1f4f7;
+    .st-pipe a, .st-pipe button.pipe-step {
+      display: block; width: 100%; text-align: center; font-size: 0.68rem; line-height: 1.25; color: var(--st-muted);
+      padding: 0.35rem 0.15rem; border-radius: 6px; background: #f6f3f2;
+      text-decoration: none; border: 1px solid transparent; cursor: pointer; font: inherit;
     }
-    .st-pipe span em { display: block; font-style: normal; font-weight: 600; color: var(--st-ink); font-size: 0.78rem; }
+    .st-pipe a:hover, .st-pipe button.pipe-step:hover {
+      border-color: #b7c9e8; color: var(--st-accent-deep); background: #eef4fc;
+    }
+    .st-pipe a.is-here, .st-pipe button.pipe-step.is-here {
+      border-color: var(--st-accent); background: #e8f1ff; color: var(--st-accent-deep); font-weight: 600;
+    }
+    .st-pipe a em, .st-pipe button.pipe-step em {
+      display: block; font-style: normal; font-weight: 600; color: var(--st-ink); font-size: 0.78rem;
+    }
     @media (max-width: 900px) { .st-pipe { grid-template-columns: repeat(3, 1fr); } }
-    .st-role {
-      display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center;
-      margin-bottom: 1rem; padding: 0.7rem 0.9rem; border-radius: 10px;
-      border: 1px solid var(--st-line); background: var(--st-paper);
+    .st-ctx {
+      display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center;
+      margin: 0 0 1rem; padding: 0.65rem 0.9rem; border-radius: var(--st-radius-sm);
+      border: 1px solid var(--st-line); border-left: 3px solid var(--st-accent); background: #f6f3f2;
+      font-size: 0.9rem; color: var(--st-muted);
     }
-    .st-role .ok { color: var(--st-ok); font-weight: 600; }
-    .st-role .warn { color: var(--st-warn); font-weight: 600; }
-    .st-login { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: end; }
-    .st-login input {
-      border: 1px solid #c5ced8; border-radius: 6px; padding: 0.4rem 0.55rem; font: inherit; min-width: 11rem;
+    .st-ctx strong { color: var(--st-ink); }
+    .st-tabs {
+      display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0 0 1rem;
+      border-bottom: 1px solid var(--st-line); padding-bottom: 0.35rem;
     }
+    .st-tabs button {
+      border: 0; background: transparent; padding: 0.55rem 0.85rem; font: inherit; cursor: pointer;
+      color: var(--st-muted); border-radius: 8px 8px 0 0; border-bottom: 2px solid transparent; margin-bottom: -1px;
+    }
+    .st-tabs button.is-on {
+      color: var(--st-accent-deep); font-weight: 600; border-bottom-color: var(--st-accent); background: #eef4fc;
+    }
+    .st-tab-panel { display: none; }
+    .st-tab-panel.is-on { display: block; }
     .st-toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 0 0 1rem; }
-    .st-toolbar select { border: 1px solid #c5ced8; border-radius: 6px; padding: 0.4rem 0.55rem; font: inherit; }
+    .st-toolbar select { border: 1px solid var(--st-line); border-radius: 6px; padding: 0.4rem 0.55rem; font: inherit; min-height: 40px; }
     .st-grid { display: grid; gap: 1rem; }
     .st-card {
-      border: 1px solid var(--st-line); border-radius: 12px; padding: 1rem 1.15rem;
-      background: var(--st-paper); box-shadow: 0 1px 0 rgba(26,35,50,0.04);
+      border: 1px solid var(--st-line); border-radius: var(--st-radius); padding: 1rem 1.15rem;
+      background: var(--st-paper); box-shadow: var(--st-shadow); margin-bottom: 1rem;
     }
-    .st-card h3 { margin: 0 0 0.4rem; font-size: 1.05rem; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+    .st-card h3 { margin: 0 0 0.4rem; font-size: 1.05rem; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; font-family: "Noto Serif SC", serif; }
+    .st-card h4 { margin: 0 0 0.45rem; font-size: 0.95rem; }
     .st-meta { font-size: 0.85rem; color: var(--st-muted); display: flex; flex-wrap: wrap; gap: 0.45rem 0.9rem; }
-    .st-badge { display: inline-block; padding: 0.12rem 0.5rem; border-radius: 999px; background: #eef2f6; font-size: 0.72rem; font-weight: 600; }
-    .st-badge--ok { background: #e6f6ea; color: var(--st-ok); }
+    .st-badge { display: inline-block; padding: 0.12rem 0.5rem; border-radius: 999px; background: #f0eded; font-size: 0.72rem; font-weight: 700; }
+    .st-badge--ok { background: #e8f7ef; color: var(--st-ok); }
     .st-badge--warn { background: #fff4e0; color: var(--st-warn); }
-    .st-badge--bad { background: #fdecea; color: var(--st-bad); }
-    .st-check { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.7rem; }
-    .st-actions { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.75rem; }
-    .st-group { margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px dashed #d8dee6; }
-    .st-group h4 { margin: 0 0 0.45rem; font-size: 0.78rem; color: var(--st-muted); font-weight: 600; letter-spacing: 0.04em; }
+    .st-badge--bad { background: #fef2f2; color: var(--st-bad); }
+    .st-actions { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.75rem; align-items: center; }
     .st-form { display: grid; gap: 0.6rem; }
     .st-form label { display: grid; gap: 0.25rem; font-size: 0.9rem; }
     .st-form input, .st-form select, .st-form textarea {
-      border: 1px solid #c5ced8; border-radius: 6px; padding: 0.45rem 0.6rem; font: inherit; background: #fff;
+      border: 1px solid var(--st-line); border-radius: 6px; padding: 0.45rem 0.6rem; font: inherit; background: #fff; min-height: 44px;
     }
     .st-form textarea { min-height: 4rem; }
     .st-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
     @media (max-width: 720px) { .st-row { grid-template-columns: 1fr; } }
     .btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem;
-      padding: 0.42rem 0.78rem; border-radius: 7px; border: 1px solid #c5ced8;
+      padding: 0.42rem 0.78rem; border-radius: var(--st-radius-sm); border: 1px solid var(--st-line);
       background: #fff; cursor: pointer; font: inherit; text-decoration: none; color: inherit;
-      transition: border-color .15s, transform .15s, background .15s;
     }
-    .btn:hover { border-color: #9aadc2; transform: translateY(-1px); }
+    .btn:hover { border-color: #b7c9e8; }
     .btn.primary { background: var(--st-accent); color: #fff; border-color: var(--st-accent); }
-    .btn.primary:hover { background: #183d64; }
     .btn.teal { background: var(--st-accent-2); color: #fff; border-color: var(--st-accent-2); }
-    .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
-    .st-msg { margin: 0.75rem 0; padding: 0.65rem 0.8rem; border-radius: 8px; background: #eef4fa; font-size: 0.9rem; white-space: pre-wrap; }
-    .st-msg.err { background: #fdecea; color: var(--st-bad); }
-    .st-msg.ok { background: #e6f6ea; color: var(--st-ok); }
-    .st-panel { margin-top: 0.75rem; display: none; }
-    .st-panel.open { display: block; }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .st-msg { margin: 0.75rem 0; padding: 0.65rem 0.8rem; border-radius: 8px; background: #e8f1ff; font-size: 0.9rem; white-space: pre-wrap; }
+    .st-msg.err { background: #fef2f2; color: var(--st-bad); border-left: 4px solid var(--st-bad); }
+    .st-msg.ok { background: #e8f7ef; color: var(--st-ok); border-left: 4px solid var(--st-ok); }
+    .st-gate {
+      margin-top: 0.65rem; padding: 0.7rem 0.85rem; border-radius: 8px;
+      background: #fef2f2; border-left: 4px solid var(--st-bad); font-size: 0.88rem;
+    }
+    .st-gate strong { font-family: "Noto Serif SC", serif; color: var(--st-bad); }
     .st-hint { font-size: 0.8rem; color: var(--st-muted); margin: 0 0 0.5rem; }
-    .st-tasks { margin-top: 0.55rem; display: grid; gap: 0.4rem; }
+    .st-empty { color: var(--st-muted); padding: 1.25rem 0.5rem; }
+    .st-progress { margin: 0.5rem 0 0; font-size: 0.92rem; color: var(--st-ink); line-height: 1.45; }
     .st-task {
       display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; justify-content: space-between;
-      padding: 0.45rem 0.55rem; border-radius: 8px; background: #f4f7fa; font-size: 0.85rem;
+      padding: 0.55rem 0.65rem; border-radius: 8px; background: #f6f3f2; font-size: 0.85rem; margin-bottom: 0.4rem;
     }
     .st-task .left { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
-    .st-empty { color: var(--st-muted); padding: 1.25rem 0.5rem; }
-    .st-verdict { margin-top: 0.5rem; font-size: 0.85rem; color: var(--st-ink); }
+    .st-login { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: end; }
+    .st-login input {
+      border: 1px solid var(--st-line); border-radius: 6px; padding: 0.4rem 0.55rem; font: inherit; min-width: 11rem;
+    }
+    .st-ok { color: var(--st-ok); font-weight: 600; }
+    .st-warn { color: var(--st-warn); font-weight: 600; }
+    .st-force { margin-top: 1rem; border-top: 1px dashed var(--st-line); padding-top: 0.75rem; }
+    .st-force summary { cursor: pointer; color: var(--st-muted); font-size: 0.88rem; }
+    .st-section-title { font-family: "Noto Serif SC", serif; font-size: 1.1rem; margin: 0 0 0.5rem; }
   </style>
 </head>
 <body class="text-on-surface antialiased inner-page">
@@ -112,150 +139,176 @@
     <header class="st-hero">
       <p style="margin:0;color:var(--st-muted);font-size:0.85rem">党建党媒 · 让栏目内容更容易被 AI 答到</p>
       <h1>选题策略工作台</h1>
-      <p class="st-lead">一次只盯<strong>一个问题</strong>、<strong>一个问答平台</strong>（豆包 / 元宝 / DeepSeek）。先摸清现状，再写稿发布，最后复测有没有被提到、有没有被引到前面。</p>
+      <p class="st-lead">一次只盯<strong>一个问题</strong>、<strong>一个问答平台</strong>（豆包 / 元宝 / DeepSeek）。先摸清现状，再写稿发布，最后看有没有被提到、有没有被引到前面。</p>
       <div class="st-pipe" aria-label="工作步骤">
-        <span><em>1</em>查页面问题</span>
-        <span><em>2</em>投放前摸底</span>
-        <span><em>3</em>定选题策略</span>
-        <span><em>4</em>备好素材</span>
-        <span><em>5</em>写稿过审</span>
-        <span><em>6</em>登记已发布</span>
-        <span><em>7</em>投放后复测</span>
-        <span><em>8</em>看效果</span>
-        <span><em>9</em>改策略或留档</span>
-      </div>
-      <div class="st-actions">
-        <a class="btn" href="/diagnostic">去查页面</a>
-        <a class="btn" href="/knowledge">去知识库写稿</a>
-        <a class="btn" href="/distribute">看分发预览</a>
-        <a class="btn" href="/suite?step=measure">去观测提问</a>
-        <button type="button" class="btn primary" id="btn-refresh">刷新列表</button>
+        <a href="/diagnostic"><em>1</em>查页面问题</a>
+        <a href="/observe"><em>2</em>投放前摸底</a>
+        <button type="button" class="pipe-step" data-tab="craft"><em>3</em>定选题策略</button>
+        <a href="/knowledge"><em>4</em>备好素材</a>
+        <button type="button" class="pipe-step" data-tab="write"><em>5</em>写稿过审</button>
+        <button type="button" class="pipe-step" data-tab="publish" data-pipe="register"><em>6</em>登记已发布</button>
+        <button type="button" class="pipe-step" data-tab="publish" data-pipe="after" data-pipe-primary="publish"><em>7</em>复测·看效果·留档</button>
       </div>
     </header>
 
-    <div class="st-role" id="st-role"><span>正在识别您的岗位…</span></div>
+    <div class="st-ctx" id="st-ctx" hidden></div>
     <div id="st-msg" class="st-msg" hidden></div>
 
-    <section class="st-card" style="margin-bottom:1.1rem">
-      <h3>新建一条选题策略</h3>
-      <p class="st-hint">先选平台和用户常问的问题，写清「现在缺什么」。建好后再补全要写什么稿、发到哪里、怎样算有效。</p>
-      <form class="st-form" id="seed-form">
-        <div class="st-row">
-          <label>盯哪个问答平台
-            <select name="platform" required>
-              <option value="doubao">豆包</option>
-              <option value="yuanbao">元宝</option>
-              <option value="deepseek">DeepSeek</option>
-            </select>
-          </label>
-          <label>用户常问什么（问题类）
-            <input name="question_class" required placeholder="例如：第一现场是什么栏目" value="第一现场是什么栏目">
-          </label>
-        </div>
-        <label>现在缺什么、打算补什么
-          <textarea name="gap_note" required placeholder="例如：页面缺少常见问答，需要官网一篇说明 + 一篇问答，并同步发公众号">页面缺少常见问答结构，需要官网一篇栏目说明 + 一篇问答，并同步发到公众号。</textarea>
+    <div class="st-tabs" role="tablist" aria-label="工作台分区">
+      <button type="button" class="is-on" data-tab="overview" role="tab" aria-selected="true">总览</button>
+      <button type="button" data-tab="craft" role="tab">定策</button>
+      <button type="button" data-tab="write" role="tab">写稿</button>
+      <button type="button" data-tab="publish" role="tab">发布与复测</button>
+      <button type="button" data-tab="account" role="tab">账号与权限</button>
+    </div>
+
+    <!-- 总览 -->
+    <section class="st-tab-panel is-on" id="panel-overview" role="tabpanel">
+      <div class="st-toolbar">
+        <strong style="font-size:1.05rem">我的选题策略</strong>
+        <label>按进度筛选
+          <select id="filter-status">
+            <option value="">全部</option>
+            <option value="draft">草稿</option>
+            <option value="pending_review">等审核</option>
+            <option value="executable">已批准，可以写稿</option>
+            <option value="deployed">已登记发布</option>
+            <option value="observing">正在复测</option>
+            <option value="effective">已见效</option>
+            <option value="partial">部分见效</option>
+            <option value="ineffective">还没见效</option>
+          </select>
         </label>
-        <div class="st-row">
-          <label>用哪个知识库（可稍后在卡片里填）
-            <input name="knowledge_base_id" id="seed-kb" placeholder="从知识库页面复制编号">
-          </label>
-          <label>关联哪次观测任务（摸底/复测要用）
-            <input name="geo_run_id" id="seed-run" placeholder="从观测页面复制任务编号">
-          </label>
-        </div>
-        <button type="submit" class="btn primary">创建草稿</button>
-      </form>
+        <button type="button" class="btn primary" id="btn-refresh">刷新列表</button>
+        <span class="st-hint" id="list-count" style="margin:0"></span>
+      </div>
+      <div class="st-grid" id="st-list"></div>
     </section>
 
-    <div class="st-toolbar">
-      <strong style="font-size:1.05rem">我的选题策略</strong>
-      <label>按进度筛选
-        <select id="filter-status">
-          <option value="">全部</option>
-          <option value="draft">草稿</option>
-          <option value="pending_review">等审核</option>
-          <option value="executable">已批准，可以写稿</option>
-          <option value="deployed">已登记发布</option>
-          <option value="observing">正在复测</option>
-          <option value="effective">已见效</option>
-          <option value="partial">部分见效</option>
-          <option value="ineffective">还没见效</option>
-        </select>
-      </label>
-      <span class="st-hint" id="list-count" style="margin:0"></span>
-    </div>
-    <div class="st-grid" id="st-list"></div>
+    <!-- 定策 -->
+    <section class="st-tab-panel" id="panel-craft" role="tabpanel">
+      <div class="st-card">
+        <h3 class="st-section-title">新建一条</h3>
+        <p class="st-hint">先选平台和用户常问的问题，写清「现在缺什么」。建好后再补全要写什么、发到哪里、怎样算有效。</p>
+        <form class="st-form" id="seed-form">
+          <div class="st-row">
+            <label>盯哪个问答平台
+              <select name="platform" required>
+                <option value="doubao">豆包</option>
+                <option value="yuanbao">元宝</option>
+                <option value="deepseek">DeepSeek</option>
+              </select>
+            </label>
+            <label>用户常问什么
+              <input name="question_class" required placeholder="例如：第一现场是什么栏目" value="第一现场是什么栏目">
+            </label>
+          </div>
+          <label>现在缺什么、打算补什么
+            <textarea name="gap_note" required>页面缺少常见问答结构，需要官网一篇栏目说明 + 一篇问答，并同步发到公众号。</textarea>
+          </label>
+          <div class="st-row">
+            <label>用哪个知识库（可稍后填）
+              <select name="knowledge_base_id" id="seed-kb"><option value="">稍后填写</option></select>
+            </label>
+            <label>关联哪次摸底/复测（可稍后填）
+              <select name="geo_run_id" id="seed-run"><option value="">稍后填写</option></select>
+            </label>
+          </div>
+          <button type="submit" class="btn primary">创建草稿</button>
+        </form>
+      </div>
+
+      <div class="st-card" id="craft-edit-card">
+        <h3 class="st-section-title">补全并送审</h3>
+        <div id="craft-empty" class="st-empty">请先在「总览」选一条策略，或新建草稿后再回来补全。</div>
+        <div id="craft-body" hidden></div>
+      </div>
+    </section>
+
+    <!-- 写稿 -->
+    <section class="st-tab-panel" id="panel-write" role="tabpanel">
+      <div class="st-card">
+        <h3 class="st-section-title">写稿与过审</h3>
+        <div id="write-empty" class="st-empty">请先在「总览」选一条策略。</div>
+        <div id="write-body" hidden></div>
+      </div>
+    </section>
+
+    <!-- 发布与复测 -->
+    <section class="st-tab-panel" id="panel-publish" role="tabpanel">
+      <div class="st-card">
+        <h3 class="st-section-title">发布与复测</h3>
+        <div id="publish-empty" class="st-empty">请先在「总览」选一条策略。</div>
+        <div id="publish-body" hidden></div>
+      </div>
+    </section>
+
+    <!-- 账号与权限 -->
+    <section class="st-tab-panel" id="panel-account" role="tabpanel">
+      <div class="st-card" id="acct-role-card">
+        <h3 class="st-section-title">当前账号</h3>
+        <div id="acct-role"><span class="st-hint">正在识别…</span></div>
+      </div>
+      <div class="st-card" id="acct-ready-card">
+        <h3 class="st-section-title">摸底与复测是否可用</h3>
+        <div id="acct-ready"><span class="st-hint">正在读取…</span></div>
+      </div>
+      <div class="st-card" id="acct-admin-card" hidden>
+        <h3 class="st-section-title">技术支持专用</h3>
+        <p class="st-hint">仅技术支持账号可见。日常编辑无需使用。</p>
+        <div id="acct-admin-body"></div>
+      </div>
+    </section>
   </main>
 
-  <script src="/js/common.js"></script>
+  <script src="/js/common.js?v=20260804-st5"></script>
   <script>
   (function () {
     const msgEl = document.getElementById('st-msg');
     const listEl = document.getElementById('st-list');
-    const roleEl = document.getElementById('st-role');
+    const ctxEl = document.getElementById('st-ctx');
     const tokenKey = 'georank_token';
+    const strategyKey = 'georank_current_strategy';
     let me = null;
+    let strategies = [];
+    let currentId = '';
+    let diagHistory = [];
+    let formOptions = { knowledge_bases: [], geo_runs: [] };
+    let poolSummary = null;
 
     const STATUS_LABEL = {
-      draft: '草稿',
-      pending_review: '等审核',
-      executable: '已批准，可以写稿',
-      deployed: '已登记发布',
-      observing: '正在复测',
-      effective: '已见效',
-      partial: '部分见效',
-      ineffective: '还没见效',
-      archived: '已归档',
+      draft: '草稿', pending_review: '等审核', executable: '已批准，可以写稿',
+      deployed: '已登记发布', observing: '正在复测', effective: '已见效',
+      partial: '部分见效', ineffective: '还没见效', archived: '已归档',
     };
-    const VERDICT_LABEL = {
-      effective: '已见效',
-      partial: '部分见效',
-      ineffective: '还没见效',
-    };
+    const VERDICT_LABEL = { effective: '已见效', partial: '部分见效', ineffective: '还没见效' };
     const PLATFORM_LABEL = { doubao: '豆包', yuanbao: '元宝', deepseek: 'DeepSeek' };
     const WORKFLOW_LABEL = {
-      claimed: '已领题',
-      template_draft: '初稿已出',
-      channel_draft: '渠道稿已出',
-      in_review: '审核中',
-      ready: '已过审，可发布',
-      promoted: '已留档',
-      archived: '已搁置',
+      claimed: '已领题', template_draft: '草稿待改', channel_draft: '渠道稿待改',
+      in_review: '等审核', ready: '已过审，可发布', promoted: '已留档', archived: '已搁置',
     };
     const ROLE_LABEL = { editor: '编写', reviewer: '审核', risk: '风控', admin: '技术支持' };
     const ACTION_OK = {
-      '/attach-diagnostic': '已挂上页面诊断',
-      '/register-baseline': '已登记投放前摸底',
+      '/attach-diagnostic': '已挂上查页面结果',
+      '/register-baseline': '已确认摸底完成',
       '/submit': '已送审',
       '/approve': '已批准，可以写稿了',
       '/tasks': '已创建写稿任务',
       '/deploy': '已登记对外发布',
-      '/start-observe': '已建投放后复测',
-      '/confirm-verdict': '效果判定已确认',
+      '/start-observe': '已开始投放后复测',
+      '/confirm-verdict': '效果已确认',
       '/fork': '已开新一版策略',
-      '/confirm-promote-l2': '已确认留档到故事证据库',
-    };
-    const MEDIA_LABEL = {
-      wechat: '微信公众号',
-      toutiao: '头条号',
-      douyin: '抖音',
-      baike: '百度百科',
-      baijiahao: '百家号',
-      other: '其他媒体号',
+      '/confirm-promote-l2': '已确认留档入库',
+      '/force/initiate': '已发起特殊留档',
+      '/force/business-confirm': '另一业务人已确认',
+      '/force/admin-confirm': '技术支持已终确',
     };
 
     function token() {
       try { return localStorage.getItem(tokenKey) || sessionStorage.getItem(tokenKey) || ''; }
       catch (_) { return ''; }
     }
-    function setToken(t) {
-      try { localStorage.setItem(tokenKey, t); } catch (_) {}
-    }
-    function showMsg(text, kind) {
-      msgEl.hidden = false;
-      msgEl.textContent = text;
-      msgEl.className = 'st-msg' + (kind === 'err' ? ' err' : kind === 'ok' ? ' ok' : '');
-    }
+    function setToken(t) { try { localStorage.setItem(tokenKey, t); } catch (_) {} }
     function escapeHtml(s) {
       return String(s == null ? '' : s)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -270,15 +323,26 @@
       if (['ineffective', 'archived'].includes(status)) return 'st-badge st-badge--bad';
       return 'st-badge';
     }
+    function isAdmin() {
+      if (!me) return false;
+      const pr = String(me.platform_role || '').toLowerCase();
+      const roles = me.effective_roles || [];
+      return pr === 'admin' || roles.indexOf('admin') >= 0;
+    }
+    function showMsg(text, kind) {
+      msgEl.hidden = false;
+      msgEl.textContent = text;
+      msgEl.className = 'st-msg' + (kind === 'err' ? ' err' : kind === 'ok' ? ' ok' : '');
+    }
     function friendlyError(msg) {
       const s = String(msg || '');
-      if (/geo_run/i.test(s)) return '请先填写「观测任务编号」（从观测页面复制），再登记摸底。';
-      if (/诊断/.test(s)) return '请先挂上页面诊断报告，再送审或批准。';
-      if (/baseline|摸底|初次观测/i.test(s)) return '请先登记投放前摸底，再批准策略。';
-      if (/起草人|自己的策略/.test(s)) return '不能自己审自己写的策略，请换审核账号操作。';
-      if (/editor|reviewer|业务角色|需要 reviewer|需要 editor/i.test(s)) return '当前账号岗位不对。编写用编写账号，批准/判定用审核账号。';
+      if (/geo_run/i.test(s)) return '请先选择「关联哪次摸底/复测」，再确认摸底。';
+      if (/诊断/.test(s)) return '请先挂上查页面结果，再送审或批准。';
+      if (/baseline|摸底|初次观测/i.test(s)) return '请先完成投放前摸底，再批准策略。';
+      if (/起草人|自己的策略/.test(s)) return '不能自己审自己写的策略，请换审核账号。';
+      if (/editor|reviewer|业务角色|需要 reviewer|需要 editor/i.test(s)) return '当前账号岗位不对。编写用编写账号，批准用审核账号。';
       if (/全部执行物|ready|过审/.test(s)) return '请至少准备两篇稿，并全部过审后，才能登记已发布。';
-      if (/六元组|问法|标签|文档/.test(s)) return '请先补全策略内容：至少3种问法、要写什么稿、用哪些素材和主题标签。';
+      if (/六元组|问法|标签|文档/.test(s)) return '请先补全策略内容：至少3种问法、要写什么稿、用哪些素材。';
       return s;
     }
     async function api(path, opts) {
@@ -286,7 +350,7 @@
       const t = token();
       if (t) headers.Authorization = 'Bearer ' + t;
       const res = await fetch('/api' + path, Object.assign({}, opts || {}, { headers }));
-      const data = await res.json().catch(() => ({}));
+      const data = await res.json().catch(function () { return {}; });
       if (!res.ok) {
         const detail = data.detail;
         const msg = typeof detail === 'string' ? detail
@@ -297,54 +361,191 @@
       return data;
     }
 
-    async function refreshRole() {
-      try { me = await api('/content-engine/geo/me'); }
-      catch (_) { me = null; }
-      const roles = (me && me.effective_roles) || [];
-      const gr = (me && me.geo_role) || '';
-      const biz = gr === 'editor' || gr === 'reviewer' || roles.includes('editor') || roles.includes('reviewer');
-      roleEl.innerHTML = '';
-      const info = document.createElement('div');
-      if (me && biz) {
-        info.innerHTML = '<span class="ok">当前岗位：' + escapeHtml(labelRole(gr)) + '</span> · 账号 ' +
-          escapeHtml(me.username || me.email || '') +
-          ' · 编写可起草写稿；审核可批准策略、过审稿件、确认效果';
-      } else if (me) {
-        info.innerHTML = '<span class="warn">当前是技术支持账号</span> · 日常选题审批请改用<strong>编写</strong>或<strong>审核</strong>账号登录';
-      } else {
-        info.innerHTML = '<span class="warn">尚未登录业务账号</span> · 请用编写或审核账号登录后再操作';
-      }
-      roleEl.appendChild(info);
-
-      const login = document.createElement('form');
-      login.className = 'st-login';
-      login.innerHTML =
-        '<label>账号<input name="account" placeholder="编写账号邮箱" value="smoke-editor@georank.local"></label>' +
-        '<label>密码<input name="password" type="password" value="SmokeTest!234"></label>' +
-        '<button class="btn teal" type="submit">登录为编写</button>' +
-        '<button class="btn" type="button" data-as="reviewer">改登审核</button>';
-      login.addEventListener('submit', async function (ev) {
-        ev.preventDefault();
-        const fd = new FormData(login);
+    function readStoredStrategyId() {
+      try {
+        const q = new URLSearchParams(location.search || '').get('strategy');
+        if (q) return q;
+        return sessionStorage.getItem(strategyKey) || '';
+      } catch (_) { return ''; }
+    }
+    function setCurrentId(id, opts) {
+      currentId = id || '';
+      try {
+        if (currentId) sessionStorage.setItem(strategyKey, currentId);
+        else sessionStorage.removeItem(strategyKey);
+      } catch (_) {}
+      if (opts && opts.syncUrl !== false) {
         try {
-          const out = await api('/auth/login', {
-            method: 'POST',
-            body: JSON.stringify({ account: fd.get('account'), password: fd.get('password'), remember_me: true }),
-          });
-          setToken(out.access_token);
-          showMsg('登录成功，可以开始操作了', 'ok');
-          await refreshRole();
-          await load();
-        } catch (e) {
-          showMsg(String(e.message || e), 'err');
-        }
+          const url = new URL(location.href);
+          if (currentId) url.searchParams.set('strategy', currentId);
+          else url.searchParams.delete('strategy');
+          history.replaceState(null, '', url.pathname + url.search + url.hash);
+        } catch (_) {}
+      }
+      renderContext();
+      renderCraft();
+      renderWrite();
+      renderPublish();
+    }
+    function currentStrategy() {
+      return strategies.find(function (s) { return s.id === currentId; }) || null;
+    }
+
+    function switchTab(name, pipeHint) {
+      document.querySelectorAll('.st-tabs button').forEach(function (b) {
+        const on = b.getAttribute('data-tab') === name;
+        b.classList.toggle('is-on', on);
+        b.setAttribute('aria-selected', on ? 'true' : 'false');
       });
-      login.querySelector('[data-as="reviewer"]').onclick = function () {
-        login.account.value = 'smoke-reviewer@georank.local';
-        login.password.value = 'SmokeTest!234';
-        login.requestSubmit();
+      document.querySelectorAll('.st-tab-panel').forEach(function (p) {
+        p.classList.toggle('is-on', p.id === 'panel-' + name);
+      });
+      // 七步条：同一 Tab 只亮一格
+      document.querySelectorAll('.st-pipe .pipe-step').forEach(function (b) {
+        b.classList.remove('is-here');
+      });
+      var primary = null;
+      if (pipeHint) {
+        primary = document.querySelector('.st-pipe .pipe-step[data-tab="' + name + '"][data-pipe="' + pipeHint + '"]');
+      }
+      if (!primary) {
+        primary = document.querySelector('.st-pipe .pipe-step[data-pipe-primary="' + name + '"]');
+      }
+      if (!primary) {
+        primary = document.querySelector('.st-pipe .pipe-step[data-tab="' + name + '"]');
+      }
+      if (primary) primary.classList.add('is-here');
+      if (name === 'craft') renderCraft();
+      if (name === 'write') renderWrite();
+      if (name === 'publish') renderPublish();
+      if (name === 'account') renderAccount();
+    }
+
+    function renderContext() {
+      const s = currentStrategy();
+      if (!s) {
+        ctxEl.hidden = true;
+        ctxEl.innerHTML = '';
+        return;
+      }
+      ctxEl.hidden = false;
+      ctxEl.innerHTML =
+        '<span>当前策略：<strong>' + escapeHtml(s.title || s.question_class || s.id) +
+        '</strong> · ' + escapeHtml(labelPlatform(s.platform)) +
+        ' · <span class="' + badgeClass(s.status) + '">' + escapeHtml(labelStatus(s.status)) + '</span></span>' +
+        '<button type="button" class="btn" id="btn-clear-strategy">更换</button>';
+      document.getElementById('btn-clear-strategy').onclick = function () {
+        setCurrentId('');
+        switchTab('overview');
       };
-      roleEl.appendChild(login);
+    }
+
+    function progressLine(s) {
+      const ts = s.task_summary || {};
+      const cl = s.handoff_checklist || {};
+      const hasDiag = !!s.diagnostic_report_id;
+      const hasBase = !!s.baseline_snapshot_id;
+      const qv = (s.query_variants || []).filter(Boolean).length;
+      if (s.status === 'draft' || s.status === 'pending_review') {
+        if (qv < 3 || !s.content_orientation) return '还差：补全要写什么稿、至少3种问法';
+        if (!hasDiag) return '还差：挂上查页面结果';
+        if (!hasBase) return '还差：完成投放前摸底';
+        if (s.status === 'draft') return '内容已齐，可以送审';
+        return '已送审，等审核批准';
+      }
+      if (s.status === 'executable') {
+        if (!ts.all_ready) return '可以写稿了 · 稿件进度 ' + (ts.ready_count || 0) + '/' + (ts.total || 0);
+        return '两篇稿都已过审，可以去登记发布';
+      }
+      if (s.status === 'deployed') return '已登记发布，请去做投放后复测';
+      if (s.status === 'observing') return '正在复测，回传后请确认效果';
+      if (s.verdict) return '效果：' + (VERDICT_LABEL[s.verdict] || s.verdict);
+      return labelStatus(s.status);
+    }
+
+    function nextAction(s) {
+      const ts = s.task_summary || {};
+      const qv = (s.query_variants || []).filter(Boolean).length;
+      if (s.status === 'draft' || s.status === 'pending_review') {
+        if (qv < 3 || !s.content_orientation || !s.diagnostic_report_id || !s.baseline_snapshot_id) {
+          return { label: '去补全策略', tab: 'craft' };
+        }
+        if (s.status === 'draft') return { label: '去送审', tab: 'craft' };
+        return { label: '去批准', tab: 'craft' };
+      }
+      if (s.status === 'executable') {
+        if (!ts.all_ready) return { label: '去写稿', tab: 'write' };
+        return { label: '去登记发布', tab: 'publish' };
+      }
+      if (s.status === 'deployed' || s.status === 'observing') {
+        return { label: '去发布与复测', tab: 'publish' };
+      }
+      if (['effective', 'partial', 'ineffective'].indexOf(s.status) >= 0) {
+        return { label: '去看效果', tab: 'publish' };
+      }
+      return { label: '打开定策', tab: 'craft' };
+    }
+
+    function kbSelectHtml(selectedId, nameAttr) {
+      const sel = String(selectedId || '');
+      let html = '<select name="' + nameAttr + '"><option value="">稍后填写</option>';
+      const seen = new Set();
+      (formOptions.knowledge_bases || []).forEach(function (kb) {
+        seen.add(kb.id);
+        const docs = kb.doc_count != null ? '（' + kb.doc_count + ' 篇）' : '';
+        html += '<option value="' + escapeHtml(kb.id) + '"' + (kb.id === sel ? ' selected' : '') + '>'
+          + escapeHtml(kb.name || kb.slug || '未命名知识库') + docs + '</option>';
+      });
+      if (sel && !seen.has(sel)) {
+        html += '<option value="' + escapeHtml(sel) + '" selected>当前已选用</option>';
+      }
+      return html + '</select>';
+    }
+    function runSelectHtml(selectedId, nameAttr) {
+      const sel = String(selectedId || '');
+      let html = '<select name="' + nameAttr + '"><option value="">稍后填写</option>';
+      const seen = new Set();
+      (formOptions.geo_runs || []).forEach(function (run) {
+        seen.add(run.id);
+        const title = run.title || run.entity || '未命名摸底/复测';
+        html += '<option value="' + escapeHtml(run.id) + '"' + (run.id === sel ? ' selected' : '') + '>'
+          + escapeHtml(title) + '</option>';
+      });
+      if (sel && !seen.has(sel)) {
+        html += '<option value="' + escapeHtml(sel) + '" selected>当前已选用</option>';
+      }
+      return html + '</select>';
+    }
+    function diagSelectHtml(selectedId) {
+      const sel = String(selectedId || '');
+      let html = '<select id="craft-diag-select"><option value="">请选择查页面结果</option>';
+      const seen = new Set();
+      diagHistory.forEach(function (r) {
+        const id = r.report_id || r.id;
+        seen.add(id);
+        const when = (r.created_at || '').slice(0, 16).replace('T', ' ');
+        const st = r.status === 'completed' ? '已完成' : (r.status || '');
+        html += '<option value="' + escapeHtml(id) + '"' + (id === sel ? ' selected' : '') + '>'
+          + escapeHtml((r.url || '未命名页面') + (when ? ' · ' + when : '') + (st ? ' · ' + st : '')) + '</option>';
+      });
+      if (sel && !seen.has(sel)) {
+        html += '<option value="' + escapeHtml(sel) + '" selected>当前已挂上</option>';
+      }
+      return html + '</select>';
+    }
+    function applySelectHtml(el, html) {
+      if (!el) return;
+      const keep = el.value;
+      const wrap = document.createElement('div');
+      wrap.innerHTML = html;
+      const src = wrap.querySelector('select');
+      if (!src) return;
+      el.innerHTML = src.innerHTML;
+      if (keep) el.value = keep;
+    }
+    function fillSeedSelects() {
+      applySelectHtml(document.getElementById('seed-kb'), kbSelectHtml('', 'knowledge_base_id'));
+      applySelectHtml(document.getElementById('seed-run'), runSelectHtml('', 'geo_run_id'));
     }
 
     async function act(id, path, body, busyText) {
@@ -363,23 +564,13 @@
       }
     }
 
-    function renderChecklist(items) {
-      if (!items || !items.length) return '';
-      return '<div class="st-check">' + items.map(function (it) {
-        const cls = it.ok ? 'st-badge st-badge--ok' : 'st-badge st-badge--warn';
-        const tip = it.deliverable || it.note || '';
-        return '<span class="' + cls + '" title="' + escapeHtml(tip) + '">' +
-          escapeHtml(it.step) + (it.ok ? ' ✓' : ' ·未齐') + '</span>';
-      }).join('') + '</div>';
-    }
-
     function sixTupleDefaults(s) {
       const cm = s.channel_matrix || {};
       const ss = s.success_signal || {};
       const tags = s.knowledge_tag_pack || {};
       return {
         title: s.title || '',
-        content_orientation: s.content_orientation || '1篇栏目说明（深文）+ 1篇常见问答',
+        content_orientation: s.content_orientation || '1篇栏目说明 + 1篇常见问答',
         query_variants: (s.query_variants || []).join('\n') || '第一现场是什么栏目\n第一现场主要报道什么内容\n哪里看第一现场官方内容',
         media_types: (cm.media_types || ['wechat']).join(','),
         success_mode: ss.mode || 'mention_top10',
@@ -394,18 +585,79 @@
       };
     }
 
-    function buildEditPanel(s) {
+    function renderOverviewCard(s) {
+      const card = document.createElement('article');
+      card.className = 'st-card';
+      card.dataset.status = s.status || '';
+      const next = nextAction(s);
+      card.innerHTML =
+        '<h3>' + escapeHtml(s.title || s.question_class || '未命名策略') +
+          ' <span class="' + badgeClass(s.status) + '">' + escapeHtml(labelStatus(s.status)) + '</span>' +
+          (s.verdict ? ' <span class="' + badgeClass(s.verdict) + '">' + escapeHtml(VERDICT_LABEL[s.verdict] || s.verdict) + '</span>' : '') +
+        '</h3>' +
+        '<div class="st-meta">' +
+          '<span>平台：' + escapeHtml(labelPlatform(s.platform)) + '</span>' +
+          '<span>问题：' + escapeHtml(s.question_class || '—') + '</span>' +
+          '<span>第 ' + escapeHtml(String(s.version || 1)) + ' 版</span>' +
+        '</div>' +
+        '<p class="st-progress">' + escapeHtml(progressLine(s)) + '</p>' +
+        '<div class="st-actions">' +
+          '<button type="button" class="btn primary" data-next>' + escapeHtml(next.label) + '</button>' +
+          '<button type="button" class="btn" data-select>设为当前</button>' +
+        '</div>';
+      card.querySelector('[data-next]').onclick = function () {
+        setCurrentId(s.id);
+        switchTab(next.tab);
+      };
+      card.querySelector('[data-select]').onclick = function () {
+        setCurrentId(s.id);
+        showMsg('已设为当前策略', 'ok');
+      };
+      return card;
+    }
+
+    function applyFilter() {
+      const st = document.getElementById('filter-status').value;
+      const cards = listEl.querySelectorAll('.st-card');
+      let n = 0;
+      cards.forEach(function (c) {
+        const show = !st || c.dataset.status === st;
+        c.style.display = show ? '' : 'none';
+        if (show) n += 1;
+      });
+      document.getElementById('list-count').textContent = '当前显示 ' + n + ' 条（共 ' + cards.length + ' 条）';
+    }
+
+    function renderCraft() {
+      const empty = document.getElementById('craft-empty');
+      const body = document.getElementById('craft-body');
+      const s = currentStrategy();
+      if (!s) {
+        empty.hidden = false;
+        body.hidden = true;
+        body.innerHTML = '';
+        return;
+      }
+      empty.hidden = true;
+      body.hidden = false;
       const d = sixTupleDefaults(s);
-      const panel = document.createElement('div');
-      panel.className = 'st-panel';
-      panel.innerHTML =
-        '<p class="st-hint">请写清楚：用户怎么问、我们写什么、发到哪里、怎样算有效、用哪些已审过的素材。保存后再送审。</p>' +
-        '<form class="st-form">' +
+      const mediaSelected = (d.media_types || 'wechat').split(',')[0] || 'wechat';
+      body.innerHTML =
+        '<p class="st-hint">正在补全：<strong>' + escapeHtml(s.title || s.question_class) + '</strong> · ' +
+          escapeHtml(labelPlatform(s.platform)) + '</p>' +
+        '<form class="st-form" id="craft-edit-form">' +
           '<label>策略名称<input name="title" value="' + escapeHtml(d.title) + '"></label>' +
           '<label>打算写什么稿<textarea name="content_orientation">' + escapeHtml(d.content_orientation) + '</textarea></label>' +
-          '<label>准备用来提问/复测的问法（每行一句，至少3句）<textarea name="query_variants">' + escapeHtml(d.query_variants) + '</textarea></label>' +
+          '<label>用来提问/复测的句子（每行一句，至少3句）<textarea name="query_variants">' + escapeHtml(d.query_variants) + '</textarea></label>' +
           '<div class="st-row">' +
-            '<label>同步发哪些媒体号（英文代号，逗号分隔：wechat 公众号）<input name="media_types" value="' + escapeHtml(d.media_types) + '"></label>' +
+            '<label>同步发到哪个媒体号<select name="media_types">' +
+              '<option value="wechat"' + (mediaSelected === 'wechat' ? ' selected' : '') + '>微信公众号</option>' +
+              '<option value="toutiao"' + (mediaSelected === 'toutiao' ? ' selected' : '') + '>头条号</option>' +
+              '<option value="douyin"' + (mediaSelected === 'douyin' ? ' selected' : '') + '>抖音</option>' +
+              '<option value="baike"' + (mediaSelected === 'baike' ? ' selected' : '') + '>百度百科</option>' +
+              '<option value="baijiahao"' + (mediaSelected === 'baijiahao' ? ' selected' : '') + '>百家号</option>' +
+              '<option value="other"' + (mediaSelected === 'other' ? ' selected' : '') + '>其他</option>' +
+            '</select></label>' +
             '<label>怎样算有效<select name="success_mode">' +
               '<option value="mention_top10"' + (d.success_mode === 'mention_top10' ? ' selected' : '') + '>被提到，且引用进前10</option>' +
               '<option value="strong_adopt"' + (d.success_mode === 'strong_adopt' ? ' selected' : '') + '>被提到并引用到我们自己的官网</option>' +
@@ -413,31 +665,55 @@
           '</div>' +
           '<div class="st-row">' +
             '<label>引用排名进入前几算有效<input name="top_n" type="number" min="1" max="20" value="' + escapeHtml(d.top_n) + '"></label>' +
-            '<label>知识库编号<input name="knowledge_base_id" value="' + escapeHtml(d.knowledge_base_id) + '" placeholder="从知识库页面复制"></label>' +
+            '<label>用哪个知识库' + kbSelectHtml(d.knowledge_base_id, 'knowledge_base_id') + '</label>' +
           '</div>' +
-          '<label>本策略要用哪些已入库素材（每行一个素材编号）<textarea name="docs" placeholder="从知识库文档列表复制编号">' + escapeHtml(d.docs) + '</textarea></label>' +
+          '<label>本策略要用哪些已入库素材（每行一个编号，可稍后填）<textarea name="docs">' + escapeHtml(d.docs) + '</textarea></label>' +
           '<div class="st-row">' +
-            '<label>站点标识（如第一现场）<input name="site_id" value="' + escapeHtml(d.site_id) + '"></label>' +
-            '<label>主题/八爪标签<input name="task_bajua" value="' + escapeHtml(d.task_bajua) + '"></label>' +
+            '<label>栏目/站点简称<input name="site_id" value="' + escapeHtml(d.site_id) + '"></label>' +
+            '<label>主题标签<input name="task_bajua" value="' + escapeHtml(d.task_bajua) + '"></label>' +
           '</div>' +
           '<div class="st-row">' +
             '<label>主题说明<input name="theme" value="' + escapeHtml(d.theme) + '"></label>' +
-            '<label>观测任务编号<input name="geo_run_id" value="' + escapeHtml(d.geo_run_id) + '" placeholder="从观测页复制"></label>' +
+            '<label>关联哪次摸底/复测' + runSelectHtml(d.geo_run_id, 'geo_run_id') + '</label>' +
           '</div>' +
           '<label>缺口与补救说明<textarea name="gap_note">' + escapeHtml(d.gap_note) + '</textarea></label>' +
           '<button type="submit" class="btn primary">保存策略内容</button>' +
-        '</form>';
-      panel.querySelector('form').addEventListener('submit', async function (ev) {
+        '</form>' +
+        '<div class="st-group" style="margin-top:1rem;padding-top:0.85rem;border-top:1px dashed var(--st-line)">' +
+          '<h4>查页面与摸底（批准前须完成）</h4>' +
+          '<div class="st-form">' +
+            '<label>挂上查页面结果' + diagSelectHtml(s.diagnostic_report_id) + '</label>' +
+            '<div class="st-actions" style="margin:0">' +
+              '<button type="button" class="btn teal" id="btn-attach-diag">确认挂上</button>' +
+              '<a class="btn" href="/diagnostic">先去查页面</a>' +
+            '</div>' +
+            '<p class="st-hint">' + (s.diagnostic_report_id ? '<span class="st-ok">已挂上查页面结果</span>' : '尚未挂上查页面结果') + '</p>' +
+            '<div class="st-actions">' +
+              '<a class="btn primary" href="/observe?strategy=' + encodeURIComponent(s.id) + '">去做摸底并回传</a>' +
+              '<button type="button" class="btn teal" id="btn-reg-base">确认摸底已完成</button>' +
+            '</div>' +
+            '<p class="st-hint">' + (s.baseline_snapshot_id ? '<span class="st-ok">已确认摸底完成</span>' : '摸底回传后，再点「确认摸底已完成」') + '</p>' +
+          '</div>' +
+          (!(s.diagnostic_report_id && s.baseline_snapshot_id)
+            ? '<div class="st-gate"><strong>还不能批准可以写稿</strong><div>请先完成：查页面 + 投放前摸底</div></div>'
+            : '') +
+          '<div class="st-actions">' +
+            '<button type="button" class="btn primary" id="btn-submit">送审</button>' +
+            '<button type="button" class="btn teal" id="btn-approve">批准可以写稿</button>' +
+          '</div>' +
+        '</div>';
+
+      body.querySelector('#craft-edit-form').addEventListener('submit', async function (ev) {
         ev.preventDefault();
         const fd = new FormData(ev.target);
         const qv = String(fd.get('query_variants') || '').split(/\r?\n/).map(function (x) { return x.trim(); }).filter(Boolean);
         const docs = String(fd.get('docs') || '').split(/\r?\n/).map(function (x) { return x.trim(); }).filter(Boolean);
-        const media = String(fd.get('media_types') || 'wechat').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
-        const body = {
+        const media = String(fd.get('media_types') || 'wechat').trim();
+        const bodyPatch = {
           title: String(fd.get('title') || '').trim() || undefined,
           content_orientation: String(fd.get('content_orientation') || '').trim(),
           query_variants: qv,
-          channel_matrix: { site_required: true, media_types: media },
+          channel_matrix: { site_required: true, media_types: media ? [media] : ['wechat'] },
           success_signal: { mode: String(fd.get('success_mode') || 'mention_top10'), top_n: Number(fd.get('top_n') || 10) },
           knowledge_document_ids: docs,
           knowledge_tag_pack: {
@@ -449,26 +725,33 @@
         };
         const kb = String(fd.get('knowledge_base_id') || '').trim();
         const run = String(fd.get('geo_run_id') || '').trim();
-        if (kb) body.knowledge_base_id = kb;
-        if (run) body.geo_run_id = run;
+        if (kb) bodyPatch.knowledge_base_id = kb;
+        if (run) bodyPatch.geo_run_id = run;
         try {
-          await api('/geo-strategies/' + s.id, { method: 'PATCH', body: JSON.stringify(body) });
+          await api('/geo-strategies/' + s.id, { method: 'PATCH', body: JSON.stringify(bodyPatch) });
           showMsg('策略内容已保存', 'ok');
           await load();
-        } catch (e) {
-          showMsg(String(e.message || e), 'err');
-        }
+        } catch (e) { showMsg(String(e.message || e), 'err'); }
       });
-      return panel;
+      body.querySelector('#btn-attach-diag').onclick = function () {
+        const id = document.getElementById('craft-diag-select').value;
+        if (!id) { showMsg('请先选择一条查页面结果', 'err'); return; }
+        act(s.id, '/attach-diagnostic', { diagnostic_report_id: id }, '正在挂上查页面结果…');
+      };
+      body.querySelector('#btn-reg-base').onclick = function () {
+        act(s.id, '/register-baseline', null, '正在确认摸底…');
+      };
+      body.querySelector('#btn-submit').onclick = function () { act(s.id, '/submit', null, '正在送审…'); };
+      body.querySelector('#btn-approve').onclick = function () { act(s.id, '/approve', null, '正在批准…'); };
     }
 
-    async function loadTasks(s, host) {
+    async function loadTasksInto(host, s) {
       host.innerHTML = '<span class="st-hint">正在加载写稿任务…</span>';
       try {
         const data = await api('/geo-strategies/' + s.id + '/tasks');
         const items = data.items || [];
         if (!items.length) {
-          host.innerHTML = '<span class="st-hint">还没有写稿任务。策略批准后，可点「写栏目说明并出稿」或「写常见问答并出稿」。</span>';
+          host.innerHTML = '<p class="st-hint">还没有写稿任务。可点上方「开始写并出草稿」。</p>';
           return;
         }
         host.innerHTML = '';
@@ -476,14 +759,10 @@
           const row = document.createElement('div');
           row.className = 'st-task';
           const preview = (t.template_draft_body || t.draft_body || '').slice(0, 80);
-          const llmTip = t.meta && t.meta.llm_ok === true
-            ? '<span class="st-badge st-badge--ok">已自动起草</span>'
-            : (t.meta && t.meta.llm_ok === false ? '<span class="st-badge st-badge--warn">起草失败，请重试或手改</span>' : '');
           row.innerHTML =
             '<div class="left">' +
               '<strong>' + escapeHtml(t.title) + '</strong>' +
               '<span class="' + badgeClass(t.workflow_status) + '">' + escapeHtml(labelWorkflow(t.workflow_status)) + '</span>' +
-              llmTip +
               (preview ? '<span style="color:#5c6570">' + escapeHtml(preview) + '…</span>' : '') +
             '</div><div class="st-actions" style="margin:0"></div>';
           const actions = row.querySelector('.st-actions');
@@ -492,8 +771,8 @@
             b.type = 'button'; b.className = 'btn' + (cls ? ' ' + cls : ''); b.textContent = label;
             b.onclick = fn; actions.appendChild(b);
           }
-          mk('自动起草', async function () {
-            showMsg('正在根据素材起草「' + t.title + '」…');
+          mk('改草稿 / 再起草', async function () {
+            showMsg('正在起草「' + t.title + '」…');
             try {
               await api('/geo-strategies/' + s.id + '/tasks/' + t.id + '/generate', { method: 'POST' });
               showMsg('草稿已出，请审阅后再送审', 'ok');
@@ -519,125 +798,320 @@
       }
     }
 
-    function renderItem(s) {
-      const ts = s.task_summary || {};
-      const cl = s.handoff_checklist || {};
-      const card = document.createElement('article');
-      card.className = 'st-card';
-      card.dataset.status = s.status || '';
-      const vd = s.verdict_detail || {};
-      const bc = vd.baseline_compare || {};
-      const readyText = ts.all_ready
-        ? '稿件已齐（' + (ts.ready_count || 0) + '篇过审）'
-        : '稿件进度 ' + (ts.ready_count || 0) + '/' + (ts.total || 0);
-      card.innerHTML =
-        '<h3>' + escapeHtml(s.title) +
-          ' <span class="' + badgeClass(s.status) + '">' + escapeHtml(labelStatus(s.status)) + '</span>' +
-          (s.verdict ? ' <span class="' + badgeClass(s.verdict) + '">' + escapeHtml(VERDICT_LABEL[s.verdict] || s.verdict) + '</span>' : '') +
-        '</h3>' +
-        '<div class="st-meta">' +
-          '<span>平台：' + escapeHtml(labelPlatform(s.platform)) + '</span>' +
-          '<span>问题：' + escapeHtml(s.question_class) + '</span>' +
-          '<span>第 ' + s.version + ' 版</span>' +
-          '<span>' + escapeHtml(readyText) + '</span>' +
+    function renderWrite() {
+      const empty = document.getElementById('write-empty');
+      const body = document.getElementById('write-body');
+      const s = currentStrategy();
+      if (!s) {
+        empty.hidden = false;
+        body.hidden = true;
+        body.innerHTML = '';
+        return;
+      }
+      empty.hidden = true;
+      body.hidden = false;
+      const canWrite = s.status === 'executable' || s.status === 'deployed' || s.status === 'observing'
+        || s.status === 'effective' || s.status === 'partial' || s.status === 'ineffective';
+      body.innerHTML =
+        '<p class="st-hint">当前：<strong>' + escapeHtml(s.title || s.question_class) + '</strong> · ' +
+          escapeHtml(labelStatus(s.status)) + '</p>' +
+        (!canWrite
+          ? '<div class="st-gate"><strong>策略批准后才能写稿</strong><div>请先在「定策」补全并送审，由审核账号批准。</div></div>'
+          : '') +
+        '<div class="st-actions">' +
+          '<button type="button" class="btn primary" id="btn-deep" ' + (!canWrite ? 'disabled' : '') + '>写栏目说明并出草稿</button>' +
+          '<button type="button" class="btn teal" id="btn-faq" ' + (!canWrite ? 'disabled' : '') + '>写常见问答并出草稿</button>' +
+          '<a class="btn" href="/knowledge?strategy=' + encodeURIComponent(s.id) + '">去知识库备素材</a>' +
         '</div>' +
-        renderChecklist(cl.items || []) +
-        (s.gap_note ? '<p style="margin:0.55rem 0 0;font-size:0.9rem;color:#445">' + escapeHtml(s.gap_note) + '</p>' : '') +
-        (s.verdict ? '<div class="st-verdict">复测里见效的问法：' + escapeHtml(String(vd.effective_query_count || 0)) + ' 条' +
-          (bc.after_mention_count != null
-            ? '；投放后被提到 ' + bc.after_mention_count + ' 次，摸底时 ' + (bc.baseline_mention_count || 0) + ' 次'
-            : '') +
-          '</div>' : '') +
-        '<div class="st-tasks" data-tasks></div>';
-
-      const editPanel = buildEditPanel(s);
-      card.appendChild(editPanel);
-
-      function group(title) {
-        const g = document.createElement('div');
-        g.className = 'st-group';
-        g.innerHTML = '<h4>' + title + '</h4><div class="st-actions"></div>';
-        card.appendChild(g);
-        return g.querySelector('.st-actions');
+        '<div id="write-tasks" style="margin-top:0.85rem"></div>';
+      if (canWrite) {
+        body.querySelector('#btn-deep').onclick = function () {
+          act(s.id, '/tasks', { title: s.question_class + ' · 栏目说明', content_kind: 'deep', generate: true }, '正在创建并起草栏目说明…');
+        };
+        body.querySelector('#btn-faq').onclick = function () {
+          act(s.id, '/tasks', { title: s.question_class + ' · 常见问答', content_kind: 'faq', generate: true }, '正在创建并起草问答…');
+        };
       }
-      function btn(host, label, fn, cls) {
-        const b = document.createElement('button');
-        b.type = 'button'; b.className = 'btn' + (cls ? ' ' + cls : ''); b.textContent = label;
-        b.onclick = fn; host.appendChild(b);
-      }
-
-      const g0 = group('定策略（编写起草 / 审核批准）');
-      btn(g0, '填写策略内容', function () { editPanel.classList.toggle('open'); }, 'primary');
-      btn(g0, '挂上页面诊断', function () {
-        const id = prompt('请粘贴诊断报告编号（在「查页面」结果里复制）');
-        if (id) act(s.id, '/attach-diagnostic', { diagnostic_report_id: id }, '正在挂接诊断…');
-      });
-      btn(g0, '登记投放前摸底', function () {
-        act(s.id, '/register-baseline', null, '正在登记摸底…');
-      });
-      btn(g0, '送审策略', function () { act(s.id, '/submit', null, '正在送审…'); });
-      btn(g0, '批准可以写稿', function () { act(s.id, '/approve', null, '正在批准…'); }, 'teal');
-
-      const g1 = group('写稿与过审');
-      btn(g1, '写栏目说明并出稿', function () {
-        act(s.id, '/tasks', { title: s.question_class + ' · 栏目说明', content_kind: 'deep', generate: true }, '正在创建并起草栏目说明…');
-      }, 'teal');
-      btn(g1, '写常见问答并出稿', function () {
-        act(s.id, '/tasks', { title: s.question_class + ' · 常见问答', content_kind: 'faq', generate: true }, '正在创建并起草问答…');
-      }, 'teal');
-      btn(g1, '只建栏目说明任务', function () {
-        act(s.id, '/tasks', { title: s.question_class + ' · 栏目说明', content_kind: 'deep' }, '正在创建任务…');
-      });
-      btn(g1, '只建问答任务', function () {
-        act(s.id, '/tasks', { title: s.question_class + ' · 常见问答', content_kind: 'faq' }, '正在创建任务…');
-      });
-
-      const g2 = group('发布、复测与看效果');
-      btn(g2, '登记已对外发布', function () {
-        const site_url = prompt('第一现场官网已发文章的链接', s.site_url || 'https://');
-        if (!site_url) return;
-        const mediaRaw = prompt('媒体号类型：公众号填 wechat；也可填 toutiao / douyin / baike / baijiahao', s.media_channel_type || 'wechat');
-        if (!mediaRaw) return;
-        const media_url = prompt((MEDIA_LABEL[mediaRaw] || '媒体号') + '已发内容的链接', s.media_url || 'https://');
-        if (!media_url) return;
-        act(s.id, '/deploy', { site_url: site_url, media_channel_type: mediaRaw, media_url: media_url }, '正在登记发布…');
-      }, 'primary');
-      btn(g2, '开始投放后复测', function () { act(s.id, '/start-observe', null, '正在建立复测…'); });
-      btn(g2, '确认效果判定', function () { act(s.id, '/confirm-verdict', {}, '正在确认效果…'); });
-      btn(g2, '效果不够，开新一版', function () { act(s.id, '/fork', null, '正在开新版…'); });
-      btn(g2, '见效内容留档入库', function () { act(s.id, '/confirm-promote-l2', null, '正在留档…'); });
-
-      loadTasks(s, card.querySelector('[data-tasks]'));
-      return card;
+      loadTasksInto(body.querySelector('#write-tasks'), s);
     }
 
-    function applyFilter() {
-      const st = document.getElementById('filter-status').value;
-      const cards = listEl.querySelectorAll('.st-card');
-      let n = 0;
-      cards.forEach(function (c) {
-        const show = !st || c.dataset.status === st;
-        c.style.display = show ? '' : 'none';
-        if (show) n += 1;
+    function renderPublish() {
+      const empty = document.getElementById('publish-empty');
+      const body = document.getElementById('publish-body');
+      const s = currentStrategy();
+      if (!s) {
+        empty.hidden = false;
+        body.hidden = true;
+        body.innerHTML = '';
+        return;
+      }
+      empty.hidden = true;
+      body.hidden = false;
+      const ts = s.task_summary || {};
+      const vd = s.verdict_detail || {};
+      const bc = vd.baseline_compare || {};
+      const fs = s.force_status || 'none';
+      const forceText =
+        fs === 'none' ? '未发起' :
+        fs === 'pending_business' ? '等另一业务人确认' :
+        fs === 'pending_admin' ? '等技术支持终确' :
+        fs === 'done' ? '已终确' : fs;
+      body.innerHTML =
+        '<p class="st-hint">当前：<strong>' + escapeHtml(s.title || s.question_class) + '</strong> · ' +
+          escapeHtml(labelStatus(s.status)) +
+          (ts.all_ready ? ' · 稿件已齐' : ' · 稿件 ' + (ts.ready_count || 0) + '/' + (ts.total || 0)) +
+        '</p>' +
+        '<h4 id="pub-register">1. 登记已发布</h4>' +
+        '<p class="st-hint">系统不代发。请在官网和媒体号发完后，把链接登记到这里。</p>' +
+        '<form class="st-form" id="deploy-form">' +
+          '<label>官网已发文章的链接<input name="site_url" required placeholder="https://" value="' + escapeHtml(s.site_url || '') + '"></label>' +
+          '<div class="st-row">' +
+            '<label>媒体号类型<select name="media_channel_type">' +
+              '<option value="wechat"' + ((s.media_channel_type || 'wechat') === 'wechat' ? ' selected' : '') + '>微信公众号</option>' +
+              '<option value="toutiao"' + (s.media_channel_type === 'toutiao' ? ' selected' : '') + '>头条号</option>' +
+              '<option value="douyin"' + (s.media_channel_type === 'douyin' ? ' selected' : '') + '>抖音</option>' +
+              '<option value="baike"' + (s.media_channel_type === 'baike' ? ' selected' : '') + '>百度百科</option>' +
+              '<option value="baijiahao"' + (s.media_channel_type === 'baijiahao' ? ' selected' : '') + '>百家号</option>' +
+              '<option value="other"' + (s.media_channel_type === 'other' ? ' selected' : '') + '>其他</option>' +
+            '</select></label>' +
+            '<label>媒体号已发内容的链接<input name="media_url" required placeholder="https://" value="' + escapeHtml(s.media_url || '') + '"></label>' +
+          '</div>' +
+          '<button type="submit" class="btn primary">登记已对外发布</button>' +
+        '</form>' +
+        '<h4 id="pub-after" style="margin-top:1.1rem">2. 投放后复测</h4>' +
+        '<div class="st-actions">' +
+          '<button type="button" class="btn teal" id="btn-start-obs">开始投放后复测</button>' +
+          '<a class="btn" href="/observe?strategy=' + encodeURIComponent(s.id) + '">去做复测并回传</a>' +
+        '</div>' +
+        '<h4 style="margin-top:1.1rem">3. 看效果</h4>' +
+        (s.verdict
+          ? '<p class="st-progress">当前效果：' + escapeHtml(VERDICT_LABEL[s.verdict] || s.verdict) +
+            ' · 见效问法 ' + escapeHtml(String(vd.effective_query_count || 0)) + ' 条' +
+            (bc.after_mention_count != null
+              ? '；投放后被提到 ' + bc.after_mention_count + ' 次，摸底时 ' + (bc.baseline_mention_count || 0) + ' 次'
+              : '') + '</p>'
+          : '<p class="st-hint">复测回传后，由审核账号确认效果。</p>') +
+        '<div class="st-actions">' +
+          '<button type="button" class="btn primary" id="btn-verdict">确认效果</button>' +
+          '<button type="button" class="btn" id="btn-fork">效果不够，开新一版</button>' +
+          '<button type="button" class="btn teal" id="btn-promote">见效内容留档入库</button>' +
+        '</div>' +
+        '<details class="st-force">' +
+          '<summary>特殊情况：无法正常留档时</summary>' +
+          '<p class="st-hint" style="margin-top:0.55rem">当前状态：' + escapeHtml(forceText) +
+            (s.force_reason ? ' · 理由：' + escapeHtml(s.force_reason) : '') + '</p>' +
+          '<div class="st-actions" id="force-actions"></div>' +
+        '</details>';
+
+      body.querySelector('#deploy-form').addEventListener('submit', function (ev) {
+        ev.preventDefault();
+        const fd = new FormData(ev.target);
+        act(s.id, '/deploy', {
+          site_url: String(fd.get('site_url') || '').trim(),
+          media_channel_type: String(fd.get('media_channel_type') || 'wechat'),
+          media_url: String(fd.get('media_url') || '').trim(),
+        }, '正在登记发布…');
       });
-      document.getElementById('list-count').textContent = '当前显示 ' + n + ' 条（共 ' + cards.length + ' 条）';
+      body.querySelector('#btn-start-obs').onclick = function () {
+        act(s.id, '/start-observe', null, '正在开始复测…');
+      };
+      body.querySelector('#btn-verdict').onclick = function () {
+        act(s.id, '/confirm-verdict', {}, '正在确认效果…');
+      };
+      body.querySelector('#btn-fork').onclick = function () {
+        act(s.id, '/fork', null, '正在开新版…');
+      };
+      body.querySelector('#btn-promote').onclick = function () {
+        act(s.id, '/confirm-promote-l2', null, '正在留档…');
+      };
+      const forceHost = body.querySelector('#force-actions');
+      function fbtn(label, fn, cls) {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'btn' + (cls ? ' ' + cls : ''); b.textContent = label;
+        b.onclick = fn; forceHost.appendChild(b);
+      }
+      fbtn('审核：发起特殊留档', function () {
+        const reason = window.prompt('请填写理由（必填）', s.force_reason || '无法正常判定引用，需例外留档');
+        if (!reason) return;
+        act(s.id, '/force/initiate', { reason: reason }, '正在发起…');
+      });
+      fbtn('另一业务人确认', function () {
+        act(s.id, '/force/business-confirm', null, '正在确认…');
+      }, 'teal');
+      if (isAdmin()) {
+        fbtn('技术支持终确', function () {
+          act(s.id, '/force/admin-confirm', null, '正在终确…');
+        }, 'primary');
+      }
+    }
+
+    function renderAccount() {
+      const roleHost = document.getElementById('acct-role');
+      const readyHost = document.getElementById('acct-ready');
+      const adminCard = document.getElementById('acct-admin-card');
+      const adminBody = document.getElementById('acct-admin-body');
+      const gr = (me && me.geo_role) || '';
+      const roles = (me && me.effective_roles) || [];
+      const biz = gr === 'editor' || gr === 'reviewer' || roles.indexOf('editor') >= 0 || roles.indexOf('reviewer') >= 0;
+
+      roleHost.innerHTML = '';
+      const info = document.createElement('div');
+      if (me && biz) {
+        info.innerHTML = '<p><span class="st-ok">当前岗位：' + escapeHtml(labelRole(gr || (roles.indexOf('reviewer') >= 0 ? 'reviewer' : 'editor'))) +
+          '</span> · ' + escapeHtml(me.email || '') +
+          '</p><p class="st-hint">编写：起草策略与写稿；审核：批准策略、过审稿件、确认效果。</p>';
+      } else if (me && isAdmin()) {
+        info.innerHTML = '<p><span class="st-warn">当前是技术支持账号</span> · ' + escapeHtml(me.email || '') +
+          '</p><p class="st-hint">日常选题请改用编写或审核账号。</p>';
+      } else if (me) {
+        info.innerHTML = '<p><span class="st-warn">当前账号无编写/审核岗位</span></p>';
+      } else {
+        info.innerHTML = '<p><span class="st-warn">尚未登录</span> · 请用编写或审核账号登录后再操作</p>';
+      }
+      roleHost.appendChild(info);
+      const login = document.createElement('form');
+      login.className = 'st-login';
+      login.innerHTML =
+        '<label>账号<input name="account" placeholder="邮箱" value="smoke-editor@georank.local"></label>' +
+        '<label>密码<input name="password" type="password" value="SmokeTest!234"></label>' +
+        '<button class="btn teal" type="submit">用编写账号登录</button>' +
+        '<button class="btn" type="button" data-as="reviewer">用审核账号登录</button>';
+      login.addEventListener('submit', async function (ev) {
+        ev.preventDefault();
+        const fd = new FormData(login);
+        try {
+          const out = await api('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ account: fd.get('account'), password: fd.get('password'), remember_me: true }),
+          });
+          setToken(out.access_token);
+          showMsg('登录成功', 'ok');
+          await refreshRole();
+          await refreshPool();
+          await load();
+        } catch (e) { showMsg(String(e.message || e), 'err'); }
+      });
+      login.querySelector('[data-as="reviewer"]').onclick = function () {
+        login.account.value = 'smoke-reviewer@georank.local';
+        login.password.value = 'SmokeTest!234';
+        login.requestSubmit();
+      };
+      roleHost.appendChild(login);
+
+      if (poolSummary) {
+        const plats = poolSummary.platforms || {};
+        const bits = ['doubao', 'yuanbao', 'deepseek'].map(function (p) {
+          const row = plats[p] || {};
+          const n = (row.available || 0) + (row.busy || 0);
+          const ok = n > 0;
+          return '<div style="margin:0.25rem 0"><strong>' + escapeHtml(PLATFORM_LABEL[p] || p) + '</strong> · ' +
+            (ok ? '<span class="st-ok">可用</span>' : '<span class="st-warn">暂不可用</span>') +
+            '</div>';
+        });
+        readyHost.innerHTML =
+          '<p class="st-hint">' + (poolSummary.formal_ready
+            ? '<span class="st-ok">摸底与复测账号已就绪</span>'
+            : '<span class="st-warn">部分平台暂不可用，可先练习，正式验收前请联系技术支持</span>') +
+          '</p>' + bits.join('') +
+          '<div class="st-actions"><a class="btn" href="/observe">去做摸底/复测</a></div>';
+      } else {
+        readyHost.innerHTML = '<p class="st-hint">暂时读不到可用性信息</p>';
+      }
+
+      if (isAdmin()) {
+        adminCard.hidden = false;
+        adminBody.innerHTML =
+          '<p class="st-hint">以下为技术支持操作，编辑不可见。</p>' +
+          '<div class="st-actions">' +
+            '<button type="button" class="btn" id="btn-seed-white">补充占位观测账号</button>' +
+          '</div>' +
+          (poolSummary ? '<pre class="st-hint" style="white-space:pre-wrap;margin-top:0.75rem">' +
+            escapeHtml(JSON.stringify(poolSummary, null, 2)) + '</pre>' : '');
+        const seedBtn = document.getElementById('btn-seed-white');
+        if (seedBtn) {
+          seedBtn.onclick = async function () {
+            try {
+              showMsg('正在补充…');
+              const out = await api('/obs-white-accounts/seed-minimum', { method: 'POST' });
+              showMsg('已补充 ' + (out.created || 0) + ' 个占位账号', 'ok');
+              await refreshPool();
+              renderAccount();
+            } catch (e) { showMsg(String(e.message || e), 'err'); }
+          };
+        }
+      } else {
+        adminCard.hidden = true;
+        adminBody.innerHTML = '';
+      }
+    }
+
+    async function refreshRole() {
+      try { me = await api('/content-engine/geo/me'); }
+      catch (_) { me = null; }
+    }
+    async function refreshPool() {
+      try { poolSummary = await api('/obs-white-accounts/summary'); }
+      catch (_) { poolSummary = null; }
+    }
+    async function loadFormOptions() {
+      try {
+        const data = await api('/geo-strategies/options');
+        formOptions = { knowledge_bases: data.knowledge_bases || [], geo_runs: data.geo_runs || [] };
+        fillSeedSelects();
+      } catch (_) {
+        fillSeedSelects();
+      }
+      try {
+        const hist = await api('/diagnostics/history?page=1&size=30');
+        diagHistory = Array.isArray(hist) ? hist : (hist.items || []);
+      } catch (_) { diagHistory = []; }
     }
 
     async function load() {
       try {
         const data = await api('/geo-strategies?limit=50');
-        const items = data.items || [];
+        strategies = data.items || [];
         listEl.innerHTML = '';
-        if (!items.length) {
-          listEl.innerHTML = '<p class="st-empty">还没有选题策略。请先用编写账号登录，在上方创建一条草稿。</p>';
+        if (!strategies.length) {
+          listEl.innerHTML = '<p class="st-empty">还没有选题策略。请到「定策」用编写账号创建一条草稿。</p>';
         } else {
-          items.forEach(function (s) { listEl.appendChild(renderItem(s)); });
+          strategies.forEach(function (s) { listEl.appendChild(renderOverviewCard(s)); });
         }
         applyFilter();
+        if (currentId && !currentStrategy()) {
+          // 保留 id，或清空
+        }
+        if (!currentId) {
+          const fromUrl = readStoredStrategyId();
+          if (fromUrl && strategies.some(function (s) { return s.id === fromUrl; })) {
+            currentId = fromUrl;
+          }
+        }
+        renderContext();
+        renderCraft();
+        renderWrite();
+        renderPublish();
       } catch (e) {
         showMsg(String(e.message || e), 'err');
       }
     }
+
+    document.querySelectorAll('.st-tabs button').forEach(function (b) {
+      b.addEventListener('click', function () { switchTab(b.getAttribute('data-tab')); });
+    });
+    document.querySelectorAll('.st-pipe .pipe-step').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var tab = b.getAttribute('data-tab');
+        var pipe = b.getAttribute('data-pipe') || '';
+        switchTab(tab, pipe || undefined);
+        if (tab === 'publish') {
+          setTimeout(function () {
+            var anchor = document.getElementById(pipe === 'register' ? 'pub-register' : 'pub-after');
+            if (anchor) anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 50);
+        }
+      });
+    });
 
     document.getElementById('seed-form').addEventListener('submit', async function (ev) {
       ev.preventDefault();
@@ -652,16 +1126,27 @@
       if (kb) body.knowledge_base_id = kb;
       if (run) body.geo_run_id = run;
       try {
-        await api('/geo-strategies/seed', { method: 'POST', body: JSON.stringify(body) });
-        showMsg('草稿已创建。请点「填写策略内容」补全后，再送审。', 'ok');
+        const created = await api('/geo-strategies/seed', { method: 'POST', body: JSON.stringify(body) });
+        showMsg('草稿已创建。请在下方「补全并送审」里写全内容。', 'ok');
         await load();
-      } catch (e) {
-        showMsg(String(e.message || e), 'err');
-      }
+        if (created && created.id) {
+          setCurrentId(created.id);
+          switchTab('craft');
+        }
+      } catch (e) { showMsg(String(e.message || e), 'err'); }
     });
     document.getElementById('btn-refresh').onclick = load;
     document.getElementById('filter-status').onchange = applyFilter;
-    refreshRole().then(load);
+
+    currentId = readStoredStrategyId();
+    refreshRole()
+      .then(refreshPool)
+      .then(loadFormOptions)
+      .then(load)
+      .then(function () {
+        const tab = new URLSearchParams(location.search || '').get('tab');
+        if (tab) switchTab(tab);
+      });
   })();
   </script>
 </body>

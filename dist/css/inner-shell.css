@@ -16,11 +16,12 @@
   --inner-muted: #5C677A;
   --inner-line: #D8D2C6;
   --inner-line-ink: rgba(26, 26, 26, 0.16);
-  --inner-primary: #0052D9;
+  /* Stitch DESIGN.md：墨蓝主色 + 青绿推进（替换亮蓝/橙辅） */
+  --inner-primary: #1F4B7A;
   --inner-primary-soft: #E8F1FF;
-  --inner-primary-mid: #4A90E2;
-  --inner-accent: #E8641B;
-  --inner-accent-soft: #FFF1E6;
+  --inner-primary-mid: #376090;
+  --inner-accent: #2A6F6A;
+  --inner-accent-soft: #EAF5F4;
   --inner-green: #2BA471;
   --inner-green-soft: #E8F7EF;
   --inner-radius: 16px;

@@ -10,6 +10,7 @@ from sqlalchemy import select
 
 from app.core.deps import CurrentUser, DbSession, OptionalUser
 from app.models.content_engine import KnowledgeBase
+from app.models.geo_run import GeoRun
 from app.models.geo_strategy import GeoStrategy
 from app.services import geo_strategy_svc as svc
 from app.services.geo_kb import serialize_task
@@ -81,6 +82,24 @@ class AttachDiagnosticBody(BaseModel):
     diagnostic_report_id: uuid.UUID
 
 
+class ObsSampleItem(BaseModel):
+    question_text: str | None = None
+    question_id: str | None = None
+    mention: bool = False
+    citation_rank: int | None = None
+    citation_url: str | None = None
+    owned_citation: bool = False
+    strong_adopted: bool = False
+    answer_text: str | None = None
+    informal: bool = False
+
+
+class RecordObsBody(BaseModel):
+    phase: str = Field(description="baseline|after")
+    account_label: str | None = None
+    samples: list[ObsSampleItem] = Field(min_length=1)
+
+
 async def _get(db: DbSession, strategy_id: uuid.UUID) -> GeoStrategy:
     s = await db.get(GeoStrategy, strategy_id)
     if not s:
@@ -106,6 +125,41 @@ async def list_strategies(
     for s in rows:
         items.append(await _ser(db, s))
     return {"items": items}
+
+
+@router.get("/options")
+async def strategy_form_options(db: DbSession, _: CurrentUser, run_limit: int = 40):
+    """新建/编辑策略用的下拉选项：知识库 + 观测任务（无需手工复制 UUID）。"""
+    kbs = (
+        await db.execute(select(KnowledgeBase).order_by(KnowledgeBase.created_at.desc()).limit(80))
+    ).scalars().all()
+    runs = (
+        await db.execute(
+            select(GeoRun).order_by(GeoRun.created_at.desc()).limit(min(max(run_limit, 1), 80))
+        )
+    ).scalars().all()
+    return {
+        "knowledge_bases": [
+            {
+                "id": str(kb.id),
+                "name": kb.name,
+                "slug": kb.slug,
+                "doc_count": kb.doc_count or 0,
+                "source_label": kb.source_label,
+            }
+            for kb in kbs
+        ],
+        "geo_runs": [
+            {
+                "id": str(run.id),
+                "title": run.title or run.entity or "未命名观测任务",
+                "entity": run.entity,
+                "status": run.status,
+                "created_at": run.created_at.isoformat() if run.created_at else None,
+            }
+            for run in runs
+        ],
+    }
 
 
 @router.post("/seed")
@@ -202,6 +256,28 @@ async def register_baseline(strategy_id: uuid.UUID, db: DbSession, user: Current
     s = await _get(db, strategy_id)
     try:
         s = await svc.register_baseline_snapshot(db, s, actor=user, create_pending=True)
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    await db.commit()
+    await db.refresh(s)
+    return await _ser(db, s)
+
+
+@router.post("/{strategy_id}/record-obs-samples")
+async def record_obs_samples(strategy_id: uuid.UUID, payload: RecordObsBody, db: DbSession, user: CurrentUser):
+    """回传白号摸底/复测样本（半自动）。"""
+    s = await _get(db, strategy_id)
+    try:
+        s = await svc.record_obs_samples(
+            db,
+            s,
+            actor=user,
+            phase=payload.phase,
+            samples=[item.model_dump() for item in payload.samples],
+            account_label=payload.account_label,
+        )
     except PermissionError as exc:
         raise HTTPException(403, str(exc)) from exc
     except ValueError as exc:
@@ -408,7 +484,6 @@ async def force_admin(strategy_id: uuid.UUID, db: DbSession, user: CurrentUser):
 @router.post("/{strategy_id}/start-observe")
 async def start_observe(strategy_id: uuid.UUID, db: DbSession, user: CurrentUser):
     """⑤后：按策略问法×单平台建白号观测快照（须已投放且全稿 ready）。"""
-    from app.models.geo_run import GeoRun
     from app.services import real_obs as real_obs_svc
 
     s = await _get(db, strategy_id)

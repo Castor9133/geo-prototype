@@ -38,9 +38,25 @@ class NavigationSettingsTests(unittest.TestCase):
                 "config",
             },
         )
+        self.assertEqual(
+            [item["id"] for item in menu["items"]],
+            [
+                "suite",
+                "diagnostic",
+                "strategies",
+                "knowledge",
+                "keywords",
+                "distribute",
+                "measure",
+                "config",
+            ],
+        )
         knowledge = next(item for item in menu["items"] if item["id"] == "knowledge")
         self.assertEqual(knowledge["url"], "/knowledge")
         self.assertEqual(knowledge["target"], "_self")
+        strategies = next(item for item in menu["items"] if item["id"] == "strategies")
+        self.assertEqual(strategies["url"], "/strategies")
+        self.assertEqual(strategies["label"], "选题策略")
         distribute = next(item for item in menu["items"] if item["id"] == "distribute")
         self.assertEqual(distribute["url"], "/distribute")
         self.assertEqual(distribute["target"], "_self")
@@ -101,7 +117,10 @@ class NavigationSettingsTests(unittest.TestCase):
             }
         )
 
-        self.assertEqual([item["id"] for item in menu["items"]], ["suite", "diagnostic", "knowledge", "distribute"])
+        self.assertEqual(
+            [item["id"] for item in menu["items"]],
+            ["suite", "diagnostic", "strategies", "knowledge", "distribute"],
+        )
 
     def test_ensure_suite_strips_removed_product_entries(self):
         menu = ensure_suite_in_navigation_menu(
@@ -118,7 +137,10 @@ class NavigationSettingsTests(unittest.TestCase):
             }
         )
 
-        self.assertEqual([item["id"] for item in menu["items"]], ["suite", "diagnostic", "knowledge", "distribute"])
+        self.assertEqual(
+            [item["id"] for item in menu["items"]],
+            ["suite", "diagnostic", "strategies", "knowledge", "distribute"],
+        )
         self.assertFalse({"tools", "companies"} & {item["id"] for item in menu["items"]})
 
     def test_ensure_suite_rewrites_legacy_knowledge_url(self):
@@ -174,8 +196,33 @@ class NavigationSettingsTests(unittest.TestCase):
         self.assertEqual(ids.count("distribute"), 1)
         self.assertEqual(
             ids,
-            ["suite", "diagnostic", "knowledge", "keywords", "distribute", "measure", "config"],
+            [
+                "suite",
+                "diagnostic",
+                "strategies",
+                "knowledge",
+                "keywords",
+                "distribute",
+                "measure",
+                "config",
+            ],
         )
+
+    def test_ensure_suite_places_strategies_after_diagnostic(self):
+        menu = ensure_suite_in_navigation_menu(
+            {
+                "items": [
+                    {"id": "suite", "label": "GEO Suite", "url": "/suite", "target": "_self"},
+                    {"id": "diagnostic", "label": "诊断", "url": "/diagnostic", "target": "_self"},
+                    {"id": "knowledge", "label": "知识库", "url": "/knowledge", "target": "_self"},
+                    {"id": "strategies", "label": "策略", "url": "/strategies", "target": "_self"},
+                ]
+            }
+        )
+        ids = [item["id"] for item in menu["items"]]
+        self.assertEqual(ids.index("strategies"), ids.index("diagnostic") + 1)
+        strategies = next(item for item in menu["items"] if item["id"] == "strategies")
+        self.assertEqual(strategies["label"], "选题策略")
 
 
 if __name__ == "__main__":

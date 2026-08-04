@@ -44,11 +44,11 @@ DEFAULT_NAVIGATION_MENU = {
     "items": [
         deepcopy(SUITE_NAVIGATION_ITEM),
         {"id": "diagnostic", "label": "诊断", "url": "/diagnostic", "target": "_self", "enabled": True},
-        deepcopy(KNOWLEDGE_NAVIGATION_ITEM),
         deepcopy(STRATEGIES_NAVIGATION_ITEM),
+        deepcopy(KNOWLEDGE_NAVIGATION_ITEM),
         {"id": "keywords", "label": "拓词", "url": "/keywords", "target": "_self", "enabled": True},
         deepcopy(DISTRIBUTE_NAVIGATION_ITEM),
-        {"id": "measure", "label": "观测", "url": "/suite?step=measure", "target": "_self", "enabled": True},
+        {"id": "measure", "label": "观测", "url": "/observe", "target": "_self", "enabled": True},
         {"id": "config", "label": "配置", "url": "/settings", "target": "_self", "enabled": True},
     ]
 }
@@ -144,6 +144,16 @@ def _rewrite_frontend_pillar_navigation_urls(items: list[dict[str, Any]]) -> lis
             next_item["url"] = DISTRIBUTE_NAVIGATION_ITEM["url"]
             next_item["target"] = "_self"
             next_item["enabled"] = next_item.get("enabled") is not False
+        elif item_id == "strategies" or item_url.split("?", 1)[0].rstrip("/").lower() in {
+            "/strategies",
+            "/strategies.html",
+        }:
+            label = str(next_item.get("label") or "").strip()
+            next_item["id"] = "strategies"
+            next_item["label"] = "选题策略" if label in ("", "策略") else label
+            next_item["url"] = STRATEGIES_NAVIGATION_ITEM["url"]
+            next_item["target"] = "_self"
+            next_item["enabled"] = next_item.get("enabled") is not False
         elif item_id in {"suite", "diagnostic", "keywords", "measure", "config"}:
             # 站内六大能力默认同窗口；外链保留原 target
             url_l = item_url.lower()
@@ -151,6 +161,38 @@ def _rewrite_frontend_pillar_navigation_urls(items: list[dict[str, Any]]) -> lis
                 next_item["target"] = "_self"
         rewritten.append(next_item)
     return rewritten
+
+
+def _insert_strategies_navigation_item(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """选题策略固定插在诊断之后；若已存在则挪到该位置。"""
+    strategies = deepcopy(STRATEGIES_NAVIGATION_ITEM)
+    remaining: list[dict[str, Any]] = []
+    for item in items:
+        item_id = str(item.get("id") or "").strip().lower()
+        path = str(item.get("url") or "").strip().lower().split("?", 1)[0].rstrip("/")
+        if item_id == "strategies" or path in {"/strategies", "/strategies.html"}:
+            label = str(item.get("label") or "").strip()
+            strategies = deepcopy(item)
+            strategies["id"] = "strategies"
+            strategies["label"] = "选题策略" if label in ("", "策略") else label
+            strategies["url"] = STRATEGIES_NAVIGATION_ITEM["url"]
+            strategies["target"] = "_self"
+            strategies["enabled"] = item.get("enabled") is not False
+            continue
+        remaining.append(item)
+    insert_at = 1
+    for index, item in enumerate(remaining):
+        item_id = str(item.get("id") or "").strip().lower()
+        item_url = str(item.get("url") or "").strip().rstrip("/").lower()
+        if item_id == "diagnostic" or item_url == "/diagnostic":
+            insert_at = index + 1
+            break
+        if item_id == "suite" or item_url == "/suite":
+            insert_at = index + 1
+    merged = [*remaining[:insert_at], strategies, *remaining[insert_at:]]
+    if len(merged) > MAX_NAVIGATION_ITEMS:
+        merged = merged[:MAX_NAVIGATION_ITEMS]
+    return merged
 
 
 def _has_knowledge_navigation_item(items: list[Any]) -> bool:
@@ -174,7 +216,7 @@ def _has_knowledge_navigation_item(items: list[Any]) -> bool:
 
 
 def _insert_knowledge_navigation_item(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Insert the six-pillar knowledge entry after diagnostic (or after suite)."""
+    """Insert knowledge after 选题策略（或诊断 / Suite）。"""
     if _has_knowledge_navigation_item(items):
         return items
     knowledge = deepcopy(KNOWLEDGE_NAVIGATION_ITEM)
@@ -182,10 +224,12 @@ def _insert_knowledge_navigation_item(items: list[dict[str, Any]]) -> list[dict[
     for index, item in enumerate(items):
         item_id = str(item.get("id") or "").strip().lower()
         item_url = str(item.get("url") or "").strip().rstrip("/").lower()
-        if item_id == "diagnostic" or item_url == "/diagnostic":
+        if item_id == "strategies" or item_url in {"/strategies", "/strategies.html"}:
             insert_at = index + 1
             break
-        if item_id == "suite" or item_url == "/suite":
+        if item_id == "diagnostic" or item_url == "/diagnostic":
+            insert_at = index + 1
+        elif item_id == "suite" or item_url == "/suite":
             insert_at = index + 1
     merged = [*items[:insert_at], knowledge, *items[insert_at:]]
     if len(merged) > MAX_NAVIGATION_ITEMS:
@@ -278,16 +322,10 @@ def ensure_suite_in_navigation_menu(payload: Any) -> dict[str, list[dict[str, An
         items = [deepcopy(SUITE_NAVIGATION_ITEM), *items]
     items = _rewrite_frontend_pillar_navigation_urls(items)
     items = _dedupe_pillar_navigation_items(items)
+    items = _insert_strategies_navigation_item(items)
     items = _insert_knowledge_navigation_item(items)
     items = _insert_distribute_navigation_item(items)
     items = _dedupe_pillar_navigation_items(items)
-    # 脚手架「策略」→ 编辑可读「选题策略」
-    for item in items:
-        if str(item.get("id") or "").strip().lower() == "strategies":
-            label = str(item.get("label") or "").strip()
-            if label in ("", "策略"):
-                item["label"] = "选题策略"
-            break
     if len(items) > MAX_NAVIGATION_ITEMS:
         items = [items[0], *items[1:MAX_NAVIGATION_ITEMS]]
     return {"items": items}

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <title>观测 · 摸底与复测</title>
+  <meta name="description" content="白号提问回传：投放前摸底与投放后复测。">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/public-tailwind.css?v=20260804-obs1">
+  <link rel="stylesheet" href="/css/common.css?v=20260804-obs1">
+  <link rel="stylesheet" href="/css/inner-shell.css?v=20260804-obs1">
+  <style>
+    :root {
+      --ob-ink: #1c1b1b; --ob-muted: #42474f; --ob-line: #d8d2c6;
+      --ob-paper: #fff; --ob-bg: #fcf9f8; --ob-accent: #1f4b7a;
+      --ob-teal: #2a6f6a; --ob-bad: #b91c1c; --ob-warn: #8a5a00;
+    }
+    body.inner-page { background: var(--ob-bg); color: var(--ob-ink); }
+    .ob-page { max-width: 1100px; margin: 0 auto; padding: 5.75rem 1rem 3rem; }
+    .ob-hero h1 { font-family: "Noto Serif SC", serif; font-size: 1.75rem; margin: 0.2rem 0; color: #003460; }
+    .ob-lead { color: var(--ob-muted); margin: 0.4rem 0 1rem; max-width: 40rem; line-height: 1.55; }
+    .ob-card {
+      background: var(--ob-paper); border: 1px solid var(--ob-line); border-radius: 16px;
+      padding: 1rem 1.15rem; box-shadow: 0 4px 16px rgba(26,26,26,.06); margin-bottom: 1rem;
+    }
+    .ob-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--ob-line); margin-bottom: 1rem; }
+    .ob-tabs button {
+      border: 0; background: none; padding: 0.65rem 1rem; font: inherit; cursor: pointer;
+      color: var(--ob-muted); border-bottom: 2px solid transparent; margin-bottom: -1px;
+    }
+    .ob-tabs button.is-on { color: var(--ob-accent); border-bottom-color: var(--ob-accent); font-weight: 600; }
+    .ob-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin-bottom: 1rem; }
+    .ob-steps div {
+      background: #f6f3f2; border-radius: 10px; padding: 0.75rem; text-align: center; font-size: 0.88rem;
+    }
+    .ob-steps strong { display: block; font-size: 0.78rem; color: var(--ob-teal); margin-bottom: 0.2rem; }
+    .ob-alert {
+      padding: 0.7rem 0.85rem; border-radius: 8px; margin-bottom: 0.75rem; font-size: 0.9rem;
+    }
+    .ob-alert.warn { background: #fff8e6; border-left: 4px solid #d48806; color: var(--ob-warn); }
+    .ob-alert.gate { background: #fef2f2; border-left: 4px solid var(--ob-bad); color: var(--ob-bad); }
+    .ob-alert.ok { background: #e8f7ef; border-left: 4px solid var(--ob-teal); }
+    .ob-form { display: grid; gap: 0.65rem; }
+    .ob-form label { display: grid; gap: 0.25rem; font-size: 0.9rem; }
+    .ob-form select, .ob-form input, .ob-form textarea {
+      border: 1px solid var(--ob-line); border-radius: 8px; padding: 0.5rem 0.65rem; font: inherit; min-height: 42px;
+    }
+    .ob-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .ob-table th, .ob-table td { border-bottom: 1px solid var(--ob-line); padding: 0.55rem 0.4rem; text-align: left; vertical-align: middle; }
+    .ob-table th { color: var(--ob-muted); font-weight: 600; font-size: 0.78rem; }
+    .ob-table input[type="text"] { width: 100%; border: 1px solid var(--ob-line); border-radius: 6px; padding: 0.35rem 0.45rem; font: inherit; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.45rem 0.85rem;
+      border-radius: 10px; border: 1px solid var(--ob-line); background: #fff; cursor: pointer; font: inherit;
+    }
+    .btn.primary { background: var(--ob-accent); color: #fff; border-color: var(--ob-accent); }
+    .btn.teal { background: var(--ob-teal); color: #fff; border-color: var(--ob-teal); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .ob-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.85rem; }
+    .ob-hint { font-size: 0.8rem; color: var(--ob-muted); }
+    @media (max-width: 720px) { .ob-steps { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body class="text-on-surface antialiased inner-page">
+  <div id="header-container"></div>
+  <main class="ob-page">
+    <header class="ob-hero">
+      <p class="ob-hint" style="margin:0">党建党媒 · 半自动观测</p>
+      <h1>观测与回传</h1>
+      <p class="ob-lead">用白号在豆包 / 元宝 / DeepSeek 按问法提问，把「有没有被提到、引用有没有进前十」登记回来。系统不代问。</p>
+      <div class="ob-actions">
+        <a class="btn" href="/strategies">回选题策略</a>
+        <a class="btn" href="/suite?step=measure">旧版观测面板</a>
+      </div>
+    </header>
+
+    <section class="ob-card">
+      <div class="ob-tabs" role="tablist">
+        <button type="button" class="is-on" data-phase="baseline">投放前摸底</button>
+        <button type="button" data-phase="after">投放后复测</button>
+      </div>
+      <div class="ob-steps" aria-label="提问流程">
+        <div><strong>步骤 1</strong>打开问答平台</div>
+        <div><strong>步骤 2</strong>按问法提问</div>
+        <div><strong>步骤 3</strong>回传登记结果</div>
+      </div>
+      <div id="ob-alerts"></div>
+      <form class="ob-form" id="ob-form">
+        <label>关联选题策略
+          <select id="ob-strategy" required><option value="">加载中…</option></select>
+        </label>
+        <p class="ob-hint" id="ob-meta">选择策略后显示平台与问法</p>
+        <div style="overflow-x:auto">
+          <table class="ob-table" id="ob-table">
+            <thead>
+              <tr>
+                <th>问法</th>
+                <th>被提到</th>
+                <th>引用进前十</th>
+                <th>排名</th>
+                <th>备注</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="ob-actions">
+          <button type="button" class="btn" id="ob-ensure-snap">先建摸底/复测快照</button>
+          <button type="submit" class="btn teal" id="ob-submit">提交登记</button>
+        </div>
+      </form>
+      <p class="ob-hint" id="ob-msg"></p>
+    </section>
+  </main>
+  <script src="/js/common.js"></script>
+  <script>
+  (function () {
+    const tokenKey = 'georank_token';
+    let phase = 'baseline';
+    let strategies = [];
+    let current = null;
+    const PLATFORM = { doubao: '豆包', yuanbao: '元宝', deepseek: 'DeepSeek' };
+
+    function token() {
+      try { return localStorage.getItem(tokenKey) || sessionStorage.getItem(tokenKey) || ''; }
+      catch (_) { return ''; }
+    }
+    async function api(path, opts) {
+      const headers = Object.assign({ 'Content-Type': 'application/json' }, (opts && opts.headers) || {});
+      const t = token();
+      if (t) headers.Authorization = 'Bearer ' + t;
+      const res = await fetch('/api' + path, Object.assign({}, opts || {}, { headers }));
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const d = data.detail;
+        throw new Error(typeof d === 'string' ? d : (data.message || res.statusText || '失败'));
+      }
+      return data;
+    }
+    function setMsg(t, ok) {
+      const el = document.getElementById('ob-msg');
+      el.textContent = t || '';
+      el.style.color = ok ? '#146c2e' : '#b91c1c';
+    }
+    function renderAlerts() {
+      const box = document.getElementById('ob-alerts');
+      if (!current) { box.innerHTML = ''; return; }
+      const qn = (current.query_variants || []).length;
+      let html = '';
+      if (qn < 3) {
+        html += '<div class="ob-alert warn">样本问法不足：策略里建议至少 3 条问法，当前 ' + qn + ' 条。请回选题策略补全。</div>';
+      }
+      if (phase === 'after' && !(current.site_url && current.media_url)) {
+        html += '<div class="ob-alert gate">还不能做正式复测：策略尚未登记官网 + 媒体号链接。' +
+          '<a href="/strategies" style="margin-left:0.5rem;color:#2a6f6a">去登记发布 →</a></div>';
+      }
+      if (phase === 'baseline' && !current.baseline_snapshot_id) {
+        html += '<div class="ob-alert warn">尚未建立摸底快照，请先点「先建摸底/复测快照」。</div>';
+      }
+      if (phase === 'after' && !current.after_snapshot_id) {
+        html += '<div class="ob-alert warn">尚未建立复测快照，请先点「先建摸底/复测快照」（须已登记发布）。</div>';
+      }
+      const b = (current.meta && current.meta.baseline_sample_count) || 0;
+      const a = (current.meta && current.meta.after_sample_count) || 0;
+      if (b || a) {
+        html += '<div class="ob-alert ok">已回传：摸底 ' + b + ' 条 · 复测 ' + a + ' 条</div>';
+      }
+      box.innerHTML = html;
+    }
+    function renderTable() {
+      const tb = document.querySelector('#ob-table tbody');
+      tb.innerHTML = '';
+      const variants = (current && current.query_variants) || [];
+      if (!variants.length) {
+        tb.innerHTML = '<tr><td colspan="5" class="ob-hint">请先选择有问法的策略</td></tr>';
+        return;
+      }
+      variants.forEach(function (q, i) {
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td><input type="text" data-k="q" value="' + String(q).replace(/"/g, '&quot;') + '"></td>' +
+          '<td><input type="checkbox" data-k="mention"></td>' +
+          '<td><input type="checkbox" data-k="top10"></td>' +
+          '<td><input type="number" data-k="rank" min="1" max="50" placeholder="如 3" style="width:4.5rem"></td>' +
+          '<td><input type="text" data-k="note" placeholder="可选"></td>';
+        tr.dataset.qid = (phase === 'baseline' ? 'bq' : 'aq') + (i + 1);
+        tb.appendChild(tr);
+      });
+    }
+    function pickStrategy(id) {
+      current = strategies.find(function (s) { return s.id === id; }) || null;
+      const meta = document.getElementById('ob-meta');
+      if (!current) {
+        meta.textContent = '未选择策略';
+      } else {
+        meta.textContent = '平台：' + (PLATFORM[current.platform] || current.platform) +
+          ' · 问题：' + (current.question_class || '') +
+          ' · 状态：' + (current.status || '');
+      }
+      renderAlerts();
+      renderTable();
+    }
+    async function loadStrategies() {
+      const sel = document.getElementById('ob-strategy');
+      try {
+        const data = await api('/geo-strategies?limit=50');
+        strategies = data.items || [];
+        sel.innerHTML = '<option value="">请选择策略</option>' + strategies.map(function (s) {
+          return '<option value="' + s.id + '">' +
+            (PLATFORM[s.platform] || s.platform) + ' · ' + (s.title || s.question_class || s.id) +
+            '</option>';
+        }).join('');
+        const params = new URLSearchParams(location.search);
+        const pre = params.get('strategy');
+        if (pre) { sel.value = pre; pickStrategy(pre); }
+      } catch (e) {
+        sel.innerHTML = '<option value="">请先登录编写/审核账号</option>';
+        setMsg(String(e.message || e), false);
+      }
+    }
+    document.querySelectorAll('.ob-tabs button').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.ob-tabs button').forEach(function (b) { b.classList.remove('is-on'); });
+        btn.classList.add('is-on');
+        phase = btn.getAttribute('data-phase');
+        renderAlerts();
+        renderTable();
+      });
+    });
+    document.getElementById('ob-strategy').addEventListener('change', function (ev) {
+      pickStrategy(ev.target.value);
+    });
+    document.getElementById('ob-ensure-snap').addEventListener('click', async function () {
+      if (!current) { setMsg('请先选策略', false); return; }
+      try {
+        setMsg('正在建快照…');
+        if (phase === 'baseline') {
+          current = await api('/geo-strategies/' + current.id + '/register-baseline', { method: 'POST' });
+        } else {
+          current = await api('/geo-strategies/' + current.id + '/start-observe', { method: 'POST' });
+        }
+        strategies = strategies.map(function (s) { return s.id === current.id ? current : s; });
+        setMsg('快照已就绪，可以登记结果', true);
+        renderAlerts();
+      } catch (e) {
+        setMsg(String(e.message || e), false);
+      }
+    });
+    document.getElementById('ob-form').addEventListener('submit', async function (ev) {
+      ev.preventDefault();
+      if (!current) { setMsg('请先选策略', false); return; }
+      const rows = Array.from(document.querySelectorAll('#ob-table tbody tr'));
+      const samples = rows.map(function (tr) {
+        const mention = !!tr.querySelector('[data-k="mention"]').checked;
+        const top10 = !!tr.querySelector('[data-k="top10"]').checked;
+        let rank = tr.querySelector('[data-k="rank"]').value;
+        if (top10 && !rank) rank = '5';
+        if (!top10 && mention) rank = rank || '12';
+        return {
+          question_id: tr.dataset.qid,
+          question_text: tr.querySelector('[data-k="q"]').value.trim(),
+          mention: mention,
+          citation_rank: rank ? Number(rank) : null,
+          citation_url: current.site_url || '',
+          owned_citation: top10 && mention,
+          answer_text: tr.querySelector('[data-k="note"]').value.trim() || null,
+          informal: true,
+        };
+      }).filter(function (x) { return x.question_text; });
+      if (!samples.length) { setMsg('没有可提交的问法行', false); return; }
+      try {
+        setMsg('正在回传…');
+        current = await api('/geo-strategies/' + current.id + '/record-obs-samples', {
+          method: 'POST',
+          body: JSON.stringify({ phase: phase, account_label: 'observe-board', samples: samples }),
+        });
+        strategies = strategies.map(function (s) { return s.id === current.id ? current : s; });
+        setMsg('已回传 ' + samples.length + ' 条（' + (phase === 'baseline' ? '摸底' : '复测') + '）', true);
+        renderAlerts();
+      } catch (e) {
+        setMsg(String(e.message || e), false);
+      }
+    });
+    loadStrategies();
+  })();
+  </script>
+</body>
+</html>

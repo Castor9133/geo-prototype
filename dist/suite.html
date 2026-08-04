@@ -29,22 +29,36 @@
     <main class="cockpit">
         <header class="cockpit-top">
             <div class="cockpit-top__left">
-                <h1 id="suite-cockpit-title">GEO Suite</h1>
-                <p class="cockpit-top__sub" id="suite-cockpit-sub">检查 → 知识 → 拓词 → 内容/分发预览 → 观测</p>
+                <h1 id="suite-cockpit-title">党建党媒工作台</h1>
+                <p class="cockpit-top__sub" id="suite-cockpit-sub">查页面 → 备知识/写稿 → 选题策略 → 分发预览 → 观测复测</p>
             </div>
             <div class="cockpit-top__tabs" role="tablist" aria-label="Suite 视图">
                 <a class="cockpit-tab is-active" href="/suite" data-suite-tab="factory">概览</a>
-                <a class="cockpit-tab" href="/suite?step=measure" data-suite-tab="measure">观测</a>
+                <a class="cockpit-tab" href="/observe" data-suite-tab="measure">观测</a>
+                <a class="cockpit-tab" href="/strategies">选题策略</a>
                 <a class="cockpit-tab" href="/knowledge">知识</a>
                 <a class="cockpit-tab" href="/settings">配置</a>
             </div>
             <div class="cockpit-top__actions">
                 <span class="cockpit-chip" id="suite-status-text">就绪</span>
-                <a class="cockpit-btn cockpit-btn--primary" id="suite-start-cta" href="/diagnostic?from=suite&amp;workflow=1&amp;step=diagnostic">开始工作流</a>
+                <a class="cockpit-btn cockpit-btn--primary" id="suite-start-cta" href="/strategies">今天从选题策略继续</a>
                 <a class="cockpit-btn" id="suite-open-content-engine" href="/knowledge" hidden>打开知识库</a>
                 <a class="cockpit-btn" id="suite-open-geoflow" href="/knowledge" hidden>GEOFlow</a>
             </div>
         </header>
+
+        <section class="cockpit-card" id="suite-welcome" style="margin-bottom:1rem;padding:1rem 1.15rem;display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:space-between">
+            <div>
+                <p style="margin:0 0 0.35rem;font-size:0.78rem;color:#5c6570"><span class="cockpit-chip">编辑工作台</span> 岗位见顶栏账号</p>
+                <h2 style="margin:0;font-family:'Noto Serif SC',serif;font-size:1.25rem;color:#003460">先摸清现状，再写稿发布，最后复测有没有被 AI 答到。</h2>
+                <p style="margin:0.4rem 0 0;color:#5c6570;font-size:0.9rem">验收看选题策略是否见效，不是看发了几篇文章。</p>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+                <a class="cockpit-btn cockpit-btn--primary" href="/strategies">打开选题策略</a>
+                <a class="cockpit-btn" href="/observe">观测回传</a>
+                <a class="cockpit-btn" href="/diagnostic">查页面</a>
+            </div>
+        </section>
 
         <!-- 图1：顶部 5 步流水线指标卡 -->
         <section class="pipe-row" id="suite-pipeline" aria-label="五步工作流指标"></section>

@@ -1,9 +1,9 @@
-/* 首页 — 向顶栏简洁气质收敛（去硬黑 neubrutal） */
+/* 首页 — 党建党媒工作台入口（墨蓝纸面，不用图标字体 ligature） */
 .home-page {
   margin: 0;
   min-height: 100vh;
-  background: var(--geo-bg, #F7F8FA);
-  color: var(--geo-ink, #1A1A1A);
+  background: var(--inner-bg, #fcf9f8);
+  color: var(--geo-ink, #1c1b1b);
   font-family: "Noto Sans SC", system-ui, sans-serif;
 }
 
@@ -30,10 +30,11 @@
 
 .home-hero h1 {
   margin: 0;
-  font-family: "Noto Sans SC", system-ui, sans-serif;
+  font-family: "Noto Serif SC", "Songti SC", Georgia, serif;
   font-size: clamp(2rem, 4.5vw, 2.75rem);
-  font-weight: 800;
-  letter-spacing: -0.03em;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #003460;
 }
 
 .home-lead {
@@ -65,8 +66,8 @@
 }
 
 .home-btn--primary {
-  background: var(--geo-accent, #1B6EF3);
-  border-color: var(--geo-accent, #1B6EF3);
+  background: var(--inner-primary, #1f4b7a);
+  border-color: var(--inner-primary, #1f4b7a);
   color: #fff;
 }
 
@@ -83,9 +84,9 @@
 .home-pillar {
   display: block;
   padding: 1rem;
-  border: 1px solid var(--geo-line, #E5EAF0);
-  border-radius: 10px;
-  box-shadow: none;
+  border: 1px solid #d8d2c6;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(26, 26, 26, 0.06);
   text-decoration: none;
   color: inherit;
   background: #fff;
@@ -93,20 +94,27 @@
 }
 
 .home-pillar:hover {
-  border-color: #C5D0E0;
+  border-color: #1f4b7a;
 }
 
-.home-pillar .material-symbols-outlined {
-  font-size: 1.4rem;
-  margin-bottom: 0.3rem;
-  color: var(--geo-accent, #1B6EF3);
+.home-pillar__label {
+  display: inline-block;
+  margin-bottom: 0.45rem;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  background: #e8f1ff;
+  color: #1f4b7a;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
 .home-pillar h2 {
   margin: 0;
-  font-family: "Noto Sans SC", system-ui, sans-serif;
+  font-family: "Noto Serif SC", "Songti SC", Georgia, serif;
   font-size: 1.05rem;
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .home-pillar p {
@@ -114,15 +122,6 @@
   font-size: 0.86rem;
   line-height: 1.55;
   color: var(--geo-muted, #5C677A);
-}
-
-.home-pillar--blue,
-.home-pillar--sand,
-.home-pillar--orange,
-.home-pillar--green,
-.home-pillar--lavender,
-.home-pillar--ink {
-  background: #fff;
 }
 
 @media (max-width: 900px) {

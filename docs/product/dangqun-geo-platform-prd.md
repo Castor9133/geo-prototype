@@ -1,9 +1,9 @@
 # 党建党媒 GEO 平台快速落地方案（PRD）
 
-> 版本：2026-08-03b · Grill 共识 + **与白板总流程对齐修订**（补回诊断 / 初次观测；写清环间交付物）  
+> 版本：2026-08-04-freeze · Grill 共识 + 白板①–⑨ + W1–W8 闸门落地冻结  
 > 周期：≤2 个月（约 8 周）  
 > 原则：正式项目，验收口径 = 上线口径；禁止演示/验收双轨降标  
-> 实现入口：`/api/geo-strategies` · 看板 `/strategies` · 诊断 `/diagnostic` · 观测挂 `real_obs`（baseline/after）
+> 实现入口：`/api/geo-strategies` · 看板 `/strategies` · 白号池 `/api/obs-white-accounts` · 诊断 `/diagnostic` · 观测 `real_obs`
 
 ---
 
@@ -232,22 +232,26 @@ flowchart TB
 - **§4 环间交付物**为验收检查表  
 - 原「①缺口感知」不再替代诊断/初次观测，只作为种子入口的辅助说法  
 
-**实现进度（相对本 PRD）**
+**实现进度（相对本 PRD · 2026-08-04-freeze）**
 
 | 项 | 现状 |
 |----|------|
-| 策略 API / 看板 | 已有 |
+| 策略 API / 看板 | 已有；Stitch 墨蓝纸面 tokens |
 | 诊断→策略硬挂接 | `POST .../attach-diagnostic`；审批前必填 |
-| baseline 作为可执行前置 | `POST .../register-baseline`（pending 占位；白号采样另测） |
-| after 快照 | `start-observe` 建 after 并写 `after_snapshot_id`（采样另测） |
-| 环间交付物 | `handoff_checklist` 字段 + `GET .../handoff-checklist` |
-| 离线/联调冒烟 | 单测 + `smoke_geo_strategy_e2e.py`（含真 LLM 生成与 Embedding 入库；after 用 fixture；**不测白号**） |
-| 策略看板 UX | `/strategies`：九环示意、岗位登录、六元组编辑、挂任务一键生成、检查表 |
+| baseline 作为可执行前置 | `register-baseline` + `record-obs-samples`（phase=baseline） |
+| after 快照 | `start-observe` + `record-obs-samples`（phase=after） |
+| 白号池 | `/api/obs-white-accounts`（每平台≥5；可 seed 占位） |
+| 知识 RAG 门禁 | 送审/批准校验绑定文档 `rag_eligible` |
+| 稿件写≠审 | `approve-ready` 仅 reviewer；claimed≠reviewed；admin 不日常过审 |
+| 强制沉淀三闸 | API + 看板按钮 |
+| 环间交付物 | `handoff_checklist` |
+| 6 策验收脚本 | `scripts/smoke_geo_strategy_six.py`（2 类×3 平台，fixture 样本） |
 
-**本机冒烟**：`alembic upgrade head`（023+024）后：
-- 服务层全流程（fixture after，不跑白号）：`python scripts/smoke_geo_strategy_e2e.py`
-- HTTP 闸门：`python scripts/smoke_geo_strategy_api_http.py`（API :8010；先跑 e2e 写入 smoke 用户）
-- 聚合：`python scripts/smoke_geo_strategy_flow.py --e2e` 或 `--api http://127.0.0.1:8010`
+**本机冒烟**：`alembic upgrade head`（至 025）后：
+- 服务层全流程：`python scripts/smoke_geo_strategy_e2e.py`
+- 六策闸门：`python scripts/smoke_geo_strategy_six.py`
+- HTTP 闸门：`python scripts/smoke_geo_strategy_api_http.py`（API :8010）
+- 聚合：`python scripts/smoke_geo_strategy_flow.py --e2e`
 
 **业务文档**（非技术科普）：
 - 操作指南：[dangqun-geo-ops-guide.md](./dangqun-geo-ops-guide.md)

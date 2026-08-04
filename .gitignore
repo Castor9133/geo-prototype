@@ -98,3 +98,7 @@ tmp/
 # Local runtime logs
 logs/
 
+# Stitch design exports (not product runtime)
+stitch_geo_design_system_prototype/
+stitch_geo_design_system_prototype.zip
+

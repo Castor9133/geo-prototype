@@ -9,7 +9,7 @@
         { id: 'suite', label: 'GEO Suite', url: '/suite', target: '_self', enabled: true },
         { id: 'diagnostic', label: '诊断', url: '/diagnostic', target: '_blank', enabled: true },
         { id: 'keywords', label: '拓词', url: '/keywords', target: '_blank', enabled: true },
-        { id: 'measure', label: '观测', url: '/suite?step=measure', target: '_self', enabled: true },
+        { id: 'measure', label: '观测', url: '/observe', target: '_self', enabled: true },
         { id: 'config', label: '配置', url: '/admin/settings', target: '_blank', enabled: true },
     ];
 

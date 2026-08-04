@@ -1,0 +1,464 @@
+{
+  "min_chars_per_kb": 20000,
+  "packs": [
+    {
+      "slug": "brand-dji-mini5",
+      "name": "DJI Mini 5 Pro 产品资料库",
+      "site_id": "dji",
+      "theme": "产品功能",
+      "task_bajua": "产品认知",
+      "total_chars": 42959,
+      "ok": true,
+      "documents": [
+        {
+          "file": "cn-product-demo-v2_fact-cards.md",
+          "title": "cn-product-demo-v2_fact-cards",
+          "chars": 10147,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "cn-product-demo-v2_import-to-geoflow.md",
+          "title": "cn-product-demo-v2_import-to-geoflow",
+          "chars": 989,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "cn-product-demo-v2_kb-name.json.md",
+          "title": "cn-product-demo-v2_kb-name.json",
+          "chars": 110,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "cn-product-demo-v2_metrics.json.md",
+          "title": "cn-product-demo-v2_metrics.json",
+          "chars": 4236,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "cn-product-demo-v2_probe-questions.md",
+          "title": "cn-product-demo-v2_probe-questions",
+          "chars": 1539,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "cn-product-demo-v2_README.md",
+          "title": "cn-product-demo-v2_README",
+          "chars": 1907,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "content-articles_article-01-battery-endurance.md",
+          "title": "content-articles_article-01-battery-endurance",
+          "chars": 1092,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "content-articles_article-02-vs-mini4pro.md",
+          "title": "content-articles_article-02-vs-mini4pro",
+          "chars": 1082,
+          "doc_type": "对比说明"
+        },
+        {
+          "file": "content-articles_article-03-night-obstacle.md",
+          "title": "content-articles_article-03-night-obstacle",
+          "chars": 957,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "content-articles_article-04-o4-transmission.md",
+          "title": "content-articles_article-04-o4-transmission",
+          "chars": 1210,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "content-articles_article-05-travel-faq.md",
+          "title": "content-articles_article-05-travel-faq",
+          "chars": 1361,
+          "doc_type": "FAQ"
+        },
+        {
+          "file": "content-articles_article-06-software-workflow.md",
+          "title": "content-articles_article-06-software-workflow",
+          "chars": 1403,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "content-articles_article-07-purchase-decision.md",
+          "title": "content-articles_article-07-purchase-decision",
+          "chars": 1922,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "fact-cards_dji-mini5pro-f-001.md",
+          "title": "fact-cards_dji-mini5pro-f-001",
+          "chars": 629,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "fact-cards_dji-mini5pro-f-002.md",
+          "title": "fact-cards_dji-mini5pro-f-002",
+          "chars": 731,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "fact-cards_dji-mini5pro-f-003.md",
+          "title": "fact-cards_dji-mini5pro-f-003",
+          "chars": 832,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "fact-cards_dji-mini5pro-f-004.md",
+          "title": "fact-cards_dji-mini5pro-f-004",
+          "chars": 778,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "fact-cards_dji-mini5pro-f-005.md",
+          "title": "fact-cards_dji-mini5pro-f-005",
+          "chars": 846,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "fact-cards_dji-mini5pro-f-006.md",
+          "title": "fact-cards_dji-mini5pro-f-006",
+          "chars": 759,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "fact-cards_dji-mini5pro-f-007.md",
+          "title": "fact-cards_dji-mini5pro-f-007",
+          "chars": 719,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "fact-cards_dji-mini5pro-f-008.md",
+          "title": "fact-cards_dji-mini5pro-f-008",
+          "chars": 750,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "fact-cards_dji-mini5pro-f-009.md",
+          "title": "fact-cards_dji-mini5pro-f-009",
+          "chars": 857,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "fact-cards_dji-mini5pro-f-010.md",
+          "title": "fact-cards_dji-mini5pro-f-010",
+          "chars": 761,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "fact-cards_dji-mini5pro-f-011.md",
+          "title": "fact-cards_dji-mini5pro-f-011",
+          "chars": 839,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "fact-cards_dji-mini5pro-f-012.md",
+          "title": "fact-cards_dji-mini5pro-f-012",
+          "chars": 733,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "fact-cards_dji-mini5pro-f-013.md",
+          "title": "fact-cards_dji-mini5pro-f-013",
+          "chars": 787,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "fact-cards_dji-mini5pro-f-014.md",
+          "title": "fact-cards_dji-mini5pro-f-014",
+          "chars": 746,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "fact-cards_dji-mini5pro-f-015.md",
+          "title": "fact-cards_dji-mini5pro-f-015",
+          "chars": 855,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "prompts_library.md",
+          "title": "prompts_library",
+          "chars": 2147,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "sample-drafts_README.md",
+          "title": "sample-drafts_README",
+          "chars": 1235,
+          "doc_type": "功能说明"
+        }
+      ]
+    },
+    {
+      "slug": "brand-feishu-base",
+      "name": "飞书多维表格产品资料库",
+      "site_id": "feishu",
+      "theme": "效率工具",
+      "task_bajua": "产品认知",
+      "total_chars": 21533,
+      "ok": true,
+      "documents": [
+        {
+          "file": "fact-cards_feishu-base-f-001.md",
+          "title": "feishu-base-f-001",
+          "chars": 564,
+          "doc_type": "事实卡片"
+        },
+        {
+          "file": "fact-cards_feishu-base-f-002.md",
+          "title": "feishu-base-f-002",
+          "chars": 469,
+          "doc_type": "事实卡片"
+        },
+        {
+          "file": "fact-cards_feishu-base-f-003.md",
+          "title": "feishu-base-f-003",
+          "chars": 456,
+          "doc_type": "事实卡片"
+        },
+        {
+          "file": "fact-cards_feishu-base-f-004.md",
+          "title": "feishu-base-f-004",
+          "chars": 433,
+          "doc_type": "事实卡片"
+        },
+        {
+          "file": "fact-cards_feishu-base-f-005.md",
+          "title": "feishu-base-f-005",
+          "chars": 483,
+          "doc_type": "事实卡片"
+        },
+        {
+          "file": "fact-cards_feishu-base-f-006.md",
+          "title": "feishu-base-f-006",
+          "chars": 405,
+          "doc_type": "事实卡片"
+        },
+        {
+          "file": "fact-cards_feishu-base-f-007.md",
+          "title": "feishu-base-f-007",
+          "chars": 381,
+          "doc_type": "事实卡片"
+        },
+        {
+          "file": "fact-cards_feishu-base-f-008.md",
+          "title": "feishu-base-f-008",
+          "chars": 392,
+          "doc_type": "事实卡片"
+        },
+        {
+          "file": "fact-cards_feishu-base-f-009.md",
+          "title": "feishu-base-f-009",
+          "chars": 407,
+          "doc_type": "事实卡片"
+        },
+        {
+          "file": "fact-cards_feishu-base-f-010.md",
+          "title": "feishu-base-f-010",
+          "chars": 484,
+          "doc_type": "事实卡片"
+        },
+        {
+          "file": "fact-cards_feishu-base-f-011.md",
+          "title": "feishu-base-f-011",
+          "chars": 472,
+          "doc_type": "事实卡片"
+        },
+        {
+          "file": "fact-cards_feishu-base-f-012.md",
+          "title": "feishu-base-f-012",
+          "chars": 431,
+          "doc_type": "事实卡片"
+        },
+        {
+          "file": "fact-cards.md",
+          "title": "fact-cards",
+          "chars": 4445,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "import-to-geoflow.md",
+          "title": "import-to-geoflow",
+          "chars": 1383,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "metrics.json.md",
+          "title": "metrics",
+          "chars": 1992,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "probe-questions.md",
+          "title": "probe-questions",
+          "chars": 1301,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "prompts_library.md",
+          "title": "library",
+          "chars": 4981,
+          "doc_type": "提示词资料"
+        },
+        {
+          "file": "README.md",
+          "title": "README",
+          "chars": 2054,
+          "doc_type": "功能说明"
+        }
+      ]
+    },
+    {
+      "slug": "brand-huawei-buds",
+      "name": "华为 FreeBuds 产品资料库",
+      "site_id": "huawei",
+      "theme": "消费电子",
+      "task_bajua": "产品认知",
+      "total_chars": 35045,
+      "ok": true,
+      "documents": [
+        {
+          "file": "content-articles_article-01-anc-how-to-choose.md",
+          "title": "article-01-anc-how-to-choose",
+          "chars": 1214,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "content-articles_article-02-call-quality.md",
+          "title": "article-02-call-quality",
+          "chars": 1075,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "content-articles_article-03-battery-charging.md",
+          "title": "article-03-battery-charging",
+          "chars": 1405,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "content-articles_article-04-bluetooth-codec.md",
+          "title": "article-04-bluetooth-codec",
+          "chars": 1539,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "content-articles_article-05-commute-scenario.md",
+          "title": "article-05-commute-scenario",
+          "chars": 1549,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "fact-cards_huawei-freebudspro4-f-001.md",
+          "title": "huawei-freebudspro4-f-001",
+          "chars": 818,
+          "doc_type": "事实卡片"
+        },
+        {
+          "file": "fact-cards_huawei-freebudspro4-f-002.md",
+          "title": "huawei-freebudspro4-f-002",
+          "chars": 767,
+          "doc_type": "事实卡片"
+        },
+        {
+          "file": "fact-cards_huawei-freebudspro4-f-003.md",
+          "title": "huawei-freebudspro4-f-003",
+          "chars": 764,
+          "doc_type": "事实卡片"
+        },
+        {
+          "file": "fact-cards_huawei-freebudspro4-f-004.md",
+          "title": "huawei-freebudspro4-f-004",
+          "chars": 808,
+          "doc_type": "事实卡片"
+        },
+        {
+          "file": "fact-cards_huawei-freebudspro4-f-005.md",
+          "title": "huawei-freebudspro4-f-005",
+          "chars": 748,
+          "doc_type": "事实卡片"
+        },
+        {
+          "file": "fact-cards_huawei-freebudspro4-f-006.md",
+          "title": "huawei-freebudspro4-f-006",
+          "chars": 830,
+          "doc_type": "事实卡片"
+        },
+        {
+          "file": "fact-cards_huawei-freebudspro4-f-007.md",
+          "title": "huawei-freebudspro4-f-007",
+          "chars": 784,
+          "doc_type": "事实卡片"
+        },
+        {
+          "file": "fact-cards_huawei-freebudspro4-f-008.md",
+          "title": "huawei-freebudspro4-f-008",
+          "chars": 1091,
+          "doc_type": "事实卡片"
+        },
+        {
+          "file": "fact-cards_huawei-freebudspro4-f-009.md",
+          "title": "huawei-freebudspro4-f-009",
+          "chars": 923,
+          "doc_type": "事实卡片"
+        },
+        {
+          "file": "fact-cards_huawei-freebudspro4-f-010.md",
+          "title": "huawei-freebudspro4-f-010",
+          "chars": 771,
+          "doc_type": "事实卡片"
+        },
+        {
+          "file": "fact-cards_huawei-freebudspro4-f-011.md",
+          "title": "huawei-freebudspro4-f-011",
+          "chars": 926,
+          "doc_type": "事实卡片"
+        },
+        {
+          "file": "fact-cards_huawei-freebudspro4-f-012.md",
+          "title": "huawei-freebudspro4-f-012",
+          "chars": 828,
+          "doc_type": "事实卡片"
+        },
+        {
+          "file": "fact-cards.md",
+          "title": "fact-cards",
+          "chars": 8816,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "import-to-geoflow.md",
+          "title": "import-to-geoflow",
+          "chars": 1051,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "metrics.json.md",
+          "title": "metrics",
+          "chars": 2234,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "probe-questions.md",
+          "title": "probe-questions",
+          "chars": 1310,
+          "doc_type": "功能说明"
+        },
+        {
+          "file": "prompts_library.md",
+          "title": "library",
+          "chars": 2293,
+          "doc_type": "提示词资料"
+        },
+        {
+          "file": "README.md",
+          "title": "README",
+          "chars": 2501,
+          "doc_type": "功能说明"
+        }
+      ]
+    }
+  ]
+}

@@ -211,11 +211,22 @@
   if (deepTab) activateTab(deepTab);
 
   async function loadStatus() {
+    const el = $("backend-status");
+    if (!el) return;
+    // 前台编辑页不展示工程模式串（native-python 等）
+    const isPublic = document.body.classList.contains("ce-page--public");
+    if (isPublic) {
+      el.textContent = "就绪";
+      el.hidden = true;
+      return;
+    }
     try {
       const s = await fetch("/api/settings/content-backend").then((r) => r.json());
-      $("backend-status").textContent = `模式：${s.mode} — ${s.note}`;
+      el.textContent = `模式：${s.mode} — ${s.note}`;
+      el.hidden = false;
     } catch (e) {
-      $("backend-status").textContent = String(e.message || e);
+      el.textContent = String(e.message || e);
+      el.hidden = false;
     }
   }
 

@@ -70,11 +70,11 @@
                 items: [
                     { id: 'suite', label: 'GEO Suite', url: '/suite', target: '_self', enabled: true },
                     { id: 'diagnostic', label: '检查', url: '/diagnostic', target: '_self', enabled: true },
-                    { id: 'knowledge', label: '知识', url: '/knowledge', target: '_self', enabled: true },
                     { id: 'strategies', label: '选题策略', url: '/strategies', target: '_self', enabled: true },
+                    { id: 'knowledge', label: '知识', url: '/knowledge', target: '_self', enabled: true },
                     { id: 'keywords', label: '拓词', url: '/keywords', target: '_self', enabled: true },
                     { id: 'distribute', label: '分发预览', url: '/distribute', target: '_self', enabled: true },
-                    { id: 'measure', label: '观测', url: '/suite?step=measure', target: '_self', enabled: true },
+                    { id: 'measure', label: '观测', url: '/observe', target: '_self', enabled: true },
                     { id: 'config', label: '配置', url: '/settings', target: '_self', enabled: true },
                 ],
             },
@@ -85,7 +85,7 @@
             promise: null,
         },
 
-        CACHE_KEY: 'georank:public-settings:v3',
+        CACHE_KEY: 'georank:public-settings:v4',
         CACHE_TTL_MS: 60_000,
 
         readCache() {
@@ -210,14 +210,25 @@
                         enabled: item.enabled !== false,
                     };
                 }
+                if (id === 'strategies' || path === '/strategies' || path.endsWith('/strategies.html')) {
+                    const label = String(item.label || '').trim();
+                    return {
+                        ...item,
+                        id: 'strategies',
+                        label: (!label || label === '策略') ? '选题策略' : label,
+                        url: '/strategies',
+                        target: '_self',
+                        enabled: item.enabled !== false,
+                    };
+                }
                 if (['suite', 'diagnostic', 'keywords', 'measure', 'config'].includes(id)
                     && url.startsWith('/') && !url.startsWith('//')) {
                     return { ...item, target: '_self' };
                 }
                 return item;
             });
-            // 六大能力菜单 id 去重，避免历史配置里出现多个「分发」
-            const pillarIds = new Set(['suite', 'diagnostic', 'knowledge', 'keywords', 'distribute', 'measure', 'config']);
+            // 能力菜单 id 去重，避免历史配置里出现多个「分发」/「选题策略」
+            const pillarIds = new Set(['suite', 'diagnostic', 'strategies', 'knowledge', 'keywords', 'distribute', 'measure', 'config']);
             const seenPillars = new Set();
             next = next.filter((item) => {
                 const id = String(item.id || '').toLowerCase();
@@ -232,6 +243,29 @@
                     ...next,
                 ];
             }
+            const isStrategiesItem = (item) => {
+                const id = String(item.id || '').toLowerCase();
+                const path = String(item.url || '').toLowerCase().split('?')[0].replace(/\/$/, '');
+                return id === 'strategies' || path === '/strategies' || path.endsWith('/strategies.html');
+            };
+            // 选题策略固定放在「检查/诊断」之后
+            const existingStrategies = next.find(isStrategiesItem);
+            next = next.filter(item => !isStrategiesItem(item));
+            const strategiesItem = existingStrategies || {
+                id: 'strategies',
+                label: '选题策略',
+                url: '/strategies',
+                target: '_self',
+                enabled: true,
+            };
+            const diagnosticIndex = next.findIndex(item => {
+                const id = String(item.id || '').toLowerCase();
+                const url = String(item.url || '').toLowerCase();
+                return id === 'diagnostic' || url === '/diagnostic' || url.startsWith('/diagnostic?');
+            });
+            const strategiesAt = diagnosticIndex >= 0 ? diagnosticIndex + 1 : Math.min(1, next.length);
+            next = [...next.slice(0, strategiesAt), strategiesItem, ...next.slice(strategiesAt)];
+
             const hasKnowledge = next.some(item => {
                 const id = String(item.id || '').toLowerCase();
                 const url = String(item.url || '').toLowerCase();
@@ -245,12 +279,15 @@
             });
             if (!hasKnowledge) {
                 const knowledge = { id: 'knowledge', label: '知识', url: '/knowledge', target: '_self', enabled: true };
-                const diagnosticIndex = next.findIndex(item => {
+                const strategiesIndex = next.findIndex(isStrategiesItem);
+                const diagIdx = next.findIndex(item => {
                     const id = String(item.id || '').toLowerCase();
                     const url = String(item.url || '').toLowerCase();
                     return id === 'diagnostic' || url === '/diagnostic' || url.startsWith('/diagnostic?');
                 });
-                const insertAt = diagnosticIndex >= 0 ? diagnosticIndex + 1 : Math.min(1, next.length);
+                const insertAt = strategiesIndex >= 0
+                    ? strategiesIndex + 1
+                    : (diagIdx >= 0 ? diagIdx + 1 : Math.min(1, next.length));
                 next = [...next.slice(0, insertAt), knowledge, ...next.slice(insertAt)];
             }
             const hasDistribute = next.some(item => String(item.id || '').toLowerCase() === 'distribute'
@@ -842,10 +879,11 @@
             <div class="geo-header__nav hidden md:flex" data-site-navigation data-navigation-variant="desktop">
                 <a href="/suite" data-nav-link data-navigation-item="suite">GEO Suite</a>
                 <a href="/diagnostic" data-nav-link data-i18n="nav.diagnostic">检查</a>
+                <a href="/strategies" data-nav-link data-navigation-item="strategies">选题策略</a>
                 <a href="/knowledge" data-nav-link data-navigation-item="knowledge">知识</a>
                 <a href="/keywords" data-nav-link data-i18n="nav.keywords">拓词</a>
                 <a href="/distribute" data-nav-link data-navigation-item="distribute">分发预览</a>
-                <a href="/suite?step=measure" data-nav-link data-navigation-item="measure">观测</a>
+                <a href="/observe" data-nav-link data-navigation-item="measure">观测</a>
                 <a href="/settings" data-nav-link data-navigation-item="config">配置</a>
             </div>
         </div>
@@ -871,10 +909,11 @@
         <div class="geo-header__mobile-nav" data-site-navigation data-navigation-variant="mobile">
             <a href="/suite" data-nav-link data-navigation-item="suite">GEO Suite</a>
             <a href="/diagnostic" data-nav-link data-i18n="nav.diagnostic">检查</a>
+            <a href="/strategies" data-nav-link data-navigation-item="strategies">选题策略</a>
             <a href="/knowledge" data-nav-link data-navigation-item="knowledge">知识</a>
             <a href="/keywords" data-nav-link data-i18n="nav.keywords">拓词</a>
             <a href="/distribute" data-nav-link data-navigation-item="distribute">分发预览</a>
-            <a href="/suite?step=measure" data-nav-link data-navigation-item="measure">观测</a>
+            <a href="/observe" data-nav-link data-navigation-item="measure">观测</a>
             <a href="/settings" data-nav-link data-navigation-item="config">配置</a>
         </div>
     </div>
@@ -999,6 +1038,7 @@ const FOOTER_HTML = `
             if (normalized === '/company' || normalized === '/companies' || normalized.startsWith('/companies/') || normalized === '/c' || normalized.startsWith('/c/')) return '/suite';
             if (normalized === '/submit-company' || normalized === '/company-submit') return '/suite';
             if (normalized === '/diagnostic' || normalized.startsWith('/diagnostic/')) return '/diagnostic';
+            if (normalized === '/strategies' || normalized.startsWith('/strategies/')) return '/strategies';
             if (normalized === '/solutions' || normalized.startsWith('/solutions/') || normalized === '/qa' || normalized.startsWith('/qa/')) return '/suite';
             if (normalized === '/plans' || normalized.startsWith('/plans/')) return '/suite';
             if (normalized === '/keywords' || normalized.startsWith('/keywords/')) return '/keywords';
@@ -1572,9 +1612,11 @@ const FOOTER_HTML = `
             const urls = [
                 '/suite',
                 '/diagnostic',
+                '/strategies',
                 '/knowledge',
                 '/keywords',
                 '/distribute',
+                '/observe',
                 '/settings',
                 '/suite?step=measure',
             ];
@@ -1585,7 +1627,7 @@ const FOOTER_HTML = `
                 prefetch: [{ source: 'list', urls }],
                 prerender: [{
                     source: 'document',
-                    where: { href_matches: ['/suite*', '/diagnostic*', '/knowledge*', '/keywords*', '/distribute*', '/settings*'] },
+                    where: { href_matches: ['/suite*', '/diagnostic*', '/strategies*', '/knowledge*', '/keywords*', '/distribute*', '/observe*', '/settings*'] },
                     eagerness: 'moderate',
                 }],
             });

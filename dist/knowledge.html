@@ -4,15 +4,32 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <title>知识库 · 内容引擎 - GEOrank</title>
-  <meta name="description" content="GEORank 知识证据中枢：切片 / 检索 / 提示词。顶栏前台布局。">
+  <title>知识库 · 党建党媒工作台</title>
+  <meta name="description" content="备好已审素材，为选题策略写稿、过审。">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/public-tailwind.css?v=20260729-unify2">
-  <link rel="stylesheet" href="/css/common.css?v=20260729-unify2">
-  <link rel="stylesheet" href="/css/channel-shells.css?v=20260729-unify2">
-  <link rel="stylesheet" href="/css/content-engine.css?v=20260729-ue1">
-  <link rel="stylesheet" href="/css/inner-shell.css?v=20260729-unify2">
+  <link rel="stylesheet" href="/css/public-tailwind.css?v=20260804-kb2">
+  <link rel="stylesheet" href="/css/common.css?v=20260804-kb2">
+  <link rel="stylesheet" href="/css/channel-shells.css?v=20260804-kb2">
+  <link rel="stylesheet" href="/css/content-engine.css?v=20260804-kb2">
+  <link rel="stylesheet" href="/css/inner-shell.css?v=20260804-kb2">
+  <style>
+    .kb-ctx {
+      display: none;
+      margin: 0.65rem 0 0;
+      padding: 0.55rem 0.75rem;
+      border: 1px solid #d8d2c6;
+      border-left: 3px solid #1f4b7a;
+      border-radius: 8px;
+      background: #f6f3f2;
+      font-size: 0.88rem;
+      color: #42474f;
+      line-height: 1.45;
+    }
+    .kb-ctx.is-on { display: block; }
+    .kb-ctx a { color: #1f4b7a; font-weight: 600; margin-left: 0.5rem; }
+    .ce-page--public #backend-status { display: none !important; }
+  </style>
 </head>
 <body class="ce-page ce-page--public text-on-surface antialiased inner-page" data-ce-shell="public">
   <div id="header-container"></div>
@@ -20,13 +37,15 @@
   <main class="ce-public-main">
     <header class="ce-public-hero">
       <div>
-        <p class="ce-public-eyebrow">GEO Hub · 知识库</p>
-        <h1>知识证据中枢</h1>
-        <p class="ce-public-lead">构建自己可控的GEO诊断和内容工作流</p>
+        <p class="ce-public-eyebrow">党建党媒 · 知识库</p>
+        <h1>知识库</h1>
+        <p class="ce-public-lead">备好已审素材，为选题策略写稿、过审。系统不代发到媒体号。</p>
+        <p class="kb-ctx" id="kb-strategy-ctx" role="status"></p>
       </div>
       <div class="ce-public-hero__actions">
-        <span class="status" id="backend-status">就绪</span>
-        <a href="/suite" class="btn">打开 Suite</a>
+        <span class="status" id="backend-status" hidden>就绪</span>
+        <a href="/strategies" class="btn primary">选题策略</a>
+        <a href="/distribute" class="btn">分发预览</a>
       </div>
     </header>
 
@@ -199,6 +218,38 @@
   <div id="footer-container"></div>
   <script src="/js/common.js?v=20260729-navfast1"></script>
   <script src="/js/suite-workflow.js?v=20260730-nobar1"></script>
-  <script src="/js/content-engine-admin.js?v=20260730-tabsplit1"></script>
+  <script src="/js/content-engine-admin.js?v=20260804-kb2"></script>
+  <script>
+  (function () {
+    var params = new URLSearchParams(location.search || '');
+    var sid = params.get('strategy');
+    var ctx = document.getElementById('kb-strategy-ctx');
+    if (!sid || !ctx) return;
+    var token = '';
+    try { token = localStorage.getItem('georank_token') || ''; } catch (_) {}
+    var PLATFORM = { doubao: '豆包', yuanbao: '元宝', deepseek: 'DeepSeek' };
+    fetch('/api/geo-strategies/' + encodeURIComponent(sid), {
+      headers: token ? { Authorization: 'Bearer ' + token } : {}
+    }).then(function (r) { return r.ok ? r.json() : null; }).then(function (s) {
+      if (!s) {
+        ctx.className = 'kb-ctx is-on';
+        ctx.innerHTML = '已从选题策略跳转，但未能读取策略详情。<a href="/strategies">回选题策略</a>';
+        return;
+      }
+      var ok = s.status === 'executable' || s.status === 'deployed' || s.status === 'observing';
+      var name = s.title || s.question_class || sid;
+      var plat = PLATFORM[s.platform] || s.platform || '';
+      ctx.className = 'kb-ctx is-on';
+      ctx.innerHTML = ok
+        ? ('当前为策略「' + name + '」写稿（' + plat + '）。过审后请去分发预览，再回策略登记已发布。'
+          + '<a href="/strategies">回选题策略</a>')
+        : ('当前策略「' + name + '」尚未批准可以写稿，请先送审/请审核批准。'
+          + '<a href="/strategies">回选题策略</a>');
+    }).catch(function () {
+      ctx.className = 'kb-ctx is-on';
+      ctx.innerHTML = '无法读取关联策略。<a href="/strategies">回选题策略</a>';
+    });
+  })();
+  </script>
 </body>
 </html>

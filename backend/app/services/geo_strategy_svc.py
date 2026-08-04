@@ -210,12 +210,40 @@ async def update_draft(db: AsyncSession, s: GeoStrategy, *, actor: User, **field
     return s
 
 
+async def _assert_knowledge_rag_eligible(db: AsyncSession, s: GeoStrategy) -> None:
+    """可执行前：绑定文档须全部可 RAG。"""
+    from app.models.content_engine import KnowledgeDocument
+
+    ids = [str(x) for x in (s.knowledge_document_ids or []) if str(x).strip()]
+    if not ids:
+        raise ValueError("知识绑定：文档集不能为空")
+    missing: list[str] = []
+    ineligible: list[str] = []
+    for raw in ids:
+        try:
+            doc_id = uuid.UUID(raw)
+        except ValueError:
+            missing.append(raw)
+            continue
+        doc = await db.get(KnowledgeDocument, doc_id)
+        if not doc:
+            missing.append(raw)
+            continue
+        if not gkb.is_rag_eligible(doc):
+            ineligible.append(f"{doc.title or raw}({doc.review_state}/{doc.tier})")
+    if missing:
+        raise ValueError(f"知识绑定文档不存在: {', '.join(missing[:5])}")
+    if ineligible:
+        raise ValueError(f"知识绑定文档未过门禁/不可检索: {', '.join(ineligible[:5])}")
+
+
 async def submit_for_approval(db: AsyncSession, s: GeoStrategy, *, actor: User) -> GeoStrategy:
     if not has_business_geo_role(actor, "editor", "reviewer"):
         raise PermissionError("需要 editor 提交审批")
     if s.status not in ("draft", "pending_review"):
         raise ValueError("仅草稿可提交审批")
     validate_six_tuple(s, for_executable=True)
+    await _assert_knowledge_rag_eligible(db, s)
     s.status = "pending_review"
     s.updated_at = datetime.utcnow()
     await db.flush()
@@ -284,11 +312,16 @@ def handoff_checklist(s: GeoStrategy, *, task_summary: dict | None = None) -> di
             "deliverable": "生效 / 部分见效 / 未见效",
         },
     ]
+    baseline_samples = int((s.meta or {}).get("baseline_sample_count") or 0)
+    after_samples = int((s.meta or {}).get("after_sample_count") or 0)
     return {
         "items": items,
         "ready_for_approve": bool(s.diagnostic_report_id and s.baseline_snapshot_id),
         "ready_for_deploy": bool(ts.get("all_ready")),
-        "obs_white_hat_deferred": True,
+        "obs_white_hat_deferred": baseline_samples < 3,
+        "baseline_sample_count": baseline_samples,
+        "after_sample_count": after_samples,
+        "white_hat_note": "正式验收：白号池每平台≥5，且摸底/复测各≥3问法样本回传",
     }
 
 
@@ -362,6 +395,129 @@ async def register_baseline_snapshot(
     return s
 
 
+async def record_obs_samples(
+    db: AsyncSession,
+    s: GeoStrategy,
+    *,
+    actor: User,
+    phase: str,
+    samples: list[dict[str, Any]],
+    account_label: str | None = None,
+) -> GeoStrategy:
+    """②/⑦ 人工回传白号观测样本（半自动：人提问，系统落库）。"""
+    if not has_business_geo_role(actor, "editor", "reviewer"):
+        raise PermissionError("需要 editor/reviewer 回传观测样本")
+    ph = (phase or "").strip().lower()
+    if ph not in ("baseline", "after"):
+        raise ValueError("phase 须为 baseline|after")
+    if ph == "baseline":
+        snap_id = s.baseline_snapshot_id
+        if not snap_id:
+            raise ValueError("请先登记投放前摸底快照")
+    else:
+        snap_id = s.after_snapshot_id
+        if not snap_id:
+            raise ValueError("请先开始投放后复测")
+        if s.status not in ("deployed", "observing", "effective", "partial", "ineffective"):
+            raise ValueError("须已登记对外发布后才能回传复测样本")
+    snap = await db.get(RealObsSnapshot, snap_id)
+    if not snap:
+        raise ValueError("观测快照不存在")
+    if not samples:
+        raise ValueError("至少回传 1 条样本")
+    variants = [str(v).strip() for v in (s.query_variants or []) if str(v).strip()]
+    written = 0
+    for i, raw in enumerate(samples):
+        text = str(raw.get("question_text") or raw.get("query") or "").strip()
+        if not text and i < len(variants):
+            text = variants[i]
+        if not text:
+            raise ValueError(f"第 {i+1} 条样本缺少问法文本")
+        qid = str(raw.get("question_id") or f"q{i+1}")
+        mention = bool(raw.get("mention"))
+        rank = raw.get("citation_rank")
+        citations: list[dict[str, Any]] = []
+        if rank is not None:
+            citations.append(
+                {
+                    "rank": int(rank),
+                    "url": str(raw.get("citation_url") or s.site_url or ""),
+                    "owned": bool(raw.get("owned_citation")),
+                }
+            )
+        elif raw.get("citations"):
+            citations = list(raw.get("citations") or [])
+        owned = bool(raw.get("owned_citation") or raw.get("strong_adopted"))
+        strong = bool(raw.get("strong_adopted") or (owned and mention and citations))
+        # upsert by unique (snapshot, question_id, platform, attempt)
+        existing = (
+            await db.execute(
+                select(RealObsSample).where(
+                    RealObsSample.snapshot_id == snap.id,
+                    RealObsSample.question_id == qid,
+                    RealObsSample.platform == s.platform,
+                    RealObsSample.attempt == 1,
+                )
+            )
+        ).scalar_one_or_none()
+        meta = {
+            "account_type": "white",
+            "account_label": account_label or "manual-white",
+            "recorded_by": str(actor.id),
+            "informal": bool(raw.get("informal")),
+        }
+        if existing:
+            existing.question_text = text
+            existing.answer_text = str(raw.get("answer_text") or "")[:8000] or None
+            existing.citations = citations
+            existing.mention = mention
+            existing.owned_citation = owned
+            existing.strong_adopted = strong
+            existing.ok = True
+            existing.label_source = "human"
+            existing.raw_meta = {**(existing.raw_meta or {}), **meta}
+            existing.sampled_at = datetime.utcnow()
+            existing.updated_at = datetime.utcnow()
+        else:
+            db.add(
+                RealObsSample(
+                    snapshot_id=snap.id,
+                    geo_run_id=snap.geo_run_id,
+                    question_id=qid,
+                    question_text=text,
+                    platform=s.platform,
+                    attempt=1,
+                    answer_text=str(raw.get("answer_text") or "")[:8000] or None,
+                    citations=citations,
+                    mention=mention,
+                    owned_citation=owned,
+                    strong_adopted=strong,
+                    ok=True,
+                    label_source="human",
+                    raw_meta=meta,
+                    sampled_at=datetime.utcnow(),
+                )
+            )
+        written += 1
+    snap.status = "completed" if written >= 3 else "partial"
+    snap.finished_at = datetime.utcnow()
+    snap.updated_at = datetime.utcnow()
+    meta = dict(s.meta or {})
+    if ph == "baseline":
+        meta["baseline_pending"] = written < 3
+        meta["baseline_sample_count"] = written
+        meta["baseline_note"] = "已回传白号摸底样本" if written >= 3 else "摸底样本不足 3 条（非正式）"
+    else:
+        meta["after_sample_count"] = written
+        meta["after_note"] = "已回传白号复测样本" if written >= 3 else "复测样本不足 3 条（非正式）"
+        if s.status == "deployed":
+            s.status = "observing"
+    s.meta = meta
+    s.updated_at = datetime.utcnow()
+    await db.flush()
+    return s
+
+
 async def approve_executable(db: AsyncSession, s: GeoStrategy, *, actor: User) -> GeoStrategy:
     if not has_business_geo_role(actor, "reviewer"):
         raise PermissionError("需要 reviewer 审批策略")
@@ -374,6 +530,7 @@ async def approve_executable(db: AsyncSession, s: GeoStrategy, *, actor: User) -
     if not s.baseline_snapshot_id:
         raise ValueError("须先挂接②baseline 快照（无白号可先 register-baseline 占位）")
     validate_six_tuple(s, for_executable=True)
+    await _assert_knowledge_rag_eligible(db, s)
     s.status = "executable"
     s.approved_by = actor.id
     s.approved_at = datetime.utcnow()
