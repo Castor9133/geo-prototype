@@ -178,6 +178,12 @@ async def main() -> int:
         s = await svc.register_baseline_snapshot(db, s, actor=editor, create_pending=True)
         s = await svc.submit_for_approval(db, s, actor=editor)
         s = await svc.approve_executable(db, s, actor=reviewer)
+        s = await svc.confirm_query_pack(
+            db,
+            s,
+            actor=editor,
+            query_variants=list(s.query_variants or []),
+        )
 
         t1 = await svc.attach_task(db, s, actor=editor, title="深文·栏目定位", content_kind="deep")
         t2 = await svc.attach_task(db, s, actor=editor, title="FAQ·官方入口", content_kind="faq")

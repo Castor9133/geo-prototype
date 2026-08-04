@@ -464,26 +464,27 @@
     }
 
     function nextAction(s) {
-      const ts = s.task_summary || {};
-      const qv = (s.query_variants || []).filter(Boolean).length;
-      if (s.status === 'draft' || s.status === 'pending_review') {
-        if (qv < 3 || !s.content_orientation || !s.diagnostic_report_id || !s.baseline_snapshot_id) {
-          return { label: '去补全策略', tab: 'craft' };
-        }
-        if (s.status === 'draft') return { label: '去送审', tab: 'craft' };
-        return { label: '去批准', tab: 'craft' };
+      const na = s.next_action || {};
+      if (na.label) {
+        return {
+          label: na.label,
+          tab: na.tab || 'overview',
+          pipe: na.pipe || null,
+          href: na.href || null,
+          key: na.key || '',
+        };
       }
-      if (s.status === 'executable') {
-        if (!ts.all_ready) return { label: '去写稿', tab: 'write' };
-        return { label: '去登记发布', tab: 'publish' };
+      return { label: '打开定策', tab: 'craft', pipe: null, href: null, key: 'craft' };
+    }
+
+    function goNextAction(s) {
+      const next = nextAction(s);
+      if (next.href && next.href.indexOf('/strategies') !== 0) {
+        location.href = next.href;
+        return;
       }
-      if (s.status === 'deployed' || s.status === 'observing') {
-        return { label: '去发布与复测', tab: 'publish' };
-      }
-      if (['effective', 'partial', 'ineffective'].indexOf(s.status) >= 0) {
-        return { label: '去看效果', tab: 'publish' };
-      }
-      return { label: '打开定策', tab: 'craft' };
+      setCurrentId(s.id);
+      switchTab(next.tab || 'overview', next.pipe || undefined);
     }
 
     function kbSelectHtml(selectedId, nameAttr) {
@@ -606,8 +607,7 @@
           '<button type="button" class="btn" data-select>设为当前</button>' +
         '</div>';
       card.querySelector('[data-next]').onclick = function () {
-        setCurrentId(s.id);
-        switchTab(next.tab);
+        goNextAction(s);
       };
       card.querySelector('[data-select]').onclick = function () {
         setCurrentId(s.id);
@@ -648,7 +648,12 @@
         '<form class="st-form" id="craft-edit-form">' +
           '<label>策略名称<input name="title" value="' + escapeHtml(d.title) + '"></label>' +
           '<label>打算写什么稿<textarea name="content_orientation">' + escapeHtml(d.content_orientation) + '</textarea></label>' +
-          '<label>用来提问/复测的句子（每行一句，至少3句）<textarea name="query_variants">' + escapeHtml(d.query_variants) + '</textarea></label>' +
+          '<label>摸底用问法草案（每行一句，至少3句；批准后请再去拓词确认终稿）<textarea name="query_variants">' + escapeHtml(d.query_variants) + '</textarea></label>' +
+          (s.status === 'executable'
+            ? '<p class="st-hint">' + (s.query_pack_confirmed
+              ? '<span class="st-ok">观测问法已确认，可以写稿（还须备齐知识）</span>'
+              : '策略已批准。请确认观测问法后再写稿。') + '</p>'
+            : '') +
           '<div class="st-row">' +
             '<label>同步发到哪个媒体号<select name="media_types">' +
               '<option value="wechat"' + (mediaSelected === 'wechat' ? ' selected' : '') + '>微信公众号</option>' +
@@ -699,7 +704,11 @@
             : '') +
           '<div class="st-actions">' +
             '<button type="button" class="btn primary" id="btn-submit">送审</button>' +
-            '<button type="button" class="btn teal" id="btn-approve">批准可以写稿</button>' +
+            '<button type="button" class="btn teal" id="btn-approve">批准可以开工</button>' +
+            (s.status === 'executable'
+              ? '<button type="button" class="btn primary" id="btn-confirm-queries">确认上方问法用于写稿</button>'
+                + '<a class="btn" href="/keywords?strategy=' + encodeURIComponent(s.id) + '">去拓词页确认</a>'
+              : '') +
           '</div>' +
         '</div>';
 
@@ -743,6 +752,23 @@
       };
       body.querySelector('#btn-submit').onclick = function () { act(s.id, '/submit', null, '正在送审…'); };
       body.querySelector('#btn-approve').onclick = function () { act(s.id, '/approve', null, '正在批准…'); };
+      const confirmBtn = body.querySelector('#btn-confirm-queries');
+      if (confirmBtn) {
+        confirmBtn.onclick = async function () {
+          const ta = body.querySelector('textarea[name="query_variants"]');
+          const qv = String((ta && ta.value) || '').split(/\r?\n/).map(function (x) { return x.trim(); }).filter(Boolean);
+          if (qv.length < 3) { showMsg('请先填写至少 3 句问法', 'err'); return; }
+          try {
+            showMsg('正在确认观测问法…');
+            await api('/geo-strategies/' + s.id + '/confirm-queries', {
+              method: 'POST',
+              body: JSON.stringify({ query_variants: qv }),
+            });
+            showMsg('观测问法已确认', 'ok');
+            await load();
+          } catch (e) { showMsg(String(e.message || e), 'err'); }
+        };
+      }
     }
 
     async function loadTasksInto(host, s) {
@@ -810,18 +836,36 @@
       }
       empty.hidden = true;
       body.hidden = false;
-      const canWrite = s.status === 'executable' || s.status === 'deployed' || s.status === 'observing'
+      const statusOk = s.status === 'executable' || s.status === 'deployed' || s.status === 'observing'
         || s.status === 'effective' || s.status === 'partial' || s.status === 'ineffective';
+      const expandOk = !!s.query_pack_confirmed;
+      const knowledgeOk = !!(s.knowledge_document_ids && s.knowledge_document_ids.length)
+        && !!(s.knowledge_tag_pack && Object.keys(s.knowledge_tag_pack).length)
+        && !!s.knowledge_base_id;
+      const canWrite = statusOk && expandOk && knowledgeOk;
+      let gateHtml = '';
+      if (!statusOk) {
+        gateHtml = '<div class="st-gate"><strong>策略批准后才能写稿</strong><div>请先在「定策」补全并送审，由审核账号批准。</div></div>';
+      } else if (!expandOk) {
+        gateHtml = '<div class="st-gate"><strong>请先确认观测问法</strong><div>拓词完成后把至少 3 句问法写回本选题，才能写稿。</div>'
+          + '<div class="st-actions" style="margin-top:0.65rem"><a class="btn primary" href="/keywords?strategy='
+          + encodeURIComponent(s.id) + '">去确认观测问法</a></div></div>';
+      } else if (!knowledgeOk) {
+        gateHtml = '<div class="st-gate"><strong>请先备齐知识素材</strong><div>知识库只备素材，不在这里写稿。备好后再回来写。</div>'
+          + '<div class="st-actions" style="margin-top:0.65rem"><a class="btn primary" href="/knowledge?strategy='
+          + encodeURIComponent(s.id) + '">去备知识</a></div></div>';
+      }
       body.innerHTML =
         '<p class="st-hint">当前：<strong>' + escapeHtml(s.title || s.question_class) + '</strong> · ' +
-          escapeHtml(labelStatus(s.status)) + '</p>' +
-        (!canWrite
-          ? '<div class="st-gate"><strong>策略批准后才能写稿</strong><div>请先在「定策」补全并送审，由审核账号批准。</div></div>'
-          : '') +
+          escapeHtml(labelStatus(s.status)) +
+          (expandOk ? ' · 问法已确认' : ' · 问法未确认') +
+        '</p>' +
+        gateHtml +
         '<div class="st-actions">' +
           '<button type="button" class="btn primary" id="btn-deep" ' + (!canWrite ? 'disabled' : '') + '>写栏目说明并出草稿</button>' +
           '<button type="button" class="btn teal" id="btn-faq" ' + (!canWrite ? 'disabled' : '') + '>写常见问答并出草稿</button>' +
           '<a class="btn" href="/knowledge?strategy=' + encodeURIComponent(s.id) + '">去知识库备素材</a>' +
+          '<a class="btn" href="/keywords?strategy=' + encodeURIComponent(s.id) + '">去拓词确认问法</a>' +
         '</div>' +
         '<div id="write-tasks" style="margin-top:0.85rem"></div>';
       if (canWrite) {
@@ -1144,8 +1188,18 @@
       .then(loadFormOptions)
       .then(load)
       .then(function () {
-        const tab = new URLSearchParams(location.search || '').get('tab');
-        if (tab) switchTab(tab);
+        const params = new URLSearchParams(location.search || '');
+        const tab = params.get('tab');
+        const pipe = params.get('pipe');
+        if (tab) switchTab(tab, pipe || undefined);
+        if (pipe === 'register') {
+          const el = document.getElementById('pub-register');
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        if (pipe === 'after') {
+          const el = document.getElementById('pub-after');
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       });
   })();
   </script>

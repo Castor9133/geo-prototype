@@ -30,6 +30,8 @@
     const statusNote = document.getElementById('diagnostic-status-note');
     const exportBtn = document.getElementById('diagnostic-export-btn');
     const toSolutionsBtn = document.getElementById('diagnostic-to-solutions-btn');
+    const createStrategyBtn = document.getElementById('diagnostic-create-strategy-btn');
+    let lastLiveReport = null;
     const reportModeEyebrow = document.getElementById('diagnostic-report-mode-eyebrow');
     const reportModeTitle = document.getElementById('diagnostic-report-mode-title');
     const reportModeCopy = document.getElementById('diagnostic-report-mode-copy');
@@ -1228,22 +1230,78 @@
         );
     }
 
+    function authHeaders() {
+        const headers = { 'Content-Type': 'application/json' };
+        try {
+            const token = localStorage.getItem('georank_token') || '';
+            if (token) headers.Authorization = 'Bearer ' + token;
+        } catch (_) {}
+        return headers;
+    }
+
+    async function createStrategyFromReport(report) {
+        if (!report || report.report_id === 'demo-report') {
+            alert('示例报告不能新建选题，请先检查真实网址。');
+            return;
+        }
+        if (report.status && report.status !== 'completed') {
+            alert('请等检查完成后再新建选题。');
+            return;
+        }
+        if (Auth && !Auth.requireAuth({ reasonKey: 'auth.reasonDiagnostic' })) return;
+        const platform = 'doubao';
+        if (createStrategyBtn) {
+            createStrategyBtn.disabled = true;
+            createStrategyBtn.textContent = '正在创建…';
+        }
+        try {
+            const res = await fetch('/api/geo-strategies/from-diagnostic', {
+                method: 'POST',
+                headers: authHeaders(),
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    diagnostic_report_id: report.report_id,
+                    platform: platform,
+                }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                throw new Error(data.detail || data.message || ('创建失败 ' + res.status));
+            }
+            const sid = data.id;
+            window.location.href = '/strategies?strategy=' + encodeURIComponent(sid) + '&tab=craft';
+        } catch (err) {
+            alert(String(err.message || err));
+            if (createStrategyBtn) {
+                createStrategyBtn.disabled = false;
+                createStrategyBtn.textContent = '用于新建选题';
+            }
+        }
+    }
+
     function renderReport(report) {
         const modules = renderSeoModules(report);
         renderPriority(report, modules);
+        lastLiveReport = report;
 
+        const isLive = report && report.report_id !== 'demo-report' && report.status === 'completed';
+        if (createStrategyBtn) {
+            createStrategyBtn.hidden = !isLive;
+            createStrategyBtn.disabled = false;
+            createStrategyBtn.textContent = '用于新建选题';
+            createStrategyBtn.onclick = function () { void createStrategyFromReport(report); };
+        }
         if (toSolutionsBtn) {
-            if (Workflow?.buildHref) {
+            if (isLive) {
+                toSolutionsBtn.href = '/strategies';
+                toSolutionsBtn.textContent = '去选题策略';
+            } else if (Workflow?.buildHref) {
                 toSolutionsBtn.href = Workflow.buildHref('keywords', {
                     diagnostic_report_id: report.report_id || '',
                     url: report.url || '',
                 });
             } else {
-                const next = new URL('/keywords', window.location.origin);
-                next.searchParams.set('diagnostic_report_id', report.report_id);
-                next.searchParams.set('url', report.url);
-                if (report.company_id) next.searchParams.set('company_id', report.company_id);
-                toSolutionsBtn.href = next.toString();
+                toSolutionsBtn.href = '/strategies';
             }
         }
         showResults();
@@ -1269,18 +1327,25 @@
             Workflow.mountBar({
                 stepId: 'diagnostic',
                 force: true,
-                hint: '检查完成，可继续拓词选题。',
-                nextHref: Workflow.buildHref('keywords', extras),
-                nextLabel: '下一步：拓词',
+                hint: '检查完成，可用本报告新建选题。',
+                nextHref: '/strategies',
+                nextLabel: '下一步：新建选题',
             });
             const host = reportShell || resultsGrid || document.querySelector('main');
             Workflow.mountNextCard?.(host, {
                 stepId: 'diagnostic',
                 title: '检查完成',
-                copy: '基础 SEO 四类结果已就绪。',
-                primaryHref: Workflow.buildHref('keywords', extras),
-                primaryLabel: '去拓词',
+                copy: '可一键新建选题，报告会自动挂上。',
+                primaryHref: '#diagnostic-create-strategy-btn',
+                primaryLabel: '用于新建选题',
             });
+            const primary = document.querySelector('#suite-wf-next-diagnostic a.suite-wf-next__btn--primary, .suite-wf-next__btn--primary');
+            if (primary && createStrategyBtn) {
+                primary.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    void createStrategyFromReport(report);
+                });
+            }
         };
         const handoffPayload = {
             diagnostic_report_id: report.report_id,

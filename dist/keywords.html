@@ -23,8 +23,9 @@
         <section class="kw-hero">
             <h1>选题清单 · 拓词</h1>
             <p class="kw-hero__lead">
-                生成选题清单，勾选后一键创建内容任务；默认种子可围绕当前产品场景预填。
+                生成问法清单，勾选后可写入当前选题（写稿前须确认至少 3 句）。知识库只备素材，写稿在选题工作台完成。
             </p>
+            <div id="kw-strategy-ctx" class="hidden mb-4 text-sm leading-6 px-4 py-3 rounded-lg border border-slate-200 bg-slate-50"></div>
             <div class="kw-search">
                 <div id="tag-input-wrapper">
                     <span class="material-symbols-outlined text-slate-500 mr-1 text-lg">search</span>
@@ -42,7 +43,10 @@
                     <p class="text-sm text-on-surface-variant mt-1">为 "<span id="seed-kw-display" class="font-medium text-on-surface"></span>" 生成了 <span id="total-kw-count" class="font-bold text-on-surface">0</span> 个选题 · 已选 <span id="selected-kw-count">0</span></p>
                 </div>
                 <div class="flex flex-wrap gap-3">
-                    <button id="create-content-tasks-btn" class="btn btn-primary px-4 py-2 text-xs font-bold inline-flex items-center gap-1.5" type="button" disabled>
+                    <button id="write-strategy-queries-btn" class="btn btn-primary px-4 py-2 text-xs font-bold inline-flex items-center gap-1.5" type="button" disabled hidden>
+                        <span class="material-symbols-outlined text-sm">playlist_add_check</span>写入当前选题
+                    </button>
+                    <button id="create-content-tasks-btn" class="btn btn-outline px-4 py-2 text-xs font-bold inline-flex items-center gap-1.5" type="button" disabled>
                         <span class="material-symbols-outlined text-sm">edit_note</span>去选模板生成
                     </button>
                     <button id="refine-btn" class="btn btn-outline px-4 py-2 text-xs font-bold inline-flex items-center gap-1.5"><span class="material-symbols-outlined text-sm">refresh</span>重新生成</button>
@@ -141,6 +145,6 @@
     <script src="/js/common.js?v=20260729-navfast1"></script>
     <script src="/js/suite-workflow.js?v=20260730-nobar1"></script>
     <script src="/js/geoflow-handoff.js?v=20260729-dji-kw1"></script>
-    <script src="/js/keywords.js?v=20260730-kwmodel1"></script>
+    <script src="/js/keywords.js?v=20260804-confirm1"></script>
 </body>
 </html>

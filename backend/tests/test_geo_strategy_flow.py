@@ -115,7 +115,8 @@ class SixTupleAndApproveGateTests(unittest.TestCase):
         s.deployed_at = datetime.utcnow()
         s.status = "deployed"
         c = handoff_checklist(s, task_summary=ts)
-        self.assertTrue(c["items"][5]["ok"])  # deployed
+        keys = {i["key"]: i["ok"] for i in c["items"]}
+        self.assertTrue(keys["deployed"])
         # ⑦⑧ 白号观测/判定：本套测试故意不执行采样，只挂 after 占位与强制沉淀路径字段
         s.after_snapshot_id = uuid.uuid4()
         s.meta["after_pending"] = True

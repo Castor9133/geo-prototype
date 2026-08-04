@@ -27,8 +27,169 @@ def _as_uuid_list(raw: list | None) -> list[str]:
     return out
 
 
+def query_variant_list(s: GeoStrategy) -> list[str]:
+    return [str(v).strip() for v in (s.query_variants or []) if str(v).strip()]
+
+
+def is_query_pack_confirmed(s: GeoStrategy) -> bool:
+    """拓词确认：meta 标记且问法 ≥3。"""
+    meta = dict(s.meta or {})
+    if not meta.get("query_pack_confirmed"):
+        return False
+    return len(query_variant_list(s)) >= 3
+
+
+def is_knowledge_bound(s: GeoStrategy) -> bool:
+    return bool(s.knowledge_document_ids) and bool(s.knowledge_tag_pack)
+
+
+def is_active_work_status(status: str | None) -> bool:
+    return (status or "") in (
+        "draft",
+        "pending_review",
+        "executable",
+        "deployed",
+        "observing",
+    )
+
+
+def _strategy_href(
+    strategy_id: uuid.UUID | str,
+    *,
+    tab: str | None = None,
+    pipe: str | None = None,
+    path: str = "/strategies",
+) -> str:
+    sid = str(strategy_id)
+    if path == "/keywords":
+        return f"/keywords?strategy={sid}"
+    if path == "/knowledge":
+        return f"/knowledge?strategy={sid}"
+    if path == "/observe":
+        phase = "baseline" if pipe == "baseline" else ("after" if pipe == "after" else "")
+        q = f"/observe?strategy={sid}"
+        return f"{q}&phase={phase}" if phase else q
+    if path == "/diagnostic":
+        return "/diagnostic"
+    parts = [f"strategy={sid}"]
+    if tab:
+        parts.append(f"tab={tab}")
+    if pipe:
+        parts.append(f"pipe={pipe}")
+    return "/strategies?" + "&".join(parts)
+
+
+def compute_next_action(s: GeoStrategy, *, task_summary: dict | None = None) -> dict[str, Any]:
+    """编辑岗「下一步」：只亮一个动作（见产品实施说明）。"""
+    ts = task_summary or {}
+    sid = s.id
+    orientation_ok = bool((s.content_orientation or "").strip())
+    matrix = s.channel_matrix or {}
+    media_types = matrix.get("media_types") or matrix.get("media") or []
+    craft_basics_ok = orientation_ok and bool(media_types)
+    draftish = s.status in ("draft", "pending_review")
+
+    if not s.diagnostic_report_id:
+        return {
+            "key": "diagnostic",
+            "label": "去挂查页面结果",
+            "href": _strategy_href(sid, tab="craft"),
+            "tab": "craft",
+            "pipe": None,
+        }
+    if not s.baseline_snapshot_id:
+        return {
+            "key": "baseline",
+            "label": "去做投放前摸底",
+            "href": _strategy_href(sid, path="/observe", pipe="baseline"),
+            "tab": "craft",
+            "pipe": "baseline",
+        }
+    if draftish:
+        if not craft_basics_ok or len(query_variant_list(s)) < 3:
+            return {
+                "key": "craft",
+                "label": "去补全策略",
+                "href": _strategy_href(sid, tab="craft"),
+                "tab": "craft",
+                "pipe": None,
+            }
+        if s.status == "draft":
+            return {
+                "key": "craft",
+                "label": "去送审",
+                "href": _strategy_href(sid, tab="craft"),
+                "tab": "craft",
+                "pipe": None,
+            }
+        return {
+            "key": "craft",
+            "label": "去批准",
+            "href": _strategy_href(sid, tab="craft"),
+            "tab": "craft",
+            "pipe": None,
+        }
+    if s.status in ("executable", "deployed", "observing") or s.verdict:
+        if s.status == "executable" and not is_query_pack_confirmed(s):
+            return {
+                "key": "expand",
+                "label": "去确认观测问法",
+                "href": _strategy_href(sid, path="/keywords"),
+                "tab": None,
+                "pipe": None,
+            }
+        if s.status == "executable" and not is_knowledge_bound(s):
+            return {
+                "key": "knowledge",
+                "label": "去备知识",
+                "href": _strategy_href(sid, path="/knowledge"),
+                "tab": None,
+                "pipe": None,
+            }
+        if s.status == "executable" and not ts.get("all_ready"):
+            return {
+                "key": "write",
+                "label": "去写稿",
+                "href": _strategy_href(sid, tab="write"),
+                "tab": "write",
+                "pipe": None,
+            }
+        if not (s.site_url and s.media_url and s.deployed_at):
+            return {
+                "key": "deploy",
+                "label": "去登记发布",
+                "href": _strategy_href(sid, tab="publish", pipe="register"),
+                "tab": "publish",
+                "pipe": "register",
+            }
+        if not s.after_snapshot_id:
+            return {
+                "key": "after",
+                "label": "去做投放后复测",
+                "href": _strategy_href(sid, tab="publish", pipe="after"),
+                "tab": "publish",
+                "pipe": "after",
+            }
+        if s.verdict not in ("effective", "partial", "ineffective"):
+            return {
+                "key": "verdict",
+                "label": "去看效果与留档",
+                "href": _strategy_href(sid, tab="publish", pipe="after"),
+                "tab": "publish",
+                "pipe": "after",
+            }
+    return {
+        "key": "done",
+        "label": "查看本条选题",
+        "href": _strategy_href(sid, tab="overview"),
+        "tab": "overview",
+        "pipe": None,
+    }
+
+
 def serialize_strategy(s: GeoStrategy, *, task_summary: dict | None = None) -> dict[str, Any]:
     checklist = handoff_checklist(s, task_summary=task_summary)
+    next_action = compute_next_action(s, task_summary=task_summary)
     return {
         "id": str(s.id),
         "title": s.title,
@@ -68,26 +229,20 @@ def serialize_strategy(s: GeoStrategy, *, task_summary: dict | None = None) -> d
         "updated_at": s.updated_at.isoformat() if s.updated_at else None,
         "task_summary": task_summary,
         "handoff_checklist": checklist,
+        "query_pack_confirmed": is_query_pack_confirmed(s),
+        "next_action": next_action,
     }
 
 
 def validate_six_tuple(s: GeoStrategy, *, for_executable: bool = False) -> None:
+    """基本六元组。for_executable=批准可开工：不再要求知识绑定与拓词终稿。"""
     if s.platform not in STRATEGY_PLATFORMS:
         raise ValueError(f"platform 须为 {', '.join(STRATEGY_PLATFORMS)}")
     if not (s.question_class or "").strip():
         raise ValueError("问题类不能为空")
     if not (s.content_orientation or "").strip():
         raise ValueError("内容供给取向不能为空")
-    docs = s.knowledge_document_ids or []
-    tags = s.knowledge_tag_pack or {}
     if for_executable:
-        if not docs:
-            raise ValueError("知识绑定：文档集不能为空")
-        if not tags:
-            raise ValueError("知识绑定：标签/主题包不能为空")
-        variants = [str(v).strip() for v in (s.query_variants or []) if str(v).strip()]
-        if len(variants) < 3:
-            raise ValueError("问题类至少 3 条观测问法")
         matrix = s.channel_matrix or {}
         if not matrix.get("site_required", True):
             raise ValueError("渠道矩阵须包含第一现场官网")
@@ -190,6 +345,13 @@ async def update_draft(db: AsyncSession, s: GeoStrategy, *, actor: User, **field
             setattr(s, key, fields[key] if key != "platform" else str(fields[key]).lower())
     if "query_variants" in fields and fields["query_variants"] is not None:
         s.query_variants = list(fields["query_variants"])
+        # 草案改动后需重新确认拓词，避免未再确认就写稿
+        meta = dict(s.meta or {})
+        if meta.get("query_pack_confirmed"):
+            meta["query_pack_confirmed"] = False
+            meta.pop("query_pack_confirmed_at", None)
+            meta.pop("query_pack_confirmed_by", None)
+            s.meta = meta
     if "channel_matrix" in fields and fields["channel_matrix"] is not None:
         s.channel_matrix = dict(fields["channel_matrix"])
     if "success_signal" in fields and fields["success_signal"] is not None:
@@ -242,8 +404,13 @@ async def submit_for_approval(db: AsyncSession, s: GeoStrategy, *, actor: User) 
         raise PermissionError("需要 editor 提交审批")
     if s.status not in ("draft", "pending_review"):
         raise ValueError("仅草稿可提交审批")
+    if not s.diagnostic_report_id:
+        raise ValueError("须先挂接查页面结果")
+    if not s.baseline_snapshot_id:
+        raise ValueError("须先登记投放前摸底")
+    if len(query_variant_list(s)) < 3:
+        raise ValueError("送审前须有至少 3 条摸底用问法草案")
     validate_six_tuple(s, for_executable=True)
-    await _assert_knowledge_rag_eligible(db, s)
     s.status = "pending_review"
     s.updated_at = datetime.utcnow()
     await db.flush()
@@ -251,7 +418,7 @@ async def submit_for_approval(db: AsyncSession, s: GeoStrategy, *, actor: User) 
 
 
 def handoff_checklist(s: GeoStrategy, *, task_summary: dict | None = None) -> dict[str, Any]:
-    """环间交付物检查表（①–⑨）。观测白号采样本身不在此强制执行。"""
+    """环间交付物检查表。观测白号采样本身不在此强制执行。"""
     ts = task_summary or {}
     items = [
         {
@@ -281,32 +448,38 @@ def handoff_checklist(s: GeoStrategy, *, task_summary: dict | None = None) -> di
             "deliverable": "审核已通过",
         },
         {
-            "step": "④素材已备齐",
+            "step": "④观测问法已确认",
+            "key": "expand",
+            "ok": is_query_pack_confirmed(s),
+            "deliverable": "拓词问法已写回（≥3）",
+        },
+        {
+            "step": "⑤素材已备齐",
             "key": "knowledge",
-            "ok": bool(s.knowledge_document_ids) and bool(s.knowledge_tag_pack),
+            "ok": is_knowledge_bound(s),
             "deliverable": "已指定用哪些稿 + 主题标签",
         },
         {
-            "step": "⑤稿件已过审",
+            "step": "⑥稿件已过审",
             "key": "tasks_ready",
             "ok": bool(ts.get("all_ready")),
             "deliverable": "至少2篇且全部过审",
         },
         {
-            "step": "⑥已对外发布",
+            "step": "⑦已对外发布",
             "key": "deployed",
             "ok": bool(s.site_url and s.media_url and s.deployed_at),
             "deliverable": "官网链接 + 媒体号链接已登记",
         },
         {
-            "step": "⑦投放后复测",
+            "step": "⑧投放后复测",
             "key": "after",
             "ok": bool(s.after_snapshot_id),
             "deliverable": "已建复测记录",
             "note": "正式验收须白号复测",
         },
         {
-            "step": "⑧效果已判定",
+            "step": "⑨效果已判定",
             "key": "verdict",
             "ok": s.verdict in ("effective", "partial", "ineffective"),
             "deliverable": "生效 / 部分见效 / 未见效",
@@ -318,6 +491,9 @@ def handoff_checklist(s: GeoStrategy, *, task_summary: dict | None = None) -> di
         "items": items,
         "ready_for_approve": bool(s.diagnostic_report_id and s.baseline_snapshot_id),
         "ready_for_deploy": bool(ts.get("all_ready")),
+        "ready_for_write": bool(
+            is_query_pack_confirmed(s) and is_knowledge_bound(s) and s.knowledge_base_id
+        ),
         "obs_white_hat_deferred": baseline_samples < 3,
         "baseline_sample_count": baseline_samples,
         "after_sample_count": after_samples,
@@ -529,14 +705,80 @@ async def approve_executable(db: AsyncSession, s: GeoStrategy, *, actor: User) -
         raise ValueError("须先挂接①诊断报告")
     if not s.baseline_snapshot_id:
         raise ValueError("须先挂接②baseline 快照（无白号可先 register-baseline 占位）")
+    if len(query_variant_list(s)) < 3:
+        raise ValueError("批准前须有至少 3 条摸底用问法草案")
     validate_six_tuple(s, for_executable=True)
-    await _assert_knowledge_rag_eligible(db, s)
     s.status = "executable"
     s.approved_by = actor.id
     s.approved_at = datetime.utcnow()
     s.updated_at = datetime.utcnow()
     await db.flush()
     return s
+
+
+async def confirm_query_pack(
+    db: AsyncSession,
+    s: GeoStrategy,
+    *,
+    actor: User,
+    query_variants: list[str] | None = None,
+) -> GeoStrategy:
+    """拓词确认：写回观测问法并打标，写稿前置。"""
+    if not has_business_geo_role(actor, "editor", "reviewer"):
+        raise PermissionError("需要 editor/reviewer")
+    variants = [str(v).strip() for v in (query_variants if query_variants is not None else s.query_variants or []) if str(v).strip()]
+    if len(variants) < 3:
+        raise ValueError("确认观测问法须至少 3 句")
+    s.query_variants = variants
+    meta = dict(s.meta or {})
+    meta["query_pack_confirmed"] = True
+    meta["query_pack_confirmed_at"] = datetime.utcnow().isoformat() + "Z"
+    meta["query_pack_confirmed_by"] = str(actor.id)
+    s.meta = meta
+    s.updated_at = datetime.utcnow()
+    await db.flush()
+    return s
+
+
+async def create_from_diagnostic(
+    db: AsyncSession,
+    *,
+    actor: User,
+    diagnostic_report_id: uuid.UUID,
+    platform: str = "doubao",
+    question_class: str | None = None,
+    title: str | None = None,
+) -> GeoStrategy:
+    """查页面完成后一键建选题草稿并挂上诊断。"""
+    from app.models.diagnostic import DiagnosticReport
+
+    from app.models.diagnostic import DiagnosticStatus
+
+    report = await db.get(DiagnosticReport, diagnostic_report_id)
+    if not report:
+        raise ValueError("诊断报告不存在")
+    if report.status != DiagnosticStatus.COMPLETED:
+        raise ValueError("仅已完成的查页面结果可用于新建选题")
+    host = (report.url or "").replace("https://", "").replace("http://", "").split("/")[0] or "页面"
+    qc = (question_class or "").strip() or f"页面认知 · {host}"
+    gaps = ""
+    rec = report.recommendations if isinstance(report.recommendations, dict) else {}
+    gap_list = rec.get("gaps") or []
+    if isinstance(gap_list, list):
+        gaps = "；".join(str(x) for x in gap_list[:4] if x)
+    summary = rec.get("summary") or {}
+    if not gaps and isinstance(summary, dict):
+        gaps = str(summary.get("priority_action") or summary.get("overview") or "")
+    gap_note = (gaps or f"来自查页面 {report.url}").strip()[:2000]
+    s = await create_from_seed(
+        db,
+        actor=actor,
+        platform=platform or "doubao",
+        question_class=qc,
+        gap_note=gap_note,
+        title=title or f"[草稿] {qc} · {platform or 'doubao'}",
+    )
+    return await attach_diagnostic(db, s, actor=actor, diagnostic_report_id=diagnostic_report_id)
 
 
 async def task_summary_for(db: AsyncSession, strategy_id: uuid.UUID) -> dict[str, Any]:
@@ -560,6 +802,19 @@ async def task_summary_for(db: AsyncSession, strategy_id: uuid.UUID) -> dict[str
     }
 
 
+async def assert_ready_for_write(db: AsyncSession, s: GeoStrategy) -> None:
+    """写稿硬卡：可执行 + 拓词已确认 + 知识可检索。"""
+    if s.status not in ("executable", "deployed", "observing"):
+        raise ValueError("仅可执行/已投放策略可写稿")
+    if not is_query_pack_confirmed(s):
+        raise ValueError("请先确认观测问法（拓词写回至少 3 句）后再写稿")
+    if not s.knowledge_base_id:
+        raise ValueError("策略未绑定知识库")
+    if not is_knowledge_bound(s):
+        raise ValueError("请先备齐知识素材（文档与主题标签）后再写稿")
+    await _assert_knowledge_rag_eligible(db, s)
+
+
 async def attach_task(
     db: AsyncSession,
     s: GeoStrategy,
@@ -569,12 +824,9 @@ async def attach_task(
     content_kind: str = "deep",
     prompt_id: uuid.UUID | None = None,
 ) -> ContentTask:
-    if s.status not in ("executable", "deployed", "observing"):
-        raise ValueError("仅可执行/已投放策略可挂执行物")
     if not has_business_geo_role(actor, "editor", "reviewer"):
         raise PermissionError("需要 editor")
-    if not s.knowledge_base_id:
-        raise ValueError("策略未绑定知识库")
+    await assert_ready_for_write(db, s)
     kind = (content_kind or "deep").strip().lower()
     # 未指定提示词时按供给取向挂内置模板，便于一键生成
     resolved_prompt_id = prompt_id

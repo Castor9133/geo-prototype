@@ -15,6 +15,8 @@
     let aiFocusScript = null;
     let platformTitleHints = [];
     let targetPlatforms = new Set(DEFAULT_AI_PLATFORMS);
+    const strategyId = new URLSearchParams(location.search || '').get('strategy') || '';
+    let boundStrategy = null;
 
     async function loadAiFocusScript() {
         if (aiFocusScript) return aiFocusScript;
@@ -566,7 +568,79 @@
         if (countEl) countEl.textContent = String(selectedKeywords.size);
         const btn = document.getElementById('create-content-tasks-btn');
         if (btn) btn.disabled = selectedKeywords.size < 1;
+        const writeBtn = document.getElementById('write-strategy-queries-btn');
+        if (writeBtn) {
+            writeBtn.hidden = !strategyId;
+            writeBtn.disabled = selectedKeywords.size < 3;
+        }
         renderTitleHints();
+    }
+
+    async function loadBoundStrategy() {
+        const ctx = document.getElementById('kw-strategy-ctx');
+        const writeBtn = document.getElementById('write-strategy-queries-btn');
+        if (!strategyId || !ctx) return;
+        try {
+            const token = localStorage.getItem('georank_token') || '';
+            const res = await fetch('/api/geo-strategies/' + encodeURIComponent(strategyId), {
+                headers: token ? { Authorization: 'Bearer ' + token } : {},
+                credentials: 'same-origin',
+            });
+            if (!res.ok) throw new Error('无法读取选题');
+            boundStrategy = await res.json();
+            const name = boundStrategy.title || boundStrategy.question_class || strategyId;
+            ctx.classList.remove('hidden');
+            ctx.innerHTML = '正在为选题「' + escapeHtml(name) + '」确认观测问法。勾选至少 3 句后点「写入当前选题」。'
+                + ' <a class="underline" href="/strategies?strategy=' + encodeURIComponent(strategyId) + '&tab=write">回写稿</a>';
+            if (writeBtn) writeBtn.hidden = false;
+            if (boundStrategy.question_class && !tags.length) {
+                addTag(boundStrategy.question_class);
+            }
+        } catch (_) {
+            ctx.classList.remove('hidden');
+            ctx.textContent = '已带选题编号，但未能读取详情。仍可勾选问法后尝试写入。';
+            if (writeBtn) writeBtn.hidden = false;
+        }
+        updateSelectedCount();
+    }
+
+    async function writeQueriesToStrategy() {
+        const keywords = Array.from(selectedKeywords);
+        if (keywords.length < 3) {
+            setTaskFeedback('请至少勾选 3 句问法再写入选题。', true);
+            return;
+        }
+        if (!strategyId) {
+            setTaskFeedback('当前没有关联选题。请从选题工作台进入拓词。', true);
+            return;
+        }
+        if (Auth && !Auth.requireAuth({ reasonKey: 'auth.reasonKeywords' })) return;
+        setTaskFeedback('正在写入选题…');
+        try {
+            const token = localStorage.getItem('georank_token') || '';
+            const res = await fetch('/api/geo-strategies/' + encodeURIComponent(strategyId) + '/confirm-queries', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: 'Bearer ' + token } : {}),
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ query_variants: keywords }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.detail || data.message || '写入失败');
+            const next = data.next_action || {};
+            setTaskFeedback('已写入并确认观测问法。' + (next.label ? '建议下一步：' + next.label : ''));
+            const go = next.href || ('/strategies?strategy=' + encodeURIComponent(strategyId) + '&tab=write');
+            const link = document.createElement('a');
+            link.href = go;
+            link.className = 'underline ml-2';
+            link.textContent = next.label || '回到选题';
+            const el = document.getElementById('kw-task-feedback');
+            if (el) el.appendChild(link);
+        } catch (error) {
+            setTaskFeedback(error.message || '写入选题失败', true);
+        }
     }
 
     function setTaskFeedback(message, isError) {
@@ -856,14 +930,21 @@
     document.getElementById('create-content-tasks-btn')?.addEventListener('click', () => {
         void createContentTasksFromSelection();
     });
+    document.getElementById('write-strategy-queries-btn')?.addEventListener('click', () => {
+        void writeQueriesToStrategy();
+    });
 
     Workflow?.syncFromQuery?.();
     void resolveContentBackendMode().then(() => {
         Workflow?.mountBar({
             stepId: 'keywords',
-            nextHref: Workflow.buildHref('distribute'),
-            nextLabel: '下一步：内容/分发预览',
-            hint: '勾选选题 → 选目标 AI 看标题建议 → 去选模板生成。',
+            nextHref: strategyId
+                ? ('/strategies?strategy=' + encodeURIComponent(strategyId) + '&tab=write')
+                : Workflow.buildHref('distribute'),
+            nextLabel: strategyId ? '下一步：写稿' : '下一步：内容/分发预览',
+            hint: strategyId
+                ? '勾选至少 3 句 → 写入当前选题 → 再去备知识或写稿。'
+                : '勾选选题 → 选目标 AI 看标题建议 → 去选模板生成。',
         });
     });
 
@@ -872,10 +953,17 @@
         renderTitleHints();
     });
 
-    DEMO_SEEDS.forEach((seed) => addTag(seed));
-    renderResults(clonePayload(SAMPLE_PAYLOAD), {
-        isExample: true,
-        seedLabel: DEMO_SEEDS.join('、'),
-        disableRefine: false,
+    void loadBoundStrategy().then(() => {
+        if (!strategyId) {
+            DEMO_SEEDS.forEach((seed) => addTag(seed));
+        }
+        if (!strategyId || !tags.length) {
+            renderResults(clonePayload(SAMPLE_PAYLOAD), {
+                isExample: true,
+                seedLabel: (tags.length ? tags : DEMO_SEEDS).join('、'),
+                disableRefine: false,
+            });
+        }
+        updateSelectedCount();
     });
 });

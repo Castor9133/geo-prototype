@@ -171,6 +171,7 @@ async def main() -> int:
                 )
                 s = await svc.submit_for_approval(db, s, actor=editor)
                 s = await svc.approve_executable(db, s, actor=reviewer)
+                s = await svc.confirm_query_pack(db, s, actor=editor, query_variants=variants)
                 t1 = await svc.attach_task(
                     db, s, actor=editor, title=f"{qc}·深文", content_kind="deep"
                 )

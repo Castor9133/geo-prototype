@@ -24,7 +24,7 @@
         <section class="diag-hero">
             <p class="diag-hero__eyebrow">党建党媒 · 查页面</p>
             <h1>查页面问题</h1>
-            <p class="diag-hero__lead">先查官网/栏目页缺口，再把报告挂到选题策略。检查完成后可去选题策略开工。</p>
+            <p class="diag-hero__lead">先查官网/栏目页缺口。检查完成后可一键新建选题，报告会自动挂上。</p>
             <div class="diag-search">
                 <div class="diag-search__field">
                     <span class="material-symbols-outlined text-lg" aria-hidden="true">language</span>
@@ -77,10 +77,11 @@
                     </div>
                     <div class="col-span-12" id="seo-modules-grid"></div>
                     <div class="col-span-12 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <p class="text-sm text-on-surface-variant">检查完成后可继续选题拓词。</p>
+                        <p class="text-sm text-on-surface-variant">检查完成后可直接新建选题，再到定策页补全。</p>
                         <div class="flex gap-3">
                             <button id="diagnostic-export-btn" class="btn btn-outline px-4 py-2 rounded-lg text-xs font-bold hidden" type="button" hidden>导出</button>
-                            <a id="diagnostic-to-solutions-btn" href="/keywords" class="btn btn-primary px-4 py-2 rounded-lg text-xs font-bold text-center">下一步：拓词</a>
+                            <button id="diagnostic-create-strategy-btn" class="btn btn-primary px-4 py-2 rounded-lg text-xs font-bold" type="button" hidden>用于新建选题</button>
+                            <a id="diagnostic-to-solutions-btn" href="/strategies" class="btn btn-outline px-4 py-2 rounded-lg text-xs font-bold text-center">去选题策略</a>
                         </div>
                     </div>
                 </div>
@@ -97,6 +98,6 @@
     <script src="/js/common.js?v=20260729-navfast1" defer></script>
     <script src="/js/suite-workflow.js?v=20260730-nobar1" defer></script>
     <script src="/js/suite-extra.js?v=20260730-diagobs1" defer></script>
-    <script src="/js/diagnostic.js?v=20260730-diagobs1" defer></script>
+    <script src="/js/diagnostic.js?v=20260804-newstrat1" defer></script>
 </body>
 </html>

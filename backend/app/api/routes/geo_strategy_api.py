@@ -82,6 +82,17 @@ class AttachDiagnosticBody(BaseModel):
     diagnostic_report_id: uuid.UUID
 
 
+class FromDiagnosticBody(BaseModel):
+    diagnostic_report_id: uuid.UUID
+    platform: str = "doubao"
+    question_class: str | None = None
+    title: str | None = None
+
+
+class ConfirmQueriesBody(BaseModel):
+    query_variants: list[str] = Field(min_length=3)
+
+
 class ObsSampleItem(BaseModel):
     question_text: str | None = None
     question_id: str | None = None
@@ -174,6 +185,27 @@ async def seed_strategy(payload: SeedBody, db: DbSession, user: CurrentUser):
             title=payload.title,
             knowledge_base_id=payload.knowledge_base_id,
             geo_run_id=payload.geo_run_id,
+        )
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    await db.commit()
+    await db.refresh(s)
+    return await _ser(db, s)
+
+
+@router.post("/from-diagnostic")
+async def from_diagnostic(payload: FromDiagnosticBody, db: DbSession, user: CurrentUser):
+    """查页面完成后一键建选题草稿并挂诊断。"""
+    try:
+        s = await svc.create_from_diagnostic(
+            db,
+            actor=user,
+            diagnostic_report_id=payload.diagnostic_report_id,
+            platform=payload.platform,
+            question_class=payload.question_class,
+            title=payload.title,
         )
     except PermissionError as exc:
         raise HTTPException(403, str(exc)) from exc
@@ -292,6 +324,23 @@ async def get_handoff_checklist(strategy_id: uuid.UUID, db: DbSession, _: Option
     s = await _get(db, strategy_id)
     summary = await svc.task_summary_for(db, s.id)
     return svc.handoff_checklist(s, task_summary=summary)
+
+
+@router.post("/{strategy_id}/confirm-queries")
+async def confirm_queries(strategy_id: uuid.UUID, payload: ConfirmQueriesBody, db: DbSession, user: CurrentUser):
+    """拓词确认：写回观测问法（写稿前置）。"""
+    s = await _get(db, strategy_id)
+    try:
+        s = await svc.confirm_query_pack(
+            db, s, actor=user, query_variants=payload.query_variants
+        )
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    await db.commit()
+    await db.refresh(s)
+    return await _ser(db, s)
 
 
 @router.post("/{strategy_id}/submit")

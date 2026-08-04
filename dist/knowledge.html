@@ -240,11 +240,12 @@
       var name = s.title || s.question_class || sid;
       var plat = PLATFORM[s.platform] || s.platform || '';
       ctx.className = 'kb-ctx is-on';
+      var back = '/strategies?strategy=' + encodeURIComponent(sid) + '&tab=write';
       ctx.innerHTML = ok
-        ? ('当前为策略「' + name + '」写稿（' + plat + '）。过审后请去分发预览，再回策略登记已发布。'
-          + '<a href="/strategies">回选题策略</a>')
-        : ('当前策略「' + name + '」尚未批准可以写稿，请先送审/请审核批准。'
-          + '<a href="/strategies">回选题策略</a>');
+        ? ('正在为选题「' + name + '」备知识素材（' + plat + '）。知识库不写稿；素材齐后请回选题工作台写稿。'
+          + '<a href="' + back + '">回写稿</a>')
+        : ('选题「' + name + '」尚未批准开工。可先备素材，或回定策送审/请审核批准。'
+          + '<a href="/strategies?strategy=' + encodeURIComponent(sid) + '&tab=craft">回定策</a>');
     }).catch(function () {
       ctx.className = 'kb-ctx is-on';
       ctx.innerHTML = '无法读取关联策略。<a href="/strategies">回选题策略</a>';

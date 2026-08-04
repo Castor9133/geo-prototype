@@ -30,7 +30,7 @@
         <header class="cockpit-top">
             <div class="cockpit-top__left">
                 <h1 id="suite-cockpit-title">党建党媒工作台</h1>
-                <p class="cockpit-top__sub" id="suite-cockpit-sub">查页面 → 备知识/写稿 → 选题策略 → 分发预览 → 观测复测</p>
+                <p class="cockpit-top__sub" id="suite-cockpit-sub">查页面 → 定策摸底 → 拓词与备知识 → 写稿发布 → 复测</p>
             </div>
             <div class="cockpit-top__tabs" role="tablist" aria-label="Suite 视图">
                 <a class="cockpit-tab is-active" href="/suite" data-suite-tab="factory">概览</a>
@@ -60,13 +60,37 @@
             </div>
         </section>
 
-        <!-- 图1：顶部 5 步流水线指标卡 -->
-        <section class="pipe-row" id="suite-pipeline" aria-label="五步工作流指标"></section>
+        <section class="cockpit-card" id="suite-active-section" style="margin-bottom:1rem;padding:1rem 1.15rem">
+            <div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:0.75rem;margin-bottom:0.75rem">
+                <div>
+                    <h2 style="margin:0;font-family:'Noto Serif SC',serif;font-size:1.15rem;color:#003460">进行中选题</h2>
+                    <p class="cockpit-muted" style="margin:0.25rem 0 0">最多显示 3 条；点「下一步」直接落到该做的那一步。</p>
+                </div>
+                <a class="cockpit-btn" href="/strategies">查看全部</a>
+            </div>
+            <div id="suite-active-list" class="suite-active-list"></div>
+            <div id="suite-active-empty" hidden>
+                <p style="margin:0 0 0.75rem;color:#5c6570">还没有进行中的选题。</p>
+                <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+                    <a class="cockpit-btn cockpit-btn--primary" href="/diagnostic">去查页面</a>
+                    <a class="cockpit-btn" href="/strategies?tab=craft">新建选题</a>
+                </div>
+            </div>
+        </section>
+
+        <details class="cockpit-card suite-flow-fold" id="suite-flow-fold" style="margin-bottom:1rem;padding:0.85rem 1.15rem">
+            <summary style="cursor:pointer;font-weight:600;color:#003460">了解作业顺序（可选）</summary>
+            <p class="cockpit-muted" style="margin:0.5rem 0 0.75rem">查页面 → 摸底 → 定策过审 → 拓词确认 → 备知识 → 写稿 → 登记发布 → 复测留档。日常请以上方「进行中选题」为准。</p>
+            <!-- 旧五步流水线：收折后仍可供熟悉流程的人查看 -->
+            <section class="pipe-row" id="suite-pipeline" aria-label="五步工作流指标"></section>
+        </details>
 
         <div class="cockpit-grid">
             <div class="cockpit-main">
+                <details class="cockpit-card" style="margin-bottom:1rem;padding:0.85rem 1.15rem">
+                    <summary style="cursor:pointer;font-weight:600;color:#003460">本机五步进度（次要）</summary>
                 <!-- 当前步骤详情 -->
-                <article class="cockpit-card suite-step-panel" id="suite-step-panel">
+                <article class="cockpit-card suite-step-panel" id="suite-step-panel" style="box-shadow:none;border:0;margin-top:0.75rem">
                     <div class="suite-step-panel__icon" id="suite-step-icon" aria-hidden="true">
                         <span class="material-symbols-outlined">monitoring</span>
                     </div>
@@ -122,6 +146,7 @@
                     <div class="suite-handoff-card__meta" id="suite-handoff-meta"></div>
                     <div class="suite-cta-row suite-cta-row--compact" id="suite-handoff-actions"></div>
                 </div>
+                </details>
             </div>
 
             <!-- 图1：右侧质量门禁 / 渠道就绪 -->
@@ -186,10 +211,22 @@
     </main>
 
     <div id="footer-container"></div>
+    <style>
+      .suite-active-list { display: flex; flex-direction: column; gap: 0.75rem; }
+      .suite-active-card {
+        display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between;
+        padding: 0.85rem 1rem; border: 1px solid #d7e0ea; border-radius: 10px; background: #f7fafc;
+      }
+      .suite-active-card__body { flex: 1 1 16rem; min-width: 0; }
+      .suite-active-card h3 { margin: 0; font-size: 1rem; color: #003460; }
+      .suite-active-card__meta, .suite-active-card__progress { margin: 0.25rem 0 0; font-size: 0.85rem; color: #5c6570; }
+      .suite-flow-fold summary::-webkit-details-marker { display: none; }
+    </style>
     <script src="/js/common.js?v=20260729-scaffold1" defer></script>
     <script src="/js/geoflow-handoff.js?v=20260729-measure-tidy2" defer></script>
     <script src="/js/suite-workflow.js?v=20260730-nobar1" defer></script>
     <script src="/js/suite-extra.js?v=20260803-realobs1" defer></script>
     <script src="/js/suite.js?v=20260729-scaffold1" defer></script>
+    <script src="/js/suite-active.js?v=20260804-active1" defer></script>
 </body>
 </html>
