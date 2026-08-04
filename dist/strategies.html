@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <title>选题策略 · 党建党媒快速落地</title>
+  <meta name="description" content="围绕一个问题、一个平台定选题策略：摸底、出稿、发布、复测、看效果。">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/public-tailwind.css?v=20260803-st2">
+  <link rel="stylesheet" href="/css/common.css?v=20260803-st2">
+  <link rel="stylesheet" href="/css/inner-shell.css?v=20260803-st2">
+  <style>
+    :root {
+      --st-ink: #1a2332;
+      --st-muted: #5c6570;
+      --st-line: #d5dde6;
+      --st-paper: rgba(255,255,255,0.92);
+      --st-ok: #146c2e;
+      --st-warn: #8a5a00;
+      --st-bad: #8a1f11;
+      --st-accent: #1f4b7a;
+      --st-accent-2: #2a6f6a;
+    }
+    body.inner-page {
+      background:
+        radial-gradient(1200px 500px at 10% -10%, #dce8f4 0%, transparent 55%),
+        radial-gradient(900px 420px at 100% 0%, #d8ebe6 0%, transparent 50%),
+        linear-gradient(180deg, #eef2f6 0%, #f7f8fa 40%, #f3f5f7 100%);
+      color: var(--st-ink);
+    }
+    .st-page { max-width: 1120px; margin: 0 auto; padding: 1.25rem 1rem 3.5rem; }
+    .st-hero h1 { font-family: "Noto Serif SC", serif; font-size: clamp(1.55rem, 2.4vw, 1.9rem); margin: 0.2rem 0; letter-spacing: 0.02em; }
+    .st-lead { color: var(--st-muted); margin: 0.45rem 0 1rem; max-width: 46rem; line-height: 1.55; }
+    .st-pipe {
+      display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 0.35rem;
+      margin: 1rem 0 1.25rem; padding: 0.75rem; border: 1px solid var(--st-line);
+      border-radius: 10px; background: var(--st-paper); backdrop-filter: blur(6px);
+    }
+    .st-pipe span {
+      text-align: center; font-size: 0.68rem; line-height: 1.25; color: var(--st-muted);
+      padding: 0.35rem 0.15rem; border-radius: 6px; background: #f1f4f7;
+    }
+    .st-pipe span em { display: block; font-style: normal; font-weight: 600; color: var(--st-ink); font-size: 0.78rem; }
+    @media (max-width: 900px) { .st-pipe { grid-template-columns: repeat(3, 1fr); } }
+    .st-role {
+      display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center;
+      margin-bottom: 1rem; padding: 0.7rem 0.9rem; border-radius: 10px;
+      border: 1px solid var(--st-line); background: var(--st-paper);
+    }
+    .st-role .ok { color: var(--st-ok); font-weight: 600; }
+    .st-role .warn { color: var(--st-warn); font-weight: 600; }
+    .st-login { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: end; }
+    .st-login input {
+      border: 1px solid #c5ced8; border-radius: 6px; padding: 0.4rem 0.55rem; font: inherit; min-width: 11rem;
+    }
+    .st-toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 0 0 1rem; }
+    .st-toolbar select { border: 1px solid #c5ced8; border-radius: 6px; padding: 0.4rem 0.55rem; font: inherit; }
+    .st-grid { display: grid; gap: 1rem; }
+    .st-card {
+      border: 1px solid var(--st-line); border-radius: 12px; padding: 1rem 1.15rem;
+      background: var(--st-paper); box-shadow: 0 1px 0 rgba(26,35,50,0.04);
+    }
+    .st-card h3 { margin: 0 0 0.4rem; font-size: 1.05rem; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+    .st-meta { font-size: 0.85rem; color: var(--st-muted); display: flex; flex-wrap: wrap; gap: 0.45rem 0.9rem; }
+    .st-badge { display: inline-block; padding: 0.12rem 0.5rem; border-radius: 999px; background: #eef2f6; font-size: 0.72rem; font-weight: 600; }
+    .st-badge--ok { background: #e6f6ea; color: var(--st-ok); }
+    .st-badge--warn { background: #fff4e0; color: var(--st-warn); }
+    .st-badge--bad { background: #fdecea; color: var(--st-bad); }
+    .st-check { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.7rem; }
+    .st-actions { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.75rem; }
+    .st-group { margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px dashed #d8dee6; }
+    .st-group h4 { margin: 0 0 0.45rem; font-size: 0.78rem; color: var(--st-muted); font-weight: 600; letter-spacing: 0.04em; }
+    .st-form { display: grid; gap: 0.6rem; }
+    .st-form label { display: grid; gap: 0.25rem; font-size: 0.9rem; }
+    .st-form input, .st-form select, .st-form textarea {
+      border: 1px solid #c5ced8; border-radius: 6px; padding: 0.45rem 0.6rem; font: inherit; background: #fff;
+    }
+    .st-form textarea { min-height: 4rem; }
+    .st-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    @media (max-width: 720px) { .st-row { grid-template-columns: 1fr; } }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem;
+      padding: 0.42rem 0.78rem; border-radius: 7px; border: 1px solid #c5ced8;
+      background: #fff; cursor: pointer; font: inherit; text-decoration: none; color: inherit;
+      transition: border-color .15s, transform .15s, background .15s;
+    }
+    .btn:hover { border-color: #9aadc2; transform: translateY(-1px); }
+    .btn.primary { background: var(--st-accent); color: #fff; border-color: var(--st-accent); }
+    .btn.primary:hover { background: #183d64; }
+    .btn.teal { background: var(--st-accent-2); color: #fff; border-color: var(--st-accent-2); }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+    .st-msg { margin: 0.75rem 0; padding: 0.65rem 0.8rem; border-radius: 8px; background: #eef4fa; font-size: 0.9rem; white-space: pre-wrap; }
+    .st-msg.err { background: #fdecea; color: var(--st-bad); }
+    .st-msg.ok { background: #e6f6ea; color: var(--st-ok); }
+    .st-panel { margin-top: 0.75rem; display: none; }
+    .st-panel.open { display: block; }
+    .st-hint { font-size: 0.8rem; color: var(--st-muted); margin: 0 0 0.5rem; }
+    .st-tasks { margin-top: 0.55rem; display: grid; gap: 0.4rem; }
+    .st-task {
+      display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; justify-content: space-between;
+      padding: 0.45rem 0.55rem; border-radius: 8px; background: #f4f7fa; font-size: 0.85rem;
+    }
+    .st-task .left { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
+    .st-empty { color: var(--st-muted); padding: 1.25rem 0.5rem; }
+    .st-verdict { margin-top: 0.5rem; font-size: 0.85rem; color: var(--st-ink); }
+  </style>
+</head>
+<body class="text-on-surface antialiased inner-page">
+  <div id="header-container"></div>
+  <main class="st-page">
+    <header class="st-hero">
+      <p style="margin:0;color:var(--st-muted);font-size:0.85rem">党建党媒 · 让栏目内容更容易被 AI 答到</p>
+      <h1>选题策略工作台</h1>
+      <p class="st-lead">一次只盯<strong>一个问题</strong>、<strong>一个问答平台</strong>（豆包 / 元宝 / DeepSeek）。先摸清现状，再写稿发布，最后复测有没有被提到、有没有被引到前面。</p>
+      <div class="st-pipe" aria-label="工作步骤">
+        <span><em>1</em>查页面问题</span>
+        <span><em>2</em>投放前摸底</span>
+        <span><em>3</em>定选题策略</span>
+        <span><em>4</em>备好素材</span>
+        <span><em>5</em>写稿过审</span>
+        <span><em>6</em>登记已发布</span>
+        <span><em>7</em>投放后复测</span>
+        <span><em>8</em>看效果</span>
+        <span><em>9</em>改策略或留档</span>
+      </div>
+      <div class="st-actions">
+        <a class="btn" href="/diagnostic">去查页面</a>
+        <a class="btn" href="/knowledge">去知识库写稿</a>
+        <a class="btn" href="/distribute">看分发预览</a>
+        <a class="btn" href="/suite?step=measure">去观测提问</a>
+        <button type="button" class="btn primary" id="btn-refresh">刷新列表</button>
+      </div>
+    </header>
+
+    <div class="st-role" id="st-role"><span>正在识别您的岗位…</span></div>
+    <div id="st-msg" class="st-msg" hidden></div>
+
+    <section class="st-card" style="margin-bottom:1.1rem">
+      <h3>新建一条选题策略</h3>
+      <p class="st-hint">先选平台和用户常问的问题，写清「现在缺什么」。建好后再补全要写什么稿、发到哪里、怎样算有效。</p>
+      <form class="st-form" id="seed-form">
+        <div class="st-row">
+          <label>盯哪个问答平台
+            <select name="platform" required>
+              <option value="doubao">豆包</option>
+              <option value="yuanbao">元宝</option>
+              <option value="deepseek">DeepSeek</option>
+            </select>
+          </label>
+          <label>用户常问什么（问题类）
+            <input name="question_class" required placeholder="例如：第一现场是什么栏目" value="第一现场是什么栏目">
+          </label>
+        </div>
+        <label>现在缺什么、打算补什么
+          <textarea name="gap_note" required placeholder="例如：页面缺少常见问答，需要官网一篇说明 + 一篇问答，并同步发公众号">页面缺少常见问答结构，需要官网一篇栏目说明 + 一篇问答，并同步发到公众号。</textarea>
+        </label>
+        <div class="st-row">
+          <label>用哪个知识库（可稍后在卡片里填）
+            <input name="knowledge_base_id" id="seed-kb" placeholder="从知识库页面复制编号">
+          </label>
+          <label>关联哪次观测任务（摸底/复测要用）
+            <input name="geo_run_id" id="seed-run" placeholder="从观测页面复制任务编号">
+          </label>
+        </div>
+        <button type="submit" class="btn primary">创建草稿</button>
+      </form>
+    </section>
+
+    <div class="st-toolbar">
+      <strong style="font-size:1.05rem">我的选题策略</strong>
+      <label>按进度筛选
+        <select id="filter-status">
+          <option value="">全部</option>
+          <option value="draft">草稿</option>
+          <option value="pending_review">等审核</option>
+          <option value="executable">已批准，可以写稿</option>
+          <option value="deployed">已登记发布</option>
+          <option value="observing">正在复测</option>
+          <option value="effective">已见效</option>
+          <option value="partial">部分见效</option>
+          <option value="ineffective">还没见效</option>
+        </select>
+      </label>
+      <span class="st-hint" id="list-count" style="margin:0"></span>
+    </div>
+    <div class="st-grid" id="st-list"></div>
+  </main>
+
+  <script src="/js/common.js"></script>
+  <script>
+  (function () {
+    const msgEl = document.getElementById('st-msg');
+    const listEl = document.getElementById('st-list');
+    const roleEl = document.getElementById('st-role');
+    const tokenKey = 'georank_token';
+    let me = null;
+
+    const STATUS_LABEL = {
+      draft: '草稿',
+      pending_review: '等审核',
+      executable: '已批准，可以写稿',
+      deployed: '已登记发布',
+      observing: '正在复测',
+      effective: '已见效',
+      partial: '部分见效',
+      ineffective: '还没见效',
+      archived: '已归档',
+    };
+    const VERDICT_LABEL = {
+      effective: '已见效',
+      partial: '部分见效',
+      ineffective: '还没见效',
+    };
+    const PLATFORM_LABEL = { doubao: '豆包', yuanbao: '元宝', deepseek: 'DeepSeek' };
+    const WORKFLOW_LABEL = {
+      claimed: '已领题',
+      template_draft: '初稿已出',
+      channel_draft: '渠道稿已出',
+      in_review: '审核中',
+      ready: '已过审，可发布',
+      promoted: '已留档',
+      archived: '已搁置',
+    };
+    const ROLE_LABEL = { editor: '编写', reviewer: '审核', risk: '风控', admin: '技术支持' };
+    const ACTION_OK = {
+      '/attach-diagnostic': '已挂上页面诊断',
+      '/register-baseline': '已登记投放前摸底',
+      '/submit': '已送审',
+      '/approve': '已批准，可以写稿了',
+      '/tasks': '已创建写稿任务',
+      '/deploy': '已登记对外发布',
+      '/start-observe': '已建投放后复测',
+      '/confirm-verdict': '效果判定已确认',
+      '/fork': '已开新一版策略',
+      '/confirm-promote-l2': '已确认留档到故事证据库',
+    };
+    const MEDIA_LABEL = {
+      wechat: '微信公众号',
+      toutiao: '头条号',
+      douyin: '抖音',
+      baike: '百度百科',
+      baijiahao: '百家号',
+      other: '其他媒体号',
+    };
+
+    function token() {
+      try { return localStorage.getItem(tokenKey) || sessionStorage.getItem(tokenKey) || ''; }
+      catch (_) { return ''; }
+    }
+    function setToken(t) {
+      try { localStorage.setItem(tokenKey, t); } catch (_) {}
+    }
+    function showMsg(text, kind) {
+      msgEl.hidden = false;
+      msgEl.textContent = text;
+      msgEl.className = 'st-msg' + (kind === 'err' ? ' err' : kind === 'ok' ? ' ok' : '');
+    }
+    function escapeHtml(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function labelStatus(st) { return STATUS_LABEL[st] || st || '—'; }
+    function labelPlatform(p) { return PLATFORM_LABEL[p] || p || '—'; }
+    function labelWorkflow(w) { return WORKFLOW_LABEL[w] || w || '—'; }
+    function labelRole(r) { return ROLE_LABEL[r] || r || '—'; }
+    function badgeClass(status) {
+      if (['effective', 'executable', 'deployed', 'promoted', 'ready'].includes(status)) return 'st-badge st-badge--ok';
+      if (['partial', 'pending_review', 'observing', 'draft', 'claimed', 'template_draft', 'channel_draft', 'in_review'].includes(status)) return 'st-badge st-badge--warn';
+      if (['ineffective', 'archived'].includes(status)) return 'st-badge st-badge--bad';
+      return 'st-badge';
+    }
+    function friendlyError(msg) {
+      const s = String(msg || '');
+      if (/geo_run/i.test(s)) return '请先填写「观测任务编号」（从观测页面复制），再登记摸底。';
+      if (/诊断/.test(s)) return '请先挂上页面诊断报告，再送审或批准。';
+      if (/baseline|摸底|初次观测/i.test(s)) return '请先登记投放前摸底，再批准策略。';
+      if (/起草人|自己的策略/.test(s)) return '不能自己审自己写的策略，请换审核账号操作。';
+      if (/editor|reviewer|业务角色|需要 reviewer|需要 editor/i.test(s)) return '当前账号岗位不对。编写用编写账号，批准/判定用审核账号。';
+      if (/全部执行物|ready|过审/.test(s)) return '请至少准备两篇稿，并全部过审后，才能登记已发布。';
+      if (/六元组|问法|标签|文档/.test(s)) return '请先补全策略内容：至少3种问法、要写什么稿、用哪些素材和主题标签。';
+      return s;
+    }
+    async function api(path, opts) {
+      const headers = Object.assign({ 'Content-Type': 'application/json' }, (opts && opts.headers) || {});
+      const t = token();
+      if (t) headers.Authorization = 'Bearer ' + t;
+      const res = await fetch('/api' + path, Object.assign({}, opts || {}, { headers }));
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const detail = data.detail;
+        const msg = typeof detail === 'string' ? detail
+          : (Array.isArray(detail) ? detail.map(function (x) { return x.msg || JSON.stringify(x); }).join('; ')
+          : data.message || res.statusText || '操作失败');
+        throw new Error(friendlyError(msg));
+      }
+      return data;
+    }
+
+    async function refreshRole() {
+      try { me = await api('/content-engine/geo/me'); }
+      catch (_) { me = null; }
+      const roles = (me && me.effective_roles) || [];
+      const gr = (me && me.geo_role) || '';
+      const biz = gr === 'editor' || gr === 'reviewer' || roles.includes('editor') || roles.includes('reviewer');
+      roleEl.innerHTML = '';
+      const info = document.createElement('div');
+      if (me && biz) {
+        info.innerHTML = '<span class="ok">当前岗位：' + escapeHtml(labelRole(gr)) + '</span> · 账号 ' +
+          escapeHtml(me.username || me.email || '') +
+          ' · 编写可起草写稿；审核可批准策略、过审稿件、确认效果';
+      } else if (me) {
+        info.innerHTML = '<span class="warn">当前是技术支持账号</span> · 日常选题审批请改用<strong>编写</strong>或<strong>审核</strong>账号登录';
+      } else {
+        info.innerHTML = '<span class="warn">尚未登录业务账号</span> · 请用编写或审核账号登录后再操作';
+      }
+      roleEl.appendChild(info);
+
+      const login = document.createElement('form');
+      login.className = 'st-login';
+      login.innerHTML =
+        '<label>账号<input name="account" placeholder="编写账号邮箱" value="smoke-editor@georank.local"></label>' +
+        '<label>密码<input name="password" type="password" value="SmokeTest!234"></label>' +
+        '<button class="btn teal" type="submit">登录为编写</button>' +
+        '<button class="btn" type="button" data-as="reviewer">改登审核</button>';
+      login.addEventListener('submit', async function (ev) {
+        ev.preventDefault();
+        const fd = new FormData(login);
+        try {
+          const out = await api('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ account: fd.get('account'), password: fd.get('password'), remember_me: true }),
+          });
+          setToken(out.access_token);
+          showMsg('登录成功，可以开始操作了', 'ok');
+          await refreshRole();
+          await load();
+        } catch (e) {
+          showMsg(String(e.message || e), 'err');
+        }
+      });
+      login.querySelector('[data-as="reviewer"]').onclick = function () {
+        login.account.value = 'smoke-reviewer@georank.local';
+        login.password.value = 'SmokeTest!234';
+        login.requestSubmit();
+      };
+      roleEl.appendChild(login);
+    }
+
+    async function act(id, path, body, busyText) {
+      try {
+        showMsg(busyText || '正在处理…');
+        const data = await api('/geo-strategies/' + id + path, {
+          method: 'POST',
+          body: body ? JSON.stringify(body) : undefined,
+        });
+        showMsg(ACTION_OK[path] || '操作完成', 'ok');
+        await load();
+        return data;
+      } catch (e) {
+        showMsg(String(e.message || e), 'err');
+        return null;
+      }
+    }
+
+    function renderChecklist(items) {
+      if (!items || !items.length) return '';
+      return '<div class="st-check">' + items.map(function (it) {
+        const cls = it.ok ? 'st-badge st-badge--ok' : 'st-badge st-badge--warn';
+        const tip = it.deliverable || it.note || '';
+        return '<span class="' + cls + '" title="' + escapeHtml(tip) + '">' +
+          escapeHtml(it.step) + (it.ok ? ' ✓' : ' ·未齐') + '</span>';
+      }).join('') + '</div>';
+    }
+
+    function sixTupleDefaults(s) {
+      const cm = s.channel_matrix || {};
+      const ss = s.success_signal || {};
+      const tags = s.knowledge_tag_pack || {};
+      return {
+        title: s.title || '',
+        content_orientation: s.content_orientation || '1篇栏目说明（深文）+ 1篇常见问答',
+        query_variants: (s.query_variants || []).join('\n') || '第一现场是什么栏目\n第一现场主要报道什么内容\n哪里看第一现场官方内容',
+        media_types: (cm.media_types || ['wechat']).join(','),
+        success_mode: ss.mode || 'mention_top10',
+        top_n: ss.top_n || 10,
+        docs: (s.knowledge_document_ids || []).join('\n'),
+        site_id: tags.site_id || 'diyixianchang',
+        theme: tags.theme || tags.task_bajua || '栏目认知',
+        task_bajua: tags.task_bajua || '栏目认知',
+        knowledge_base_id: s.knowledge_base_id || '',
+        geo_run_id: s.geo_run_id || '',
+        gap_note: s.gap_note || '',
+      };
+    }
+
+    function buildEditPanel(s) {
+      const d = sixTupleDefaults(s);
+      const panel = document.createElement('div');
+      panel.className = 'st-panel';
+      panel.innerHTML =
+        '<p class="st-hint">请写清楚：用户怎么问、我们写什么、发到哪里、怎样算有效、用哪些已审过的素材。保存后再送审。</p>' +
+        '<form class="st-form">' +
+          '<label>策略名称<input name="title" value="' + escapeHtml(d.title) + '"></label>' +
+          '<label>打算写什么稿<textarea name="content_orientation">' + escapeHtml(d.content_orientation) + '</textarea></label>' +
+          '<label>准备用来提问/复测的问法（每行一句，至少3句）<textarea name="query_variants">' + escapeHtml(d.query_variants) + '</textarea></label>' +
+          '<div class="st-row">' +
+            '<label>同步发哪些媒体号（英文代号，逗号分隔：wechat 公众号）<input name="media_types" value="' + escapeHtml(d.media_types) + '"></label>' +
+            '<label>怎样算有效<select name="success_mode">' +
+              '<option value="mention_top10"' + (d.success_mode === 'mention_top10' ? ' selected' : '') + '>被提到，且引用进前10</option>' +
+              '<option value="strong_adopt"' + (d.success_mode === 'strong_adopt' ? ' selected' : '') + '>被提到并引用到我们自己的官网</option>' +
+            '</select></label>' +
+          '</div>' +
+          '<div class="st-row">' +
+            '<label>引用排名进入前几算有效<input name="top_n" type="number" min="1" max="20" value="' + escapeHtml(d.top_n) + '"></label>' +
+            '<label>知识库编号<input name="knowledge_base_id" value="' + escapeHtml(d.knowledge_base_id) + '" placeholder="从知识库页面复制"></label>' +
+          '</div>' +
+          '<label>本策略要用哪些已入库素材（每行一个素材编号）<textarea name="docs" placeholder="从知识库文档列表复制编号">' + escapeHtml(d.docs) + '</textarea></label>' +
+          '<div class="st-row">' +
+            '<label>站点标识（如第一现场）<input name="site_id" value="' + escapeHtml(d.site_id) + '"></label>' +
+            '<label>主题/八爪标签<input name="task_bajua" value="' + escapeHtml(d.task_bajua) + '"></label>' +
+          '</div>' +
+          '<div class="st-row">' +
+            '<label>主题说明<input name="theme" value="' + escapeHtml(d.theme) + '"></label>' +
+            '<label>观测任务编号<input name="geo_run_id" value="' + escapeHtml(d.geo_run_id) + '" placeholder="从观测页复制"></label>' +
+          '</div>' +
+          '<label>缺口与补救说明<textarea name="gap_note">' + escapeHtml(d.gap_note) + '</textarea></label>' +
+          '<button type="submit" class="btn primary">保存策略内容</button>' +
+        '</form>';
+      panel.querySelector('form').addEventListener('submit', async function (ev) {
+        ev.preventDefault();
+        const fd = new FormData(ev.target);
+        const qv = String(fd.get('query_variants') || '').split(/\r?\n/).map(function (x) { return x.trim(); }).filter(Boolean);
+        const docs = String(fd.get('docs') || '').split(/\r?\n/).map(function (x) { return x.trim(); }).filter(Boolean);
+        const media = String(fd.get('media_types') || 'wechat').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+        const body = {
+          title: String(fd.get('title') || '').trim() || undefined,
+          content_orientation: String(fd.get('content_orientation') || '').trim(),
+          query_variants: qv,
+          channel_matrix: { site_required: true, media_types: media },
+          success_signal: { mode: String(fd.get('success_mode') || 'mention_top10'), top_n: Number(fd.get('top_n') || 10) },
+          knowledge_document_ids: docs,
+          knowledge_tag_pack: {
+            site_id: String(fd.get('site_id') || '').trim(),
+            theme: String(fd.get('theme') || '').trim(),
+            task_bajua: String(fd.get('task_bajua') || '').trim(),
+          },
+          gap_note: String(fd.get('gap_note') || '').trim() || undefined,
+        };
+        const kb = String(fd.get('knowledge_base_id') || '').trim();
+        const run = String(fd.get('geo_run_id') || '').trim();
+        if (kb) body.knowledge_base_id = kb;
+        if (run) body.geo_run_id = run;
+        try {
+          await api('/geo-strategies/' + s.id, { method: 'PATCH', body: JSON.stringify(body) });
+          showMsg('策略内容已保存', 'ok');
+          await load();
+        } catch (e) {
+          showMsg(String(e.message || e), 'err');
+        }
+      });
+      return panel;
+    }
+
+    async function loadTasks(s, host) {
+      host.innerHTML = '<span class="st-hint">正在加载写稿任务…</span>';
+      try {
+        const data = await api('/geo-strategies/' + s.id + '/tasks');
+        const items = data.items || [];
+        if (!items.length) {
+          host.innerHTML = '<span class="st-hint">还没有写稿任务。策略批准后，可点「写栏目说明并出稿」或「写常见问答并出稿」。</span>';
+          return;
+        }
+        host.innerHTML = '';
+        items.forEach(function (t) {
+          const row = document.createElement('div');
+          row.className = 'st-task';
+          const preview = (t.template_draft_body || t.draft_body || '').slice(0, 80);
+          const llmTip = t.meta && t.meta.llm_ok === true
+            ? '<span class="st-badge st-badge--ok">已自动起草</span>'
+            : (t.meta && t.meta.llm_ok === false ? '<span class="st-badge st-badge--warn">起草失败，请重试或手改</span>' : '');
+          row.innerHTML =
+            '<div class="left">' +
+              '<strong>' + escapeHtml(t.title) + '</strong>' +
+              '<span class="' + badgeClass(t.workflow_status) + '">' + escapeHtml(labelWorkflow(t.workflow_status)) + '</span>' +
+              llmTip +
+              (preview ? '<span style="color:#5c6570">' + escapeHtml(preview) + '…</span>' : '') +
+            '</div><div class="st-actions" style="margin:0"></div>';
+          const actions = row.querySelector('.st-actions');
+          function mk(label, fn, cls) {
+            const b = document.createElement('button');
+            b.type = 'button'; b.className = 'btn' + (cls ? ' ' + cls : ''); b.textContent = label;
+            b.onclick = fn; actions.appendChild(b);
+          }
+          mk('自动起草', async function () {
+            showMsg('正在根据素材起草「' + t.title + '」…');
+            try {
+              await api('/geo-strategies/' + s.id + '/tasks/' + t.id + '/generate', { method: 'POST' });
+              showMsg('草稿已出，请审阅后再送审', 'ok');
+              await load();
+            } catch (e) { showMsg(String(e.message || e), 'err'); }
+          }, 'teal');
+          mk('送审', async function () {
+            try {
+              await api('/content-engine/tasks/' + t.id + '/submit-review', { method: 'POST' });
+              showMsg('稿件已送审', 'ok'); await load();
+            } catch (e) { showMsg(String(e.message || e), 'err'); }
+          });
+          mk('审核通过', async function () {
+            try {
+              await api('/content-engine/tasks/' + t.id + '/approve-ready', { method: 'POST' });
+              showMsg('稿件已过审，可以对外发布', 'ok'); await load();
+            } catch (e) { showMsg(String(e.message || e), 'err'); }
+          });
+          host.appendChild(row);
+        });
+      } catch (e) {
+        host.innerHTML = '<span class="st-hint">' + escapeHtml(e.message || e) + '</span>';
+      }
+    }
+
+    function renderItem(s) {
+      const ts = s.task_summary || {};
+      const cl = s.handoff_checklist || {};
+      const card = document.createElement('article');
+      card.className = 'st-card';
+      card.dataset.status = s.status || '';
+      const vd = s.verdict_detail || {};
+      const bc = vd.baseline_compare || {};
+      const readyText = ts.all_ready
+        ? '稿件已齐（' + (ts.ready_count || 0) + '篇过审）'
+        : '稿件进度 ' + (ts.ready_count || 0) + '/' + (ts.total || 0);
+      card.innerHTML =
+        '<h3>' + escapeHtml(s.title) +
+          ' <span class="' + badgeClass(s.status) + '">' + escapeHtml(labelStatus(s.status)) + '</span>' +
+          (s.verdict ? ' <span class="' + badgeClass(s.verdict) + '">' + escapeHtml(VERDICT_LABEL[s.verdict] || s.verdict) + '</span>' : '') +
+        '</h3>' +
+        '<div class="st-meta">' +
+          '<span>平台：' + escapeHtml(labelPlatform(s.platform)) + '</span>' +
+          '<span>问题：' + escapeHtml(s.question_class) + '</span>' +
+          '<span>第 ' + s.version + ' 版</span>' +
+          '<span>' + escapeHtml(readyText) + '</span>' +
+        '</div>' +
+        renderChecklist(cl.items || []) +
+        (s.gap_note ? '<p style="margin:0.55rem 0 0;font-size:0.9rem;color:#445">' + escapeHtml(s.gap_note) + '</p>' : '') +
+        (s.verdict ? '<div class="st-verdict">复测里见效的问法：' + escapeHtml(String(vd.effective_query_count || 0)) + ' 条' +
+          (bc.after_mention_count != null
+            ? '；投放后被提到 ' + bc.after_mention_count + ' 次，摸底时 ' + (bc.baseline_mention_count || 0) + ' 次'
+            : '') +
+          '</div>' : '') +
+        '<div class="st-tasks" data-tasks></div>';
+
+      const editPanel = buildEditPanel(s);
+      card.appendChild(editPanel);
+
+      function group(title) {
+        const g = document.createElement('div');
+        g.className = 'st-group';
+        g.innerHTML = '<h4>' + title + '</h4><div class="st-actions"></div>';
+        card.appendChild(g);
+        return g.querySelector('.st-actions');
+      }
+      function btn(host, label, fn, cls) {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'btn' + (cls ? ' ' + cls : ''); b.textContent = label;
+        b.onclick = fn; host.appendChild(b);
+      }
+
+      const g0 = group('定策略（编写起草 / 审核批准）');
+      btn(g0, '填写策略内容', function () { editPanel.classList.toggle('open'); }, 'primary');
+      btn(g0, '挂上页面诊断', function () {
+        const id = prompt('请粘贴诊断报告编号（在「查页面」结果里复制）');
+        if (id) act(s.id, '/attach-diagnostic', { diagnostic_report_id: id }, '正在挂接诊断…');
+      });
+      btn(g0, '登记投放前摸底', function () {
+        act(s.id, '/register-baseline', null, '正在登记摸底…');
+      });
+      btn(g0, '送审策略', function () { act(s.id, '/submit', null, '正在送审…'); });
+      btn(g0, '批准可以写稿', function () { act(s.id, '/approve', null, '正在批准…'); }, 'teal');
+
+      const g1 = group('写稿与过审');
+      btn(g1, '写栏目说明并出稿', function () {
+        act(s.id, '/tasks', { title: s.question_class + ' · 栏目说明', content_kind: 'deep', generate: true }, '正在创建并起草栏目说明…');
+      }, 'teal');
+      btn(g1, '写常见问答并出稿', function () {
+        act(s.id, '/tasks', { title: s.question_class + ' · 常见问答', content_kind: 'faq', generate: true }, '正在创建并起草问答…');
+      }, 'teal');
+      btn(g1, '只建栏目说明任务', function () {
+        act(s.id, '/tasks', { title: s.question_class + ' · 栏目说明', content_kind: 'deep' }, '正在创建任务…');
+      });
+      btn(g1, '只建问答任务', function () {
+        act(s.id, '/tasks', { title: s.question_class + ' · 常见问答', content_kind: 'faq' }, '正在创建任务…');
+      });
+
+      const g2 = group('发布、复测与看效果');
+      btn(g2, '登记已对外发布', function () {
+        const site_url = prompt('第一现场官网已发文章的链接', s.site_url || 'https://');
+        if (!site_url) return;
+        const mediaRaw = prompt('媒体号类型：公众号填 wechat；也可填 toutiao / douyin / baike / baijiahao', s.media_channel_type || 'wechat');
+        if (!mediaRaw) return;
+        const media_url = prompt((MEDIA_LABEL[mediaRaw] || '媒体号') + '已发内容的链接', s.media_url || 'https://');
+        if (!media_url) return;
+        act(s.id, '/deploy', { site_url: site_url, media_channel_type: mediaRaw, media_url: media_url }, '正在登记发布…');
+      }, 'primary');
+      btn(g2, '开始投放后复测', function () { act(s.id, '/start-observe', null, '正在建立复测…'); });
+      btn(g2, '确认效果判定', function () { act(s.id, '/confirm-verdict', {}, '正在确认效果…'); });
+      btn(g2, '效果不够，开新一版', function () { act(s.id, '/fork', null, '正在开新版…'); });
+      btn(g2, '见效内容留档入库', function () { act(s.id, '/confirm-promote-l2', null, '正在留档…'); });
+
+      loadTasks(s, card.querySelector('[data-tasks]'));
+      return card;
+    }
+
+    function applyFilter() {
+      const st = document.getElementById('filter-status').value;
+      const cards = listEl.querySelectorAll('.st-card');
+      let n = 0;
+      cards.forEach(function (c) {
+        const show = !st || c.dataset.status === st;
+        c.style.display = show ? '' : 'none';
+        if (show) n += 1;
+      });
+      document.getElementById('list-count').textContent = '当前显示 ' + n + ' 条（共 ' + cards.length + ' 条）';
+    }
+
+    async function load() {
+      try {
+        const data = await api('/geo-strategies?limit=50');
+        const items = data.items || [];
+        listEl.innerHTML = '';
+        if (!items.length) {
+          listEl.innerHTML = '<p class="st-empty">还没有选题策略。请先用编写账号登录，在上方创建一条草稿。</p>';
+        } else {
+          items.forEach(function (s) { listEl.appendChild(renderItem(s)); });
+        }
+        applyFilter();
+      } catch (e) {
+        showMsg(String(e.message || e), 'err');
+      }
+    }
+
+    document.getElementById('seed-form').addEventListener('submit', async function (ev) {
+      ev.preventDefault();
+      const fd = new FormData(ev.target);
+      const body = {
+        platform: fd.get('platform'),
+        question_class: fd.get('question_class'),
+        gap_note: fd.get('gap_note'),
+      };
+      const kb = String(fd.get('knowledge_base_id') || '').trim();
+      const run = String(fd.get('geo_run_id') || '').trim();
+      if (kb) body.knowledge_base_id = kb;
+      if (run) body.geo_run_id = run;
+      try {
+        await api('/geo-strategies/seed', { method: 'POST', body: JSON.stringify(body) });
+        showMsg('草稿已创建。请点「填写策略内容」补全后，再送审。', 'ok');
+        await load();
+      } catch (e) {
+        showMsg(String(e.message || e), 'err');
+      }
+    });
+    document.getElementById('btn-refresh').onclick = load;
+    document.getElementById('filter-status').onchange = applyFilter;
+    refreshRole().then(load);
+  })();
+  </script>
+</body>
+</html>

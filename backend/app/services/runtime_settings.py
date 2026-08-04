@@ -497,10 +497,12 @@ def _build_ai_runtime_config(values: dict[str, Any]) -> dict[str, Any]:
             settings.LLM_FALLBACK_MODEL,
             settings.CODEX_MODEL,
         ),
+        # Embedding Key 与 Chat LLM Key 隔离：DeepSeek 等不支持向量接口
         "embedding_api_key": _pick_string(
             values.get("embedding_api_key"),
-            values.get("openai_api_key"),
+            values.get("dashscope_api_key"),
             settings.EMBEDDING_API_KEY,
+            settings.DASHSCOPE_API_KEY,
         ),
         "embedding_base_url": _pick_string(values.get("embedding_base_url"), settings.EMBEDDING_BASE_URL),
         "embedding_model": _pick_string(values.get("embedding_model"), settings.EMBEDDING_MODEL),

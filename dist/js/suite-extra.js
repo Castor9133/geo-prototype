@@ -82,6 +82,7 @@
     async function renderKnowledge(container) {
         const native = isNative();
         let metrics = null;
+        let geoStats = null;
         try {
             metrics = await fetchJson(DEMO_KB.metricsUrl);
         } catch (e) {
@@ -92,6 +93,14 @@
             demo = await fetchJson('/api/content-engine/public/demo-summary');
         } catch (e) {
             console.warn('[suite-extra] demo-summary failed', e);
+        }
+        const kbIdForStats = demo && demo.knowledge_base && demo.knowledge_base.id;
+        if (kbIdForStats) {
+            try {
+                geoStats = await fetchJson(`/api/content-engine/knowledge-bases/${kbIdForStats}/geo-stats`);
+            } catch (e) {
+                console.warn('[suite-extra] geo-stats failed', e);
+            }
         }
 
         const entity = (metrics && metrics.entity_name) || DEMO_KB.entity;
@@ -145,6 +154,17 @@
                 : (readyFlag
                     ? `<p class="suite-extra__meta">示例知识库已就绪，可在知识库页检索与生成。</p>`
                     : `<p class="suite-extra__meta">尚未导入示例库：可在知识库页导入或新建。</p>`),
+            geoStats
+                ? [
+                    `<div class="suite-metric-grid" style="margin-top:0.75rem">`,
+                    `<div class="suite-metric"><strong>${geoStats.tiers?.L1 || 0}</strong><span>L1 权威</span></div>`,
+                    `<div class="suite-metric"><strong>${geoStats.tiers?.L2 || 0}</strong><span>L2 故事</span></div>`,
+                    `<div class="suite-metric"><strong>${geoStats.tiers?.L3 || 0}</strong><span>L3 口径</span></div>`,
+                    `<div class="suite-metric"><strong>${geoStats.rag_eligible || 0}</strong><span>可检索</span>`
+                    + `<small>待确认 L1：${geoStats.pending_l1_confirm || 0}</small></div>`,
+                    `</div>`,
+                ].join('')
+                : '',
             `<div class="suite-cta-row suite-cta-row--compact">`,
             `<a class="suite-btn suite-btn--primary" href="${escapeHtml(adminUrl)}">打开知识库</a>`,
             `<a class="suite-btn suite-btn--ghost" href="${escapeHtml(listUrl)}">管理知识库</a>`,
@@ -179,26 +199,98 @@
             : `<p class="suite-extra__meta">暂无任务草稿。请在知识库/分发页新建任务并生成草稿。</p>`;
 
         if (native) {
+            let geoTasks = [];
+            try {
+                const gt = await fetchJson('/api/content-engine/tasks-geo?limit=12');
+                geoTasks = gt.items || [];
+            } catch (e) {
+                console.warn('[suite-extra] tasks-geo failed', e);
+            }
+            const wfList = geoTasks.length
+                ? [
+                    `<ul class="suite-fact-list" id="suite-geo-tasks">`,
+                    ...geoTasks.slice(0, 8).map((t) => (
+                        `<li data-tid="${escapeHtml(t.id)}">`
+                        + `<strong>${escapeHtml(t.workflow_status || '-')}</strong> `
+                        + `${escapeHtml(t.title)}`
+                        + (t.promote_suggestion
+                            ? ` · <span class="suite-badge">建议${t.promote_suggestion === 'promote' ? '沉淀' : '剔除'}</span>`
+                            : '')
+                        + ` <button type="button" class="suite-btn suite-btn--ghost suite-geo-refresh" data-tid="${escapeHtml(t.id)}">刷新建议</button>`
+                        + (t.workflow_status === 'ready' || t.promote_suggestion
+                            ? ` <button type="button" class="suite-btn suite-btn--ghost suite-geo-promote" data-tid="${escapeHtml(t.id)}">确认沉淀</button>`
+                            + ` <button type="button" class="suite-btn suite-btn--ghost suite-geo-reject" data-tid="${escapeHtml(t.id)}">确认剔除</button>`
+                            : '')
+                        + `</li>`
+                    )),
+                    `</ul>`,
+                ].join('')
+                : taskList;
+
             container.innerHTML = [
                 `<div class="suite-extra__head">`,
-                `<h3>渠道预览</h3>`,
-                `<span class="suite-badge suite-badge--accent">预览·不外发</span>`,
+                `<h3>生成两步 · 观测沉淀</h3>`,
+                `<span class="suite-badge suite-badge--accent">模板稿→平台稿→审核→ready</span>`,
                 `</div>`,
                 `<p class="suite-extra__lead">`,
-                `绑定知识库与提示词生成草稿，再预览渠道壳并标记就绪。`,
+                `小编可改模板稿与平台适配稿；reviewer 过稿后 ready。点名后半自动建议沉淀/剔除，须人确认。`,
                 `</p>`,
                 `<ol class="suite-demo-list suite-extra__steps">`,
-                `<li>打开内容/分发 → 任务</li>`,
-                `<li>选择提示词并绑定知识库</li>`,
-                `<li>生成草稿</li>`,
-                `<li>预览渠道壳并标记就绪</li>`,
+                `<li>领题 / 生成模板稿（可编辑）</li>`,
+                `<li>选平台适配稿（可编辑）→ 提交审核</li>`,
+                `<li>ready 后关联真实点名 → 确认沉淀 L2 或剔除</li>`,
                 `</ol>`,
-                taskList,
+                wfList,
                 `<div class="suite-cta-row suite-cta-row--compact">`,
                 `<a class="suite-btn suite-btn--primary" href="/distribute">打开内容/分发</a>`,
                 `<a class="suite-btn suite-btn--ghost" href="/knowledge">打开知识库</a>`,
+                `<a class="suite-btn suite-btn--ghost" href="/suite?step=measure">真实点名</a>`,
                 `</div>`,
             ].join('');
+
+            async function postTask(path) {
+                const resp = await fetch(path, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: '{}',
+                });
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({}));
+                    throw new Error(err.detail || resp.statusText);
+                }
+                return resp.json();
+            }
+            container.querySelectorAll('.suite-geo-refresh').forEach((btn) => {
+                btn.addEventListener('click', async () => {
+                    try {
+                        await postTask(`/api/content-engine/tasks/${btn.dataset.tid}/refresh-suggestion`);
+                        await renderDistribute(container);
+                    } catch (err) {
+                        alert(err.message || err);
+                    }
+                });
+            });
+            container.querySelectorAll('.suite-geo-promote').forEach((btn) => {
+                btn.addEventListener('click', async () => {
+                    try {
+                        await postTask(`/api/content-engine/tasks/${btn.dataset.tid}/confirm-promote`);
+                        await renderDistribute(container);
+                    } catch (err) {
+                        alert(err.message || err);
+                    }
+                });
+            });
+            container.querySelectorAll('.suite-geo-reject').forEach((btn) => {
+                btn.addEventListener('click', async () => {
+                    try {
+                        await postTask(`/api/content-engine/tasks/${btn.dataset.tid}/confirm-reject`);
+                        await renderDistribute(container);
+                    } catch (err) {
+                        alert(err.message || err);
+                    }
+                });
+            });
             return;
         }
 

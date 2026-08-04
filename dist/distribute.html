@@ -129,12 +129,17 @@
                 </table>
               </div>
             </div>
-            <h3>草稿 / 预览</h3>
+            <h3>草稿 / 两步编辑</h3>
+            <p class="ce-hint" id="task-workflow-hint">状态：— · 模板稿可改 → 平台适配稿可改 → 提交审核 → ready</p>
             <div class="btn-row btn-row--stack btn-row--inline">
+              <button type="button" class="btn" id="btn-save-template-draft" disabled>保存模板稿</button>
+              <button type="button" class="btn" id="btn-save-channel-draft" disabled>保存平台适配稿</button>
+              <button type="button" class="btn" id="btn-submit-review" disabled>提交审核</button>
+              <button type="button" class="btn green" id="btn-approve-ready" disabled>审核通过→ready</button>
               <button type="button" class="btn" id="btn-preview-shell" disabled>渠道预览</button>
               <button type="button" class="btn green" id="btn-mark-dist" disabled>标记就绪</button>
             </div>
-            <pre id="task-draft">—</pre>
+            <textarea id="task-draft" class="ce-draft-editor" rows="16" placeholder="生成或打开任务后在此编辑…">—</textarea>
             <div id="shell-preview" class="shell-preview hidden" aria-live="polite"></div>
           </div>
         </div>

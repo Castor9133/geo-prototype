@@ -26,6 +26,7 @@ class SnapshotCreate(BaseModel):
         default=None, description="人工确认已外发时间；缺省则 after 用当前 UTC"
     )
     prompt_pack_version: str = "manual-v1"
+    strategy_id: uuid.UUID | None = Field(default=None, description="挂接 GEO 策略（白号观测验收）")
 
 
 class SampleIngest(BaseModel):
@@ -78,6 +79,7 @@ async def create_real_obs_snapshot(
             entity_aliases=payload.entity_aliases,
             published_at=payload.published_at,
             prompt_pack_version=payload.prompt_pack_version,
+            strategy_id=payload.strategy_id,
         )
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc

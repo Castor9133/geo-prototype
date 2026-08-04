@@ -175,6 +175,7 @@ def serialize_snapshot(snap: RealObsSnapshot) -> dict[str, Any]:
     return {
         "id": str(snap.id),
         "geo_run_id": str(snap.geo_run_id),
+        "strategy_id": str(snap.strategy_id) if getattr(snap, "strategy_id", None) else None,
         "phase": snap.phase,
         "prompt_pack_version": snap.prompt_pack_version,
         "platforms": snap.platforms or [],
@@ -301,6 +302,7 @@ async def create_snapshot(
     entity_aliases: list[str] | None = None,
     published_at: datetime | None = None,
     prompt_pack_version: str = "manual-v1",
+    strategy_id: UUID | None = None,
 ) -> RealObsSnapshot:
     if phase not in ("baseline", "after"):
         raise ValueError("phase 须为 baseline 或 after")
@@ -319,6 +321,7 @@ async def create_snapshot(
     snap = RealObsSnapshot(
         id=uuid4(),
         geo_run_id=run.id,
+        strategy_id=strategy_id,
         phase=phase,
         prompt_pack_version=prompt_pack_version or "manual-v1",
         platforms=plats,
@@ -342,7 +345,8 @@ async def create_snapshot(
             "question_count": len(qs),
         },
     )
-    await db.commit()
+    # 只 flush：由调用方（API 路由 / 业务服务）统一 commit，避免中途提交打散事务
+    await db.flush()
     await db.refresh(snap)
     return snap
 

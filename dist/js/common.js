@@ -71,6 +71,7 @@
                     { id: 'suite', label: 'GEO Suite', url: '/suite', target: '_self', enabled: true },
                     { id: 'diagnostic', label: '检查', url: '/diagnostic', target: '_self', enabled: true },
                     { id: 'knowledge', label: '知识', url: '/knowledge', target: '_self', enabled: true },
+                    { id: 'strategies', label: '选题策略', url: '/strategies', target: '_self', enabled: true },
                     { id: 'keywords', label: '拓词', url: '/keywords', target: '_self', enabled: true },
                     { id: 'distribute', label: '分发预览', url: '/distribute', target: '_self', enabled: true },
                     { id: 'measure', label: '观测', url: '/suite?step=measure', target: '_self', enabled: true },

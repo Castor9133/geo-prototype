@@ -92,8 +92,8 @@ class Settings(BaseSettings):
     # ----- AI / LLM -----
     # 主 LLM 服务（兼容 OpenAI API 格式的服务均可）
     LLM_API_KEY: str = ""
-    LLM_BASE_URL: str = ""
-    LLM_MODEL: str = "gpt-4o-mini"
+    LLM_BASE_URL: str = "https://api.deepseek.com/v1"
+    LLM_MODEL: str = "deepseek-v4-flash"
     LLM_FALLBACK_MODEL: str = ""
     ALLOW_PRIVATE_LLM_PROVIDER_URLS: bool = False
 
@@ -103,13 +103,15 @@ class Settings(BaseSettings):
 
     # 向后兼容旧字段（ai_client 内部使用 LLM_* 前缀）
     OPENAI_API_KEY: str = ""
-    OPENAI_MODEL: str = "gpt-4o-mini"
+    OPENAI_MODEL: str = "deepseek-v4-flash"
 
-    # Embedding 配置，需单独配置兼容 OpenAI 格式的 Embedding Key，或留空使用降级逻辑。
-    EMBEDDING_API_KEY: str = ""         # 专用于 Embedding 的 API Key（如有直连 OpenAI）
-    EMBEDDING_BASE_URL: str = ""        # 留空则使用 api.openai.com
-    EMBEDDING_MODEL: str = "text-embedding-3-small"
-    EMBEDDING_DIMENSIONS: int = 1536
+    # Embedding：默认 Qwen3-Embedding 系列（DashScope OpenAI 兼容 text-embedding-v4）
+    # 勿与 DeepSeek 等仅 Chat 的 Key 混用；未配置时内容引擎降级本地哈希向量。
+    EMBEDDING_API_KEY: str = ""
+    DASHSCOPE_API_KEY: str = ""  # 可与 EMBEDDING_API_KEY 二选一
+    EMBEDDING_BASE_URL: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    EMBEDDING_MODEL: str = "text-embedding-v4"
+    EMBEDDING_DIMENSIONS: int = 1024
 
     # 本地 / Suite 演示：允许未登录调用诊断、拓词、问答等 AI 接口
     GEORANK_ALLOW_ANONYMOUS_AI: bool = False
@@ -131,8 +133,8 @@ class Settings(BaseSettings):
 
     @property
     def effective_embedding_key(self) -> str:
-        """Embedding 仅使用专用 Key，避免误用不支持向量的 LLM 网关。"""
-        return self.EMBEDDING_API_KEY or self.OPENAI_API_KEY
+        """Embedding 仅用专用 Key（或 DashScope），绝不回退到 DeepSeek/LLM Key。"""
+        return self.EMBEDDING_API_KEY or self.DASHSCOPE_API_KEY
 
     # ----- JWT -----
     JWT_SECRET: str = "change-me-jwt-secret"

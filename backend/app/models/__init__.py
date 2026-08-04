@@ -30,6 +30,7 @@ from app.models.content_engine import (
 )
 from app.models.geo_run import GeoRun
 from app.models.real_obs import RealObsSample, RealObsSnapshot
+from app.models.geo_strategy import GeoStrategy
 
 __all__ = [
     "Company",
@@ -65,4 +66,5 @@ __all__ = [
     "GeoRun",
     "RealObsSnapshot",
     "RealObsSample",
+    "GeoStrategy",
 ]

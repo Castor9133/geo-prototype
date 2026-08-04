@@ -46,10 +46,19 @@ class RuntimeSettingsTests(unittest.TestCase):
         self.assertEqual(config["embedding_dimensions"], 1024)
 
     def test_build_ai_runtime_config_does_not_reuse_llm_key_for_embedding(self):
-        config = _build_ai_runtime_config({"llm_api_key": "shared-key"})
+        config = _build_ai_runtime_config(
+            {
+                "llm_api_key": "shared-key",
+                "openai_api_key": "also-chat-only-key",
+            }
+        )
 
         self.assertEqual(config["llm_api_key"], "shared-key")
         self.assertEqual(config["embedding_api_key"], "")
+
+    def test_build_ai_runtime_config_accepts_dashscope_embedding_key(self):
+        config = _build_ai_runtime_config({"dashscope_api_key": "sk-dashscope"})
+        self.assertEqual(config["embedding_api_key"], "sk-dashscope")
 
     def test_build_ai_runtime_config_falls_back_to_codex_for_llm_backup(self):
         config = _build_ai_runtime_config(

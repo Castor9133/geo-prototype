@@ -95,3 +95,6 @@ tmp/
 .tmp-*.png
 .tmp-admin-*.png
 
+# Local runtime logs
+logs/
+

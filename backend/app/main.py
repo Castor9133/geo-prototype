@@ -69,15 +69,15 @@ async def _seed_settings(db):
         {"key": "openai_api_key", "value": "", "category": "api_keys", "is_public": False},
         {"key": "google_search_api_key", "value": "", "category": "api_keys", "is_public": False},
         {"key": "llm_api_key", "value": "", "category": "api_keys", "is_public": False},
-        {"key": "llm_base_url", "value": "", "category": "llm", "is_public": False},
-        {"key": "llm_model", "value": "gpt-4o-mini", "category": "llm", "is_public": False},
+        {"key": "llm_base_url", "value": "https://api.deepseek.com/v1", "category": "llm", "is_public": False},
+        {"key": "llm_model", "value": "deepseek-v4-flash", "category": "llm", "is_public": False},
         {"key": "llm_fallback_model", "value": "", "category": "llm", "is_public": False},
         {"key": "llm_providers", "value": get_default_llm_provider_config(), "category": "llm", "is_public": False},
         {"key": "llm_provider_keys", "value": {}, "category": "api_keys", "is_public": False},
         {"key": "embedding_api_key", "value": "", "category": "api_keys", "is_public": False},
-        {"key": "embedding_base_url", "value": "", "category": "llm", "is_public": False},
-        {"key": "embedding_model", "value": "text-embedding-3-small", "category": "llm", "is_public": False},
-        {"key": "embedding_dimensions", "value": 1536, "category": "llm", "is_public": False},
+        {"key": "embedding_base_url", "value": "https://dashscope.aliyuncs.com/compatible-mode/v1", "category": "llm", "is_public": False},
+        {"key": "embedding_model", "value": "text-embedding-v4", "category": "llm", "is_public": False},
+        {"key": "embedding_dimensions", "value": 1024, "category": "llm", "is_public": False},
         {"key": "codex_api_key", "value": "", "category": "api_keys", "is_public": False},
         {"key": "codex_base_url", "value": "", "category": "llm", "is_public": False},
         {"key": "codex_model", "value": "gpt-5.3-codex-spark", "category": "llm", "is_public": False},
@@ -97,6 +97,22 @@ async def _seed_settings(db):
         result = await db.execute(select(Setting).where(Setting.key == item["key"]))
         if not result.scalar_one_or_none():
             db.add(Setting(**item))
+
+    # 将仍停留在旧 OpenAI 演示默认值的 LLM/Embedding 设置升级到 DeepSeek + Qwen Embedding
+    stale_ai_defaults = {
+        "llm_model": ({"gpt-4o-mini", "gpt-4o", ""}, "deepseek-v4-flash"),
+        "llm_base_url": ({"", "https://api.openai.com/v1"}, "https://api.deepseek.com/v1"),
+        "embedding_model": ({"text-embedding-3-small", "text-embedding-3-large", ""}, "text-embedding-v4"),
+        "embedding_base_url": ({"", "https://api.openai.com/v1"}, "https://dashscope.aliyuncs.com/compatible-mode/v1"),
+        "embedding_dimensions": ({1536, "1536", None}, 1024),
+    }
+    for key, (stale_values, new_value) in stale_ai_defaults.items():
+        row = (await db.execute(select(Setting).where(Setting.key == key))).scalar_one_or_none()
+        if row is None:
+            continue
+        current = row.value
+        if current in stale_values:
+            row.value = new_value
 
     # 旧库可能已有不含 Suite 的菜单；启动时补齐，并剥离已删除的专家/教程/GitHub 入口
     menu_result = await db.execute(

@@ -30,6 +30,13 @@ DISTRIBUTE_NAVIGATION_ITEM: dict[str, Any] = {
     "target": "_self",
     "enabled": True,
 }
+STRATEGIES_NAVIGATION_ITEM: dict[str, Any] = {
+    "id": "strategies",
+    "label": "选题策略",
+    "url": "/strategies",
+    "target": "_self",
+    "enabled": True,
+}
 REMOVED_NAVIGATION_IDS = frozenset({"companies", "experts", "tutorial", "github", "solutions", "plans"})
 # Soft-hidden from public nav (recoverable via admin menu editor / module switch).
 HIDDEN_NAVIGATION_IDS = frozenset({"tools"})
@@ -38,6 +45,7 @@ DEFAULT_NAVIGATION_MENU = {
         deepcopy(SUITE_NAVIGATION_ITEM),
         {"id": "diagnostic", "label": "诊断", "url": "/diagnostic", "target": "_self", "enabled": True},
         deepcopy(KNOWLEDGE_NAVIGATION_ITEM),
+        deepcopy(STRATEGIES_NAVIGATION_ITEM),
         {"id": "keywords", "label": "拓词", "url": "/keywords", "target": "_self", "enabled": True},
         deepcopy(DISTRIBUTE_NAVIGATION_ITEM),
         {"id": "measure", "label": "观测", "url": "/suite?step=measure", "target": "_self", "enabled": True},
@@ -203,7 +211,16 @@ def _has_distribute_navigation_item(items: list[Any]) -> bool:
 
 def _dedupe_pillar_navigation_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Keep one entry per six-pillar id (suite/诊断/知识库/拓词/分发/观测/配置)."""
-    pillar_ids = {"suite", "diagnostic", "knowledge", "keywords", "distribute", "measure", "config"}
+    pillar_ids = {
+        "suite",
+        "diagnostic",
+        "knowledge",
+        "strategies",
+        "keywords",
+        "distribute",
+        "measure",
+        "config",
+    }
     seen: set[str] = set()
     deduped: list[dict[str, Any]] = []
     for item in items:
@@ -264,6 +281,13 @@ def ensure_suite_in_navigation_menu(payload: Any) -> dict[str, list[dict[str, An
     items = _insert_knowledge_navigation_item(items)
     items = _insert_distribute_navigation_item(items)
     items = _dedupe_pillar_navigation_items(items)
+    # 脚手架「策略」→ 编辑可读「选题策略」
+    for item in items:
+        if str(item.get("id") or "").strip().lower() == "strategies":
+            label = str(item.get("label") or "").strip()
+            if label in ("", "策略"):
+                item["label"] = "选题策略"
+            break
     if len(items) > MAX_NAVIGATION_ITEMS:
         items = [items[0], *items[1:MAX_NAVIGATION_ITEMS]]
     return {"items": items}

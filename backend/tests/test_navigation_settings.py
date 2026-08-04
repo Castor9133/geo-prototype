@@ -27,7 +27,16 @@ class NavigationSettingsTests(unittest.TestCase):
         )
         self.assertEqual(
             {item["id"] for item in menu["items"]},
-            {"suite", "diagnostic", "knowledge", "keywords", "distribute", "measure", "config"},
+            {
+                "suite",
+                "diagnostic",
+                "knowledge",
+                "strategies",
+                "keywords",
+                "distribute",
+                "measure",
+                "config",
+            },
         )
         knowledge = next(item for item in menu["items"] if item["id"] == "knowledge")
         self.assertEqual(knowledge["url"], "/knowledge")

@@ -513,6 +513,33 @@
   function setTaskActions(enabled) {
     if ($("btn-preview-shell")) $("btn-preview-shell").disabled = !enabled;
     if ($("btn-mark-dist")) $("btn-mark-dist").disabled = !enabled;
+    ["btn-save-template-draft", "btn-save-channel-draft", "btn-submit-review"].forEach((id) => {
+      if ($(id)) $(id).disabled = !enabled;
+    });
+    if ($("btn-approve-ready")) $("btn-approve-ready").disabled = !enabled;
+  }
+
+  function setDraftText(text) {
+    const el = $("task-draft");
+    if (!el) return;
+    if ("value" in el) el.value = text || "";
+    else el.textContent = text || "";
+  }
+
+  function getDraftText() {
+    const el = $("task-draft");
+    if (!el) return "";
+    return ("value" in el ? el.value : el.textContent) || "";
+  }
+
+  function setWorkflowHint(task) {
+    const el = $("task-workflow-hint");
+    if (!el) return;
+    const wf = task?.workflow_status || "—";
+    const sug = task?.promote_suggestion
+      ? ` · 建议${task.promote_suggestion === "promote" ? "沉淀" : "剔除"}`
+      : "";
+    el.textContent = `状态：${wf}${sug} · 模板稿可改 → 平台适配稿可改 → 提交审核 → ready`;
   }
 
   const TASK_STATUS_LABEL = {
@@ -523,10 +550,20 @@
     open: "开启",
     paused: "暂停",
     done: "完成",
+    claimed: "已领题",
+    template_draft: "模板稿",
+    channel_draft: "平台稿",
+    in_review: "审核中",
+    ready: "ready",
+    archived: "已剔除",
+    promoted: "已沉淀",
   };
 
-  function formatTaskStatus(status, distributed) {
-    const label = TASK_STATUS_LABEL[status] || status || "—";
+  function formatTaskStatus(status, distributed, workflowStatus) {
+    const wf = workflowStatus && TASK_STATUS_LABEL[workflowStatus]
+      ? TASK_STATUS_LABEL[workflowStatus]
+      : null;
+    const label = wf || TASK_STATUS_LABEL[status] || status || "—";
     return distributed ? `${label} · 已就绪` : label;
   }
 
@@ -694,7 +731,7 @@
         .map(
           (t) => `<tr>
         <td>${escapeHtml(t.title)}</td>
-        <td>${escapeHtml(formatTaskStatus(t.status, t.distributed))}</td>
+        <td>${escapeHtml(formatTaskStatus(t.status, t.distributed, t.workflow_status))}</td>
         <td><button type="button" class="btn" data-tid="${t.id}">打开</button></td>
       </tr>`
         )
@@ -703,7 +740,7 @@
       b.addEventListener("click", async () => {
         const t = await api(`/tasks/${b.dataset.tid}`);
         currentTaskId = t.id;
-        currentDraft = t.draft_body || t.error_message || "";
+        currentDraft = t.channel_draft_body || t.template_draft_body || t.draft_body || t.error_message || "";
         currentTemplateKey = t.template_key || $("task-template")?.value || "wechat-article";
         if ($("task-title") && t.title) $("task-title").value = t.title;
         if ($("task-keyword") && t.input_query) $("task-keyword").value = t.input_query;
@@ -711,7 +748,8 @@
           const opt = [...($("task-prompt").options || [])].find((o) => o.value === t.prompt_id);
           if (opt) $("task-prompt").value = t.prompt_id;
         }
-        $("task-draft").textContent = currentDraft || "（无正文）";
+        setDraftText(currentDraft || "（无正文）");
+        setWorkflowHint(t);
         setTaskActions(Boolean(currentDraft));
         $("shell-preview")?.classList.add("hidden");
         activateTab("tasks");
@@ -1108,27 +1146,78 @@
         ai_focus_inject: Boolean($("task-ai-focus-inject")?.checked),
       },
     };
-    $("task-draft").textContent = "生成中…";
+    setDraftText("生成中…");
     try {
       await withBusy($("btn-create-task"), async () => {
         const r = await api("/tasks", { method: "POST", body: JSON.stringify(body) });
         currentTaskId = r.id;
         const full = await api(`/tasks/${r.id}`);
-        currentDraft = full.draft_body || r.draft_preview || "";
+        currentDraft = full.template_draft_body || full.draft_body || r.draft_preview || "";
         currentTemplateKey = full.template_key || templateKey || "wechat-article";
-        $("task-draft").textContent = currentDraft || "（无正文）";
+        setDraftText(currentDraft || "（无正文）");
+        setWorkflowHint(full);
         setTaskActions(Boolean(currentDraft));
         $("shell-preview")?.classList.add("hidden");
         await refreshTasks();
       }, "生成中…");
-      toast(currentDraft ? "草稿已生成" : "任务已创建，但暂无正文", currentDraft ? "ok" : "warn");
+      toast(currentDraft ? "模板稿已生成（可编辑）" : "任务已创建，但暂无正文", currentDraft ? "ok" : "warn");
     } catch (e) {
-      $("task-draft").textContent = String(e.message || e);
+      setDraftText(String(e.message || e));
+      toast(String(e.message || e), "err");
+    }
+  });
+
+  $("btn-save-template-draft")?.addEventListener("click", async () => {
+    if (!currentTaskId) return;
+    const body = getDraftText();
+    const t = await api(`/tasks/${currentTaskId}/template-draft`, {
+      method: "PATCH",
+      body: JSON.stringify({ body, template_key: currentTemplateKey || $("task-template")?.value }),
+    });
+    currentDraft = t.template_draft_body || body;
+    setWorkflowHint(t);
+    toast("模板稿已保存", "ok");
+    await refreshTasks();
+  });
+
+  $("btn-save-channel-draft")?.addEventListener("click", async () => {
+    if (!currentTaskId) return;
+    const body = getDraftText();
+    const t = await api(`/tasks/${currentTaskId}/channel-draft`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        body,
+        channel_key: $("task-template")?.value || currentTemplateKey || "wechat-article",
+      }),
+    });
+    currentDraft = t.channel_draft_body || body;
+    setWorkflowHint(t);
+    toast("平台适配稿已保存", "ok");
+    await refreshTasks();
+  });
+
+  $("btn-submit-review")?.addEventListener("click", async () => {
+    if (!currentTaskId) return;
+    const t = await api(`/tasks/${currentTaskId}/submit-review`, { method: "POST", body: "{}" });
+    setWorkflowHint(t);
+    toast("已提交审核", "ok");
+    await refreshTasks();
+  });
+
+  $("btn-approve-ready")?.addEventListener("click", async () => {
+    if (!currentTaskId) return;
+    try {
+      const t = await api(`/tasks/${currentTaskId}/approve-ready`, { method: "POST", body: "{}" });
+      setWorkflowHint(t);
+      toast("已通过 → ready（可关联点名）", "ok");
+      await refreshTasks();
+    } catch (e) {
       toast(String(e.message || e), "err");
     }
   });
 
   $("btn-preview-shell")?.addEventListener("click", () => {
+    currentDraft = getDraftText();
     if (!currentDraft) return;
     renderShellPreview($("task-title").value || "任务预览", currentDraft, currentTemplateKey);
     $("shell-preview").classList.remove("hidden");
@@ -1136,8 +1225,9 @@
 
   $("btn-mark-dist")?.addEventListener("click", async () => {
     if (!currentTaskId) return;
+    currentDraft = getDraftText();
     const r = await api(`/tasks/${currentTaskId}/mark-distributed`, { method: "POST", body: "{}" });
-    $("task-draft").textContent = `${currentDraft}\n\n——\n已标记就绪（未真实发布） · status=${r.status}`;
+    setDraftText(`${currentDraft}\n\n——\n已标记就绪（未真实发布） · status=${r.status}`);
     const Workflow = window.GEOrank?.SuiteWorkflow;
     if (Workflow?.handoff) {
       const chLabel = ($("task-channel")?.selectedOptions?.[0]?.textContent || "channel").trim();

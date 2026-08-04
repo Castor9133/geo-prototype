@@ -22,6 +22,7 @@ class RealObsSnapshot(Base):
     geo_run_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("geo_runs.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    strategy_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), index=True)
     phase: Mapped[str] = mapped_column(String(20), nullable=False, default="after", index=True)
     prompt_pack_version: Mapped[str] = mapped_column(String(80), nullable=False, default="manual-v1")
     platforms: Mapped[list | None] = mapped_column(JSONB, default=list)

@@ -27,6 +27,8 @@ class User(Base):
     phone: Mapped[str | None] = mapped_column(String(30), unique=True, nullable=True, index=True)
     hashed_password: Mapped[str] = mapped_column(String(200), nullable=False)
     role: Mapped[UserRole] = mapped_column(pg_enum(UserRole, "userrole"), default=UserRole.USER)
+    # GEO 内容岗：editor | reviewer | risk（平台 admin 角色另见 role=admin）
+    geo_role: Mapped[str | None] = mapped_column(String(40), nullable=True, index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     token_version: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)

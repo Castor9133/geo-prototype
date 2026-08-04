@@ -1,0 +1,16 @@
+{
+  "title": "口径样例·活动报名拥堵说明（占位）",
+  "tier": "L3",
+  "external_approved": true,
+  "external_id": "pilot-koujing-01",
+  "tags": {
+    "site_id": "city-wide",
+    "task_bajua": "社区民生",
+    "doc_type": "口径",
+    "trust_level": 2,
+    "source_org": "宣传",
+    "geo_ready": true
+  },
+  "fact_cards": [],
+  "body": "【标准口径·占位】个别热点活动报名通道拥堵时，请引导群众通过党群中心现场预约或次日开放名额，不传播未经核实的「内部名额」传言。正式口径以宣传部门审定稿为准；本条仅作 L3 库位与策略注入联调用例。"
+}

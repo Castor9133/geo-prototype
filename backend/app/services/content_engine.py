@@ -215,14 +215,49 @@ async def search_chunks(
     kb_id: uuid.UUID,
     query: str,
     limit: int = 6,
+    include_l3: bool = False,
+    bajua: str | None = None,
+    site_id: str | None = None,
+    tiers: list[str] | None = None,
+    apply_geo_filter: bool = True,
 ) -> list[dict[str, Any]]:
     q_emb = await embed_text(query)
     result = await db.execute(
         select(KnowledgeChunk).where(KnowledgeChunk.knowledge_base_id == kb_id).limit(500)
     )
     rows = list(result.scalars().all())
+    allowed_docs: set[uuid.UUID] | None = None
+    if apply_geo_filter:
+        from app.services.geo_kb import eligible_document_ids
+
+        allowed_docs = await eligible_document_ids(
+            db,
+            kb_id,
+            include_l3=include_l3,
+            bajua=bajua,
+            site_id=site_id,
+            tiers=tiers,
+        )
+        # 旧文档无 tier 字段迁移前：若过滤结果为空且库内有 chunk，回退不滤（兼容演示包）
+        if not allowed_docs:
+            from app.models.content_engine import KnowledgeDocument
+
+            any_tagged = await db.scalar(
+                select(KnowledgeDocument.id)
+                .where(
+                    KnowledgeDocument.knowledge_base_id == kb_id,
+                    KnowledgeDocument.tags.isnot(None),
+                )
+                .limit(1)
+            )
+            if any_tagged is None:
+                allowed_docs = None
     scored = sorted(
-        ((cosine(q_emb, c.embedding), c) for c in rows),
+        (
+            (cosine(q_emb, c.embedding), c)
+            for c in rows
+            if allowed_docs is None or c.document_id in allowed_docs
+        ),
         key=lambda x: x[0],
         reverse=True,
     )
@@ -359,7 +394,10 @@ async def run_content_task(db: AsyncSession, task_id: uuid.UUID) -> ContentTask:
                 f"{focus_note}"
                 f"答案摘要\n基于知识库检索整理如下要点。\n\n{knowledge_block[:1200]}\n"
             )
-        task.draft_body = soften_markdown_prose(draft)
+        softened = soften_markdown_prose(draft)
+        task.draft_body = softened
+        task.template_draft_body = softened
+        task.workflow_status = "template_draft"
         task.status = "completed"
         task.finished_at = datetime.utcnow()
         task.error_message = llm_error

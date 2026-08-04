@@ -115,6 +115,10 @@ class ChannelCreate(BaseModel):
 class SearchBody(BaseModel):
     query: str = Field(min_length=1)
     limit: int = Field(default=6, ge=1, le=20)
+    include_l3: bool = False
+    bajua: str | None = None
+    site_id: str | None = None
+    tiers: list[str] | None = None
 
 
 def _kb_dict(kb: KnowledgeBase) -> dict[str, Any]:
@@ -266,6 +270,19 @@ async def get_kb(kb_id: uuid.UUID, db: DbSession, _: AdminUser):
                 "status": d.status,
                 "source_path": d.source_path,
                 "body": d.body or "",
+                "tier": getattr(d, "tier", None) or "L2",
+                "tags": getattr(d, "tags", None) or {},
+                "review_state": getattr(d, "review_state", None) or "approved",
+                "rag_eligible": bool(
+                    (getattr(d, "review_state", "approved") == "approved")
+                    and (
+                        (getattr(d, "tier", "L2") or "L2").upper() == "L2"
+                        or (
+                            (getattr(d, "tier", "") or "").upper() == "L1"
+                            and getattr(d, "local_confirmed_at", None)
+                        )
+                    )
+                ),
             }
             for d in docs
         ],
@@ -346,7 +363,16 @@ async def search_kb(kb_id: uuid.UUID, payload: SearchBody, db: DbSession, _: Adm
     kb = await db.get(KnowledgeBase, kb_id)
     if not kb:
         raise HTTPException(404, "知识库不存在")
-    hits = await ce.search_chunks(db, kb_id=kb_id, query=payload.query, limit=payload.limit)
+    hits = await ce.search_chunks(
+        db,
+        kb_id=kb_id,
+        query=payload.query,
+        limit=payload.limit,
+        include_l3=payload.include_l3,
+        bajua=payload.bajua,
+        site_id=payload.site_id,
+        tiers=payload.tiers,
+    )
     return {"items": hits}
 
 
@@ -445,10 +471,12 @@ async def list_tasks(db: DbSession, _: AdminUser):
                 "id": str(t.id),
                 "title": t.title,
                 "status": t.status,
+                "workflow_status": getattr(t, "workflow_status", None) or "claimed",
+                "promote_suggestion": getattr(t, "promote_suggestion", None),
                 "knowledge_base_id": str(t.knowledge_base_id) if t.knowledge_base_id else None,
                 "template_key": t.template_key,
                 "created_at": t.created_at.isoformat() if t.created_at else None,
-                "has_draft": bool(t.draft_body),
+                "has_draft": bool(t.draft_body or getattr(t, "template_draft_body", None)),
                 "distributed": bool((t.meta or {}).get("distributed_at")),
             }
             for t in rows
@@ -493,8 +521,14 @@ async def get_task(task_id: uuid.UUID, db: DbSession, _: AdminUser):
         "id": str(task.id),
         "title": task.title,
         "status": task.status,
+        "workflow_status": getattr(task, "workflow_status", None) or "claimed",
         "input_query": task.input_query,
         "draft_body": task.draft_body,
+        "template_draft_body": getattr(task, "template_draft_body", None),
+        "channel_draft_body": getattr(task, "channel_draft_body", None),
+        "channel_key": getattr(task, "channel_key", None),
+        "promote_suggestion": getattr(task, "promote_suggestion", None),
+        "geo_run_id": str(task.geo_run_id) if getattr(task, "geo_run_id", None) else None,
         "error_message": task.error_message,
         "template_key": task.template_key,
         "knowledge_base_id": str(task.knowledge_base_id) if task.knowledge_base_id else None,

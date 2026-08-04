@@ -1,0 +1,29 @@
+{
+  "title": "通新岭社区党群服务中心·站点数字身份",
+  "tier": "L1",
+  "external_approved": true,
+  "external_id": "pilot-ft-tongxinling-identity",
+  "source_url": "https://example.local/dangqun/tongxinling",
+  "tags": {
+    "site_id": "ft-tongxinling",
+    "district": "福田",
+    "street": "华富",
+    "task_bajua": "社区民生",
+    "doc_type": "服务指南",
+    "trust_level": 1,
+    "source_org": "党群",
+    "geo_ready": true,
+    "media_refs": ["第一现场"]
+  },
+  "fact_cards": [
+    {
+      "claim": "通新岭党群服务中心提供民生诉求收集与党员志愿服务对接",
+      "evidence_url": "https://example.local/dangqun/tongxinling",
+      "bajua": "社区民生",
+      "doc_type": "服务指南",
+      "as_of": "2026-08-01",
+      "quote_span": "民生诉求收集站"
+    }
+  ],
+  "body": "通新岭社区党群服务中心是福田区示范站点之一。\n\n开放服务：党员活动、民意速办引导、志愿服务报名。\n工作日 9:00-18:00 对外开放。\n\n本条目经外系统初审，入库后须本仓管理员完成 L1 确认方可进入生成检索。"
+}

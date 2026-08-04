@@ -424,26 +424,33 @@ class AIClient:
             raise errors[-1]
         raise ValueError("未配置可用的 LLM 模型")
 
-    async def embed(self, text: str) -> list[float]:
-        """将文本转换为向量（需要支持 Embedding 的 API Key）"""
+    async def _embeddings_create(self, *, input_data, config: dict):
+        """调用 Embedding；部分网关不接受 dimensions 时自动降级重试。"""
         client = await self._get_embed_client()
+        model = config["embedding_model"]
+        dims = config.get("embedding_dimensions")
+        kwargs: dict = {"model": model, "input": input_data}
+        if dims:
+            kwargs["dimensions"] = int(dims)
+        try:
+            return await client.embeddings.create(**kwargs)
+        except Exception as exc:
+            msg = str(exc).lower()
+            if dims and ("dimension" in msg or "unknown" in msg or "unsupported" in msg):
+                kwargs.pop("dimensions", None)
+                return await client.embeddings.create(**kwargs)
+            raise
+
+    async def embed(self, text: str) -> list[float]:
+        """将文本转换为向量（需要支持 Embedding 的 API Key，如 DashScope Qwen）"""
         config = await self._get_runtime_config()
-        response = await client.embeddings.create(
-            model=config["embedding_model"],
-            input=text,
-            dimensions=config["embedding_dimensions"],
-        )
+        response = await self._embeddings_create(input_data=text, config=config)
         return response.data[0].embedding
 
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
         """批量 Embedding"""
-        client = await self._get_embed_client()
         config = await self._get_runtime_config()
-        response = await client.embeddings.create(
-            model=config["embedding_model"],
-            input=texts,
-            dimensions=config["embedding_dimensions"],
-        )
+        response = await self._embeddings_create(input_data=texts, config=config)
         return [item.embedding for item in response.data]
 
     async def complete(
