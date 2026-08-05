@@ -312,10 +312,6 @@
 
     async function initProfile() {
         const Auth = window.GEOrank?.Auth;
-        if (typeof Auth?.isDemoOpenAccess === 'function' && Auth.isDemoOpenAccess()) {
-            window.location.replace(Auth.demoHomePath?.() || '/suite');
-            return;
-        }
         if (!Auth?.isAuthenticated?.()) {
             window.location.replace(loginPath());
             return;

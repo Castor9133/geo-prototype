@@ -5,10 +5,11 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
-from app.core.deps import DbSession, OptionalUser
+from app.core.deps import CurrentUser, DbSession
 from app.models.geo_run import GeoRun
 from app.services import real_obs as service
 
@@ -50,6 +51,10 @@ class SampleOverride(BaseModel):
     owned_citation: bool | None = None
     strong_adopted: bool | None = None
     competitor_mention: bool | None = None
+    diagnosis_type: str | None = Field(
+        default=None,
+        description="absent|competitor_dominated|low_ranked|suspected_negative|ok",
+    )
 
 
 async def _get_run(db: DbSession, run_id: uuid.UUID) -> GeoRun:
@@ -64,7 +69,7 @@ async def create_real_obs_snapshot(
     run_id: uuid.UUID,
     payload: SnapshotCreate,
     db: DbSession,
-    _: OptionalUser,
+    _: CurrentUser,
 ):
     run = await _get_run(db, run_id)
     try:
@@ -91,7 +96,7 @@ async def create_real_obs_snapshot(
 
 
 @router.get("/{run_id}/real-obs/snapshots")
-async def list_real_obs_snapshots(run_id: uuid.UUID, db: DbSession, _: OptionalUser):
+async def list_real_obs_snapshots(run_id: uuid.UUID, db: DbSession, _: CurrentUser):
     await _get_run(db, run_id)
     snaps = await service.list_snapshots(db, run_id)
     return {
@@ -105,7 +110,7 @@ async def get_real_obs_snapshot(
     run_id: uuid.UUID,
     snapshot_id: uuid.UUID,
     db: DbSession,
-    _: OptionalUser,
+    _: CurrentUser,
 ):
     run = await _get_run(db, run_id)
     snap = await service.get_snapshot(db, snapshot_id)
@@ -125,7 +130,7 @@ async def start_real_obs_sampling(
     run_id: uuid.UUID,
     snapshot_id: uuid.UUID,
     db: DbSession,
-    _: OptionalUser,
+    _: CurrentUser,
 ):
     run = await _get_run(db, run_id)
     snap = await service.get_snapshot(db, snapshot_id)
@@ -141,7 +146,7 @@ async def ingest_real_obs_sample(
     snapshot_id: uuid.UUID,
     payload: SampleIngest,
     db: DbSession,
-    _: OptionalUser,
+    _: CurrentUser,
 ):
     run = await _get_run(db, run_id)
     snap = await service.get_snapshot(db, snapshot_id)
@@ -177,7 +182,7 @@ async def ingest_real_obs_samples_batch(
     snapshot_id: uuid.UUID,
     payload: SampleBatchIngest,
     db: DbSession,
-    _: OptionalUser,
+    _: CurrentUser,
 ):
     run = await _get_run(db, run_id)
     snap = await service.get_snapshot(db, snapshot_id)
@@ -212,13 +217,85 @@ async def ingest_real_obs_samples_batch(
     }
 
 
+@router.get("/{run_id}/real-obs/snapshots/{snapshot_id}/sample-sheet.csv")
+async def download_sample_sheet(
+    run_id: uuid.UUID,
+    snapshot_id: uuid.UUID,
+    db: DbSession,
+    _: CurrentUser,
+    platform: str | None = None,
+):
+    """导出人工采样答题卡（CSV）。"""
+    await _get_run(db, run_id)
+    snap = await service.get_snapshot(db, snapshot_id)
+    if not snap or snap.geo_run_id != run_id:
+        raise HTTPException(404, "快照不存在")
+    body = service.build_sample_sheet_csv(snap, platform=platform)
+    filename = f"real-obs-{snapshot_id}-sample-sheet.csv"
+    return Response(
+        content=body.encode("utf-8-sig"),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.post("/{run_id}/real-obs/snapshots/{snapshot_id}/sample-sheet")
+async def upload_sample_sheet(
+    run_id: uuid.UUID,
+    snapshot_id: uuid.UUID,
+    db: DbSession,
+    _: CurrentUser,
+    file: UploadFile = File(...),
+):
+    """上传填写后的采样表，批量入库。"""
+    run = await _get_run(db, run_id)
+    snap = await service.get_snapshot(db, snapshot_id)
+    if not snap or snap.geo_run_id != run_id:
+        raise HTTPException(404, "快照不存在")
+    raw = await file.read()
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        text = raw.decode("gbk", errors="replace")
+    try:
+        items = service.parse_sample_sheet_csv(text)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    results = []
+    for item in items:
+        try:
+            sample = await service.upsert_sample(
+                db,
+                run,
+                snap,
+                question_id=item["question_id"],
+                platform=item["platform"],
+                attempt=item.get("attempt") or 1,
+                answer_text=item.get("answer_text"),
+                citations=item.get("citations"),
+                ok=bool(item.get("ok", True)),
+                raw_meta=item.get("raw_meta"),
+            )
+            results.append(service.serialize_sample(sample))
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        snap = await service.get_snapshot(db, snapshot_id)
+        if not snap:
+            raise HTTPException(404, "快照不存在")
+    return {
+        "samples": results,
+        "snapshot": service.serialize_snapshot(snap),
+        "imported": len(results),
+    }
+
+
 @router.patch("/{run_id}/real-obs/samples/{sample_id}")
 async def override_real_obs_sample(
     run_id: uuid.UUID,
     sample_id: uuid.UUID,
     payload: SampleOverride,
     db: DbSession,
-    _: OptionalUser,
+    _: CurrentUser,
 ):
     await _get_run(db, run_id)
     from app.models.real_obs import RealObsSample
@@ -226,18 +303,22 @@ async def override_real_obs_sample(
     sample = await db.get(RealObsSample, sample_id)
     if not sample or sample.geo_run_id != run_id:
         raise HTTPException(404, "样本不存在")
-    sample = await service.override_sample_labels(
-        db,
-        sample,
-        mention=payload.mention,
-        owned_citation=payload.owned_citation,
-        strong_adopted=payload.strong_adopted,
-        competitor_mention=payload.competitor_mention,
-    )
+    try:
+        sample = await service.override_sample_labels(
+            db,
+            sample,
+            mention=payload.mention,
+            owned_citation=payload.owned_citation,
+            strong_adopted=payload.strong_adopted,
+            competitor_mention=payload.competitor_mention,
+            diagnosis_type=payload.diagnosis_type,
+        )
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
     return {"sample": service.serialize_sample(sample)}
 
 
 @router.get("/{run_id}/real-obs/compare")
-async def compare_real_obs(run_id: uuid.UUID, db: DbSession, _: OptionalUser):
+async def compare_real_obs(run_id: uuid.UUID, db: DbSession, _: CurrentUser):
     run = await _get_run(db, run_id)
     return await service.compare_run(db, run)

@@ -1343,13 +1343,45 @@
     async function renderMeasure(container) {
         const Workflow = global.GEOrank?.SuiteWorkflow;
         const runId = Workflow?.getRunId?.();
+        let demoMetrics = false;
+        try {
+            const st = await fetchJson('/api/content-engine/backend-status');
+            demoMetrics = Boolean(st && st.demo_metrics);
+        } catch (_) {
+            demoMetrics = false;
+        }
+
+        if (!demoMetrics) {
+            // 正式模式：禁止剧本 KPI，只展示真实点名或「未测」
+            container.innerHTML = [
+                '<div class="measure-tabs" data-measure-tabs>',
+                '<p class="suite-extra__meta measure-tabs__hint"><strong>正式指标</strong>：未测不编数。无真实样本时不显示演示百分比。</p>',
+                '<div class="measure-tabs__pane" data-measure-pane="real"></div>',
+                '</div>',
+            ].join('');
+            const realPane = container.querySelector('[data-measure-pane="real"]');
+            try {
+                await mountRealObs(realPane, {
+                    runId,
+                    doneStep: 'measure',
+                    doneLabel: '标记观测完成',
+                });
+                if (realPane && !realPane.querySelector('.obs-monitor, .measure-monitor, .suite-extra__lead')) {
+                    realPane.innerHTML = '<p class="suite-extra__lead"><strong>未测</strong>：尚无真实点名样本，请勿用演示数汇报。</p>';
+                }
+            } catch (error) {
+                realPane.innerHTML = `<p class="suite-extra__lead"><strong>未测</strong>：${escapeHtml(error.message || error)}</p>`;
+            }
+            return;
+        }
+
         container.innerHTML = [
             '<div class="measure-tabs" data-measure-tabs>',
             '<div class="measure-tabs__bar" role="tablist">',
             '<button type="button" class="measure-tabs__btn is-active" data-measure-tab="demo" role="tab">演示观测</button>',
             '<button type="button" class="measure-tabs__btn" data-measure-tab="real" role="tab">真实点名</button>',
             '</div>',
-            '<p class="suite-extra__meta measure-tabs__hint">演示视图为方法剧本（非实测）；真实点名为约定账号网页端抽样。</p>',
+            '<p class="suite-extra__meta measure-tabs__hint"><strong>演示</strong>视图为方法剧本（非实测）；真实点名为约定账号网页端抽样。上线请关闭 GEORANK_DEMO_METRICS。</p>',
             '<div class="measure-tabs__pane" data-measure-pane="demo"></div>',
             '<div class="measure-tabs__pane" data-measure-pane="real" hidden></div>',
             '</div>',

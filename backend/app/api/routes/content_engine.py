@@ -155,12 +155,12 @@ def _safe_upload_name(name: str) -> str:
 
 
 @router.get("/backend-status")
-async def backend_status(_: OptionalUser = None):
+async def backend_status(_: OptionalUser):
     return ce.public_content_backend_status()
 
 
 @router.get("/public/demo-summary")
-async def public_demo_summary(db: DbSession, _: OptionalUser = None):
+async def public_demo_summary(db: DbSession, _: OptionalUser):
     """Suite 知识库/分发步只读：DJI 演示包摘要 + 最近任务草稿预览。"""
     kb = await db.scalar(select(KnowledgeBase).where(KnowledgeBase.slug == "dji-mini-5-pro-demo"))
     status = ce.public_content_backend_status()
@@ -200,7 +200,7 @@ async def public_demo_summary(db: DbSession, _: OptionalUser = None):
 
 
 @router.get("/channel-templates")
-async def list_channel_templates(_: OptionalUser = None):
+async def list_channel_templates(_: OptionalUser):
     """中国生态五渠道静态壳清单（自 GEOFlow 主题 key 对照，无编译管线）。"""
     return {"items": CHANNEL_TEMPLATES}
 

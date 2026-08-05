@@ -43,10 +43,12 @@ def content_backend_mode() -> str:
 
 def public_content_backend_status() -> dict[str, Any]:
     mode = content_backend_mode()
+    demo_metrics = bool(getattr(settings, "GEORANK_DEMO_METRICS", False))
     return {
         "mode": mode,
         "native": mode == "native-python",
         "legacy_flow": mode == "legacy-flow",
+        "demo_metrics": demo_metrics,
         "public_path": "/knowledge",
         "admin_path": "/admin/content-engine",
         "materials_path": "/knowledge",
@@ -54,6 +56,11 @@ def public_content_backend_status() -> dict[str, Any]:
             "知识库/任务/分发走 GEORank 原生 Python"
             if mode == "native-python"
             else "Suite 仍可 handoff 到 GEOFlow（F2 对照）"
+        ),
+        "metrics_note": (
+            "演示指标已开启：可用剧本 KPI，须标「演示」"
+            if demo_metrics
+            else "正式指标：无真实样本时显示「未测」，禁止用剧本冒充"
         ),
     }
 

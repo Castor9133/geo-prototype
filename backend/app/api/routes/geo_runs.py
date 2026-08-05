@@ -11,7 +11,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
-from app.core.deps import AdminUser, DbSession, OptionalUser
+from app.core.deps import AdminUser, CurrentUser, DbSession
 from app.models.content_engine import ContentPrompt, ContentTask, KnowledgeBase
 from app.models.geo_run import (
     DEFAULT_COMPETITOR,
@@ -92,7 +92,7 @@ def _append_step(artifacts: dict[str, Any], step: str | None, meta: dict[str, An
 
 @router.post("")
 @router.post("/")
-async def create_geo_run(payload: GeoRunCreate, db: DbSession, _: OptionalUser):
+async def create_geo_run(payload: GeoRunCreate, db: DbSession, _: CurrentUser):
     entity = (payload.entity or DEFAULT_ENTITY).strip() or DEFAULT_ENTITY
     title = (payload.title or "").strip() or f"{entity} · GEO 回合"
     artifacts: dict[str, Any] = {
@@ -126,7 +126,7 @@ async def create_geo_run(payload: GeoRunCreate, db: DbSession, _: OptionalUser):
 
 @router.get("")
 @router.get("/")
-async def list_geo_runs(db: DbSession, _: OptionalUser, limit: int = 20):
+async def list_geo_runs(db: DbSession, _: CurrentUser, limit: int = 20):
     rows = (
         await db.execute(select(GeoRun).order_by(GeoRun.created_at.desc()).limit(min(limit, 50)))
     ).scalars().all()
@@ -134,7 +134,7 @@ async def list_geo_runs(db: DbSession, _: OptionalUser, limit: int = 20):
 
 
 @router.get("/scripts/{script_key}")
-async def get_observe_script(script_key: str, _: OptionalUser):
+async def get_observe_script(script_key: str, _: CurrentUser):
     try:
         script = load_observe_script(script_key)
     except FileNotFoundError as exc:
@@ -143,7 +143,7 @@ async def get_observe_script(script_key: str, _: OptionalUser):
 
 
 @router.get("/{run_id}")
-async def get_geo_run(run_id: uuid.UUID, db: DbSession, _: OptionalUser):
+async def get_geo_run(run_id: uuid.UUID, db: DbSession, _: CurrentUser):
     run = await db.get(GeoRun, run_id)
     if not run:
         raise HTTPException(404, "回合不存在")
@@ -151,7 +151,7 @@ async def get_geo_run(run_id: uuid.UUID, db: DbSession, _: OptionalUser):
 
 
 @router.get("/{run_id}/steps")
-async def get_geo_run_steps(run_id: uuid.UUID, db: DbSession, _: OptionalUser):
+async def get_geo_run_steps(run_id: uuid.UUID, db: DbSession, _: CurrentUser):
     """接口三问 Q3：测试智能体可读的运行可视化 Board。"""
     run = await db.get(GeoRun, run_id)
     if not run:
@@ -168,7 +168,7 @@ async def get_geo_run_steps(run_id: uuid.UUID, db: DbSession, _: OptionalUser):
 
 
 @router.get("/{run_id}/geo-preview")
-async def get_geo_preview(run_id: uuid.UUID, db: DbSession, _: OptionalUser):
+async def get_geo_preview(run_id: uuid.UUID, db: DbSession, _: CurrentUser):
     run = await db.get(GeoRun, run_id)
     if not run:
         raise HTTPException(404, "回合不存在")
@@ -185,7 +185,7 @@ async def get_geo_preview(run_id: uuid.UUID, db: DbSession, _: OptionalUser):
 
 
 @router.patch("/{run_id}/handoff")
-async def patch_handoff(run_id: uuid.UUID, payload: GeoRunHandoff, db: DbSession, _: OptionalUser):
+async def patch_handoff(run_id: uuid.UUID, payload: GeoRunHandoff, db: DbSession, _: CurrentUser):
     run = await db.get(GeoRun, run_id)
     if not run:
         raise HTTPException(404, "回合不存在")

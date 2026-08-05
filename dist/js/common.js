@@ -888,7 +888,7 @@
             </div>
         </div>
         <div class="header-actions geo-header__actions">
-            <span data-demo-mode-badge class="geo-header__badge hidden">演示模式 · 免登录</span>
+            <span data-demo-mode-badge class="geo-header__badge hidden">演示 · 匿名 AI</span>
             <a href="/login" data-auth-trigger data-profile-link class="auth-trigger header-profile-button" aria-label="登录 / 个人中心" data-i18n-aria-label="auth.triggerSignedOut">
                 <span class="header-profile-button__icon" aria-hidden="true">
                     <svg fill="none" height="20" viewBox="0 0 24 24" width="20">
@@ -1992,11 +1992,6 @@ const FOOTER_HTML = `
         },
 
         openModal(mode = 'login', options = {}) {
-            // 本地演示：彻底禁用登录弹层
-            if (this.isDemoOpenAccess()) {
-                this.closeModal();
-                return;
-            }
             this.ensureModal();
             this.setMode(mode);
             const modal = document.getElementById(this.MODAL_ID);
@@ -2071,12 +2066,12 @@ const FOOTER_HTML = `
             }
         },
 
+        /**
+         * 是否允许匿名使用 AI（诊断/拓词/问答）。
+         * 不等于免管理员登录，也不应隐藏登录入口。
+         */
         isDemoOpenAccess() {
             if (window.GEORANK_OPEN_DEMO === true) return true;
-            const host = String(window.location.hostname || '').toLowerCase();
-            if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return true;
-            // 局域网演示（10/8、172.16/12、192.168/16、链路本地）免登录
-            if (/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.|169\.254\.)/.test(host)) return true;
             return Boolean(window.GEOrank?.APIKeyStore?.policy?.allow_anonymous_ai_usage);
         },
 
@@ -2084,50 +2079,37 @@ const FOOTER_HTML = `
             return Routes.buildUrl('/suite') || '/suite';
         },
 
-        /** 演示模式：隐藏登录入口，登录/注册/个人中心跳首页 */
+        /** 演示：仅展示「匿名 AI」角标，保留登录入口 */
         applyDemoNoAuthUi() {
-            if (!this.isDemoOpenAccess()) return;
-            document.querySelectorAll('[data-auth-trigger], [data-auth-menu]').forEach((el) => {
-                el.classList.add('hidden');
-                el.setAttribute('hidden', 'hidden');
-                el.style.display = 'none';
-            });
-            document.querySelectorAll('a[href="/login"], a[href="/register"], a[href="/login.html"], a[href="/register.html"]').forEach((el) => {
-                if (el.matches('[data-auth-trigger]')) return;
-                el.classList.add('hidden');
-                el.style.display = 'none';
-                el.setAttribute('href', this.demoHomePath());
-            });
             const badge = document.querySelector('[data-demo-mode-badge]');
             const actions = document.querySelector('.header-actions');
+            if (!this.isDemoOpenAccess()) {
+                if (badge) {
+                    badge.classList.add('hidden');
+                    badge.style.display = 'none';
+                }
+                return;
+            }
             if (badge) {
                 badge.classList.remove('hidden');
                 badge.classList.add('geo-header__badge');
+                badge.textContent = '演示 · 匿名 AI';
                 badge.style.display = '';
             } else if (actions) {
                 const created = document.createElement('span');
                 created.dataset.demoModeBadge = '1';
                 created.className = 'geo-header__badge';
-                created.textContent = '演示模式 · 免登录';
+                created.textContent = '演示 · 匿名 AI';
                 actions.insertBefore(created, actions.firstChild);
             }
-            this.closeModal();
         },
 
         redirectAwayFromAuthPages() {
-            if (!this.isDemoOpenAccess()) return false;
-            const path = Routes.normalizePath(window.location.pathname);
-            if (path === '/login' || path === '/register' || path === '/profile') {
-                window.location.replace(this.demoHomePath());
-                return true;
-            }
             return false;
         },
 
         requireAuth(options = {}) {
             if (this.isAuthenticated()) return true;
-            // 本地演示 / 后台已开放匿名 AI 时，不拦截功能页
-            if (this.isDemoOpenAccess()) return true;
             const translatedReason = options.reasonKey ? I18N.t(options.reasonKey) : '';
             this.openModal(options.mode || 'login', {
                 reason: translatedReason || options.reason || I18N.t('auth.requireReason'),
@@ -2145,11 +2127,6 @@ const FOOTER_HTML = `
             }
             trigger.dataset.bound = '1';
             trigger.addEventListener('click', (event) => {
-                if (this.isDemoOpenAccess()) {
-                    event.preventDefault();
-                    window.location.href = this.demoHomePath();
-                    return;
-                }
                 if (trigger.matches('[data-profile-link]')) return;
                 event.preventDefault();
                 if (!this.isAuthenticated()) {
@@ -2212,7 +2189,6 @@ const FOOTER_HTML = `
         },
 
         maybePromptFirstVisit() {
-            if (this.isDemoOpenAccess()) return;
             const path = Routes.normalizePath(window.location.pathname);
             if (this.isAuthenticated()) return;
             if (path.startsWith('/admin') || path === '/login' || path === '/register') return;
@@ -2323,9 +2299,7 @@ const FOOTER_HTML = `
             this.state.initialized = true;
             if (this.redirectAwayFromAuthPages()) return;
             this.syncState();
-            if (!this.isDemoOpenAccess()) {
-                this.ensureModal();
-            }
+            this.ensureModal();
             this.bindHeader();
             this.applyDemoNoAuthUi();
             if (this.state.token && !this.state.user) {

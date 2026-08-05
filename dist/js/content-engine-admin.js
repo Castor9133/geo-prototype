@@ -17,14 +17,6 @@
     return `/admin/?returnUrl=${encodeURIComponent(returnUrl || "/knowledge")}`;
   }
 
-  function isDemoOpenAccess() {
-    if (window.GEORANK_OPEN_DEMO === true) return true;
-    const host = String(window.location.hostname || "").toLowerCase();
-    if (host === "localhost" || host === "127.0.0.1" || host === "::1") return true;
-    if (/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.|169\.254\.)/.test(host)) return true;
-    return Boolean(window.GEOrank?.APIKeyStore?.policy?.allow_anonymous_ai_usage);
-  }
-
   function redirectToLogin() {
     window.location.href = loginHref();
   }
@@ -32,11 +24,6 @@
   function showAuthGate(visible) {
     const gate = document.getElementById("ce-auth-gate");
     if (!gate) return;
-    // 本地演示永不展示登录门
-    if (isDemoOpenAccess()) {
-      gate.classList.add("hidden");
-      return;
-    }
     gate.classList.toggle("hidden", !visible);
     const link = document.getElementById("ce-auth-login");
     if (link) link.href = loginHref();
@@ -56,10 +43,6 @@
       headers: { ...headers(!(opts.body instanceof FormData)), ...(opts.headers || {}) },
     });
     if (res.status === 401 || res.status === 403) {
-      if (isDemoOpenAccess()) {
-        showAuthGate(false);
-        throw new Error("暂时无法免登录访问，请稍后重试或联系管理员");
-      }
       if (isPublicShell) {
         showAuthGate(true);
       } else {
@@ -1218,7 +1201,38 @@
   $("btn-approve-ready")?.addEventListener("click", async () => {
     if (!currentTaskId) return;
     try {
-      const t = await api(`/tasks/${currentTaskId}/approve-ready`, { method: "POST", body: "{}" });
+      // 先体检
+      try {
+        const lint = await api(`/tasks/${currentTaskId}/lint`);
+        if (lint.blocking) {
+          const msgs = (lint.issues || [])
+            .filter((i) => i.severity === "error")
+            .map((i) => i.message)
+            .join("；");
+          const reason = window.prompt(
+            `写稿体检红牌：${msgs || "存在严重问题"}\n\n管理员可填理由强行过审（取消则放弃）：`,
+            ""
+          );
+          if (!reason || !String(reason).trim()) {
+            toast(msgs || "体检未通过", "err");
+            return;
+          }
+          const t = await api(`/tasks/${currentTaskId}/approve-ready`, {
+            method: "POST",
+            body: JSON.stringify({ force_reason: String(reason).trim() }),
+          });
+          setWorkflowHint(t);
+          toast("已强开 → ready", "ok");
+          await refreshTasks();
+          return;
+        }
+      } catch (_) {
+        /* lint 失败仍尝试过审 */
+      }
+      const t = await api(`/tasks/${currentTaskId}/approve-ready`, {
+        method: "POST",
+        body: JSON.stringify({}),
+      });
       setWorkflowHint(t);
       toast("已通过 → ready（可关联点名）", "ok");
       await refreshTasks();
@@ -1274,8 +1288,7 @@
 
   (async function init() {
     const authed = Boolean(getToken());
-    const demo = isDemoOpenAccess();
-    if (!authed && !demo) {
+    if (!authed) {
       if (isPublicShell) {
         showAuthGate(true);
         await loadStatus();

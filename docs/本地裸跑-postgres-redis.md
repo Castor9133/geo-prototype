@@ -48,6 +48,8 @@ GEOFLOW_ENABLED=false
 GEORANK_ALLOW_ANONYMOUS_AI=true
 ```
 
+`GEORANK_ALLOW_ANONYMOUS_AI` 仅开放诊断/拓词/问答等匿名 AI 用量；**管理后台与选题/知识库写接口仍需登录**。生产环境（`DEBUG=false`）必须关闭。
+
 LLM / Embedding Key 按现有字段配置（`LLM_*` / `EMBEDDING_*`）。无 Embedding Key 时切片仍会用本地哈希向量降级，保证演示可跑。
 
 ## 4. 启动

@@ -16,8 +16,15 @@ from app.models.geo_strategy import (
 )
 from app.models.real_obs import RealObsSample, RealObsSnapshot
 from app.models.user import User
+from app.core.config import settings
 from app.services import geo_kb as gkb
 from app.services.geo_roles import has_business_geo_role, is_platform_admin
+from app.services.real_obs import infer_diagnosis_type
+
+
+def demo_metrics_enabled() -> bool:
+    """领导 demo 可开；正式环境须关（未测不编数 + 观测硬样本）。"""
+    return bool(getattr(settings, "GEORANK_DEMO_METRICS", False))
 
 
 def _as_uuid_list(raw: list | None) -> list[str]:
@@ -418,8 +425,13 @@ async def submit_for_approval(db: AsyncSession, s: GeoStrategy, *, actor: User) 
 
 
 def handoff_checklist(s: GeoStrategy, *, task_summary: dict | None = None) -> dict[str, Any]:
-    """环间交付物检查表。观测白号采样本身不在此强制执行。"""
+    """环间交付物检查表。演示开时可占位；正式须真实样本。"""
     ts = task_summary or {}
+    demo = demo_metrics_enabled()
+    baseline_samples = int((s.meta or {}).get("baseline_sample_count") or 0)
+    after_samples = int((s.meta or {}).get("after_sample_count") or 0)
+    baseline_ok = bool(s.baseline_snapshot_id) and (demo or baseline_samples >= 3)
+    after_ok = bool(s.after_snapshot_id) and (demo or after_samples >= 3)
     items = [
         {
             "step": "①页面诊断",
@@ -430,9 +442,13 @@ def handoff_checklist(s: GeoStrategy, *, task_summary: dict | None = None) -> di
         {
             "step": "②投放前摸底",
             "key": "baseline",
-            "ok": bool(s.baseline_snapshot_id),
+            "ok": baseline_ok,
             "deliverable": "已登记摸底结果",
-            "note": "正式验收须用白号提问回传；可先占位",
+            "note": (
+                "演示模式：可先占位；正式须≥3条真实样本"
+                if demo
+                else "正式：须≥3条真实摸底样本（未测不可批准）"
+            ),
         },
         {
             "step": "③策略已批可开工",
@@ -474,9 +490,13 @@ def handoff_checklist(s: GeoStrategy, *, task_summary: dict | None = None) -> di
         {
             "step": "⑧投放后复测",
             "key": "after",
-            "ok": bool(s.after_snapshot_id),
+            "ok": after_ok,
             "deliverable": "已建复测记录",
-            "note": "正式验收须白号复测",
+            "note": (
+                "演示模式：可先建快照；正式须≥3条复测样本"
+                if demo
+                else "正式：须≥3条真实复测样本方可判定"
+            ),
         },
         {
             "step": "⑨效果已判定",
@@ -485,19 +505,23 @@ def handoff_checklist(s: GeoStrategy, *, task_summary: dict | None = None) -> di
             "deliverable": "生效 / 部分见效 / 未见效",
         },
     ]
-    baseline_samples = int((s.meta or {}).get("baseline_sample_count") or 0)
-    after_samples = int((s.meta or {}).get("after_sample_count") or 0)
     return {
         "items": items,
-        "ready_for_approve": bool(s.diagnostic_report_id and s.baseline_snapshot_id),
+        "demo_metrics": demo,
+        "ready_for_approve": bool(s.diagnostic_report_id and baseline_ok),
         "ready_for_deploy": bool(ts.get("all_ready")),
         "ready_for_write": bool(
             is_query_pack_confirmed(s) and is_knowledge_bound(s) and s.knowledge_base_id
         ),
+        "ready_for_verdict": after_ok and bool(s.site_url and s.media_url),
         "obs_white_hat_deferred": baseline_samples < 3,
         "baseline_sample_count": baseline_samples,
         "after_sample_count": after_samples,
-        "white_hat_note": "正式验收：白号池每平台≥5，且摸底/复测各≥3问法样本回传",
+        "white_hat_note": (
+            "演示指标开启：可用占位；上线请关 GEORANK_DEMO_METRICS"
+            if demo
+            else "正式验收：摸底/复测各≥3条真实样本；未测不编数"
+        ),
     }
 
 
@@ -642,13 +666,25 @@ async def record_obs_samples(
             "recorded_by": str(actor.id),
             "informal": bool(raw.get("informal")),
         }
+        competitor_mention = bool(raw.get("competitor_mention"))
+        dtype = infer_diagnosis_type(
+            mention=mention,
+            competitor_mention=competitor_mention,
+            owned_citation=owned,
+            answer_text=str(raw.get("answer_text") or "") or None,
+            citations=citations,
+            raw_meta={**meta, "citation_rank": rank, "diagnosis_override": raw.get("diagnosis_type")},
+            diagnosis_override=str(raw.get("diagnosis_type") or "").strip() or None,
+        )
         if existing:
             existing.question_text = text
             existing.answer_text = str(raw.get("answer_text") or "")[:8000] or None
             existing.citations = citations
             existing.mention = mention
+            existing.competitor_mention = competitor_mention
             existing.owned_citation = owned
             existing.strong_adopted = strong
+            existing.diagnosis_type = dtype
             existing.ok = True
             existing.label_source = "human"
             existing.raw_meta = {**(existing.raw_meta or {}), **meta}
@@ -666,8 +702,10 @@ async def record_obs_samples(
                     answer_text=str(raw.get("answer_text") or "")[:8000] or None,
                     citations=citations,
                     mention=mention,
+                    competitor_mention=competitor_mention,
                     owned_citation=owned,
                     strong_adopted=strong,
+                    diagnosis_type=dtype,
                     ok=True,
                     label_source="human",
                     raw_meta=meta,
@@ -694,10 +732,16 @@ async def record_obs_samples(
     return s
 
 
-async def approve_executable(db: AsyncSession, s: GeoStrategy, *, actor: User) -> GeoStrategy:
-    if not has_business_geo_role(actor, "reviewer"):
+async def approve_executable(
+    db: AsyncSession,
+    s: GeoStrategy,
+    *,
+    actor: User,
+    force_reason: str | None = None,
+) -> GeoStrategy:
+    if not has_business_geo_role(actor, "reviewer") and not is_platform_admin(actor):
         raise PermissionError("需要 reviewer 审批策略")
-    if s.created_by and s.created_by == actor.id:
+    if s.created_by and s.created_by == actor.id and not is_platform_admin(actor):
         raise PermissionError("起草人不可审批自己的策略")
     if s.status != "pending_review":
         raise ValueError("仅待审策略可批准为可执行")
@@ -707,6 +751,17 @@ async def approve_executable(db: AsyncSession, s: GeoStrategy, *, actor: User) -
         raise ValueError("须先挂接②baseline 快照（无白号可先 register-baseline 占位）")
     if len(query_variant_list(s)) < 3:
         raise ValueError("批准前须有至少 3 条摸底用问法草案")
+    baseline_samples = int((s.meta or {}).get("baseline_sample_count") or 0)
+    if not demo_metrics_enabled() and baseline_samples < 3:
+        if is_platform_admin(actor) and (force_reason or "").strip():
+            meta = dict(s.meta or {})
+            meta["approve_force_reason"] = force_reason.strip()
+            meta["approve_forced_by"] = str(actor.id)
+            s.meta = meta
+        else:
+            raise ValueError(
+                "正式模式：批准前须有≥3条真实摸底样本（或管理员填写 force_reason 强开）"
+            )
     validate_six_tuple(s, for_executable=True)
     s.status = "executable"
     s.approved_by = actor.id
@@ -1086,11 +1141,22 @@ async def confirm_verdict(
     *,
     actor: User,
     verdict: str | None = None,
+    force_reason: str | None = None,
 ) -> GeoStrategy:
-    if not has_business_geo_role(actor, "reviewer"):
+    if not has_business_geo_role(actor, "reviewer") and not is_platform_admin(actor):
         raise PermissionError("需要 reviewer 确认策略判定")
     if s.status not in ("deployed", "observing", "effective", "partial", "ineffective"):
         raise ValueError("须先已投放并完成观测")
+    after_samples = int((s.meta or {}).get("after_sample_count") or 0)
+    if not demo_metrics_enabled() and after_samples < 3:
+        if is_platform_admin(actor) and (force_reason or "").strip():
+            meta = dict(s.meta or {})
+            meta["verdict_force_reason"] = force_reason.strip()
+            s.meta = meta
+        else:
+            raise ValueError(
+                "正式模式：判定前须有≥3条真实复测样本（或管理员填写 force_reason 强开）"
+            )
     suggestion = await compute_verdict_suggestion(db, s)
     final = verdict or suggestion["suggested_verdict"]
     if final not in ("effective", "partial", "ineffective"):

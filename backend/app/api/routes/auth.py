@@ -2,8 +2,6 @@
 认证 API — 注册 / 登录 / 获取当前用户
 """
 from datetime import datetime, timedelta, timezone
-import re
-import uuid
 
 from fastapi import APIRouter, HTTPException, Request, status
 from jose import jwt
@@ -21,6 +19,12 @@ from app.schemas.user import (
     UserOut,
     UserProfileUpdateRequest,
 )
+from app.services.phone_security import (
+    assign_user_phone,
+    normalize_phone_digits,
+    phone_lookup_hash,
+    reveal_user_phone,
+)
 
 router = APIRouter()
 
@@ -36,15 +40,27 @@ def _verify_password(plain: str, hashed: str) -> bool:
 
 
 def _normalize_phone(phone: str | None) -> str:
-    digits = re.sub(r"\D+", "", str(phone or ""))
-    if digits.startswith("86") and len(digits) == 13:
-        digits = digits[2:]
-    if not re.fullmatch(r"1\d{10}", digits):
+    """兼容 admin 等模块导入；校验失败抛 HTTP 422。"""
+    try:
+        return normalize_phone_digits(phone)
+    except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="请输入有效的手机号",
-        )
-    return digits
+            detail=str(exc),
+        ) from exc
+
+
+def _user_out(user: User) -> UserOut:
+    return UserOut(
+        id=str(user.id),
+        email=user.email,
+        username=user.username,
+        phone=reveal_user_phone(user),
+        role=user.role.value if hasattr(user.role, "value") else user.role,
+        is_active=user.is_active,
+        is_verified=user.is_verified,
+        created_at=user.created_at.isoformat() if user.created_at else None,
+    )
 
 
 async def _username_exists(db: DbSession, username: str) -> bool:
@@ -88,7 +104,8 @@ async def register(data: RegisterRequest, db: DbSession):
     email = str(data.email) if data.email else None
 
     if phone:
-        result = await db.execute(select(User).where(User.phone == phone))
+        phone_hash = phone_lookup_hash(phone)
+        result = await db.execute(select(User).where(User.phone_hash == phone_hash))
         if result.scalar_one_or_none():
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="手机号已被注册")
         if not username or not email:
@@ -108,12 +125,12 @@ async def register(data: RegisterRequest, db: DbSession):
     user = User(
         email=email,
         username=username,
-        phone=phone,
         hashed_password=_hash_password(data.password),
         role=UserRole.USER,
         is_active=True,
         is_verified=False,
     )
+    assign_user_phone(user, phone)
     db.add(user)
     await db.commit()
     await db.refresh(user)
@@ -128,12 +145,12 @@ async def register(data: RegisterRequest, db: DbSession):
 
 @router.post("/login", response_model=TokenResponse)
 async def login(request: Request, data: LoginRequest, db: DbSession):
-    """用户登录 — 支持用户名或邮箱登录（全局限速 200次/分钟/IP 兜底）"""
+    """用户登录 — 支持手机号 / 用户名 / 邮箱（全局限速 200次/分钟/IP 兜底）"""
     identifier = data.phone or data.account or data.username or ""
     filters = []
     if data.phone:
         normalized_phone = _normalize_phone(data.phone)
-        filters.append(User.phone == normalized_phone)
+        filters.append(User.phone_hash == phone_lookup_hash(normalized_phone))
     else:
         filters.extend([User.username == identifier, User.email == identifier])
 
@@ -148,6 +165,12 @@ async def login(request: Request, data: LoginRequest, db: DbSession):
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="账号已停用")
 
+    # 遗留明文手机号：登录成功后升级为密文 + hash
+    plain = reveal_user_phone(user)
+    if plain and (not user.phone_hash or not (user.phone or "").startswith("ph1.")):
+        assign_user_phone(user, plain)
+        await db.commit()
+
     token = _create_access_token(
         str(user.id),
         token_version=user.token_version,
@@ -159,15 +182,7 @@ async def login(request: Request, data: LoginRequest, db: DbSession):
 @router.get("/me", response_model=UserOut)
 async def get_me(current_user: CurrentUser):
     """获取当前登录用户信息"""
-    return UserOut(
-        id=str(current_user.id),
-        email=current_user.email,
-        username=current_user.username,
-        phone=current_user.phone,
-        role=current_user.role.value if hasattr(current_user.role, "value") else current_user.role,
-        is_active=current_user.is_active,
-        is_verified=current_user.is_verified,
-    )
+    return _user_out(current_user)
 
 
 @router.put("/me", response_model=UserOut)
@@ -205,27 +220,20 @@ async def update_me(data: UserProfileUpdateRequest, current_user: CurrentUser, d
     if "phone" in updates:
         raw_phone = updates["phone"]
         next_phone = _normalize_phone(raw_phone) if raw_phone and str(raw_phone).strip() else None
-        if next_phone != current_user.phone:
+        current_plain = reveal_user_phone(current_user)
+        if next_phone != current_plain:
             if next_phone:
+                phone_hash = phone_lookup_hash(next_phone)
                 result = await db.execute(
-                    select(User.id).where(User.phone == next_phone, User.id != current_user.id)
+                    select(User.id).where(User.phone_hash == phone_hash, User.id != current_user.id)
                 )
                 if result.scalar_one_or_none():
                     raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="手机号已被注册")
-            current_user.phone = next_phone
+            assign_user_phone(current_user, next_phone)
 
     await db.commit()
     await db.refresh(current_user)
-    return UserOut(
-        id=str(current_user.id),
-        email=current_user.email,
-        username=current_user.username,
-        phone=current_user.phone,
-        role=current_user.role.value if hasattr(current_user.role, "value") else current_user.role,
-        is_active=current_user.is_active,
-        is_verified=current_user.is_verified,
-        created_at=current_user.created_at.isoformat() if current_user.created_at else None,
-    )
+    return _user_out(current_user)
 
 
 @router.put("/password")

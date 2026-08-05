@@ -99,6 +99,7 @@
                 <th>被提到</th>
                 <th>引用进前十</th>
                 <th>排名</th>
+                <th>诊断分型</th>
                 <th>备注</th>
               </tr>
             </thead>
@@ -107,6 +108,10 @@
         </div>
         <div class="ob-actions">
           <button type="button" class="btn" id="ob-ensure-snap">先建摸底/复测快照</button>
+          <button type="button" class="btn" id="ob-dl-csv">下载答题卡 CSV</button>
+          <label class="btn" style="cursor:pointer">上传答题卡
+            <input type="file" id="ob-up-csv" accept=".csv,text/csv" hidden>
+          </label>
           <button type="submit" class="btn teal" id="ob-submit">提交登记</button>
         </div>
       </form>
@@ -173,7 +178,7 @@
       tb.innerHTML = '';
       const variants = (current && current.query_variants) || [];
       if (!variants.length) {
-        tb.innerHTML = '<tr><td colspan="5" class="ob-hint">请先选择有问法的策略</td></tr>';
+        tb.innerHTML = '<tr><td colspan="6" class="ob-hint">请先选择有问法的策略</td></tr>';
         return;
       }
       variants.forEach(function (q, i) {
@@ -183,6 +188,13 @@
           '<td><input type="checkbox" data-k="mention"></td>' +
           '<td><input type="checkbox" data-k="top10"></td>' +
           '<td><input type="number" data-k="rank" min="1" max="50" placeholder="如 3" style="width:4.5rem"></td>' +
+          '<td><select data-k="dtype">' +
+            '<option value="">自动</option>' +
+            '<option value="absent">完全没提</option>' +
+            '<option value="competitor_dominated">竞品抢戏</option>' +
+            '<option value="low_ranked">提了但靠后</option>' +
+            '<option value="suspected_negative">疑似负面</option>' +
+          '</select></td>' +
           '<td><input type="text" data-k="note" placeholder="可选"></td>';
         tr.dataset.qid = (phase === 'baseline' ? 'bq' : 'aq') + (i + 1);
         tb.appendChild(tr);
@@ -257,6 +269,7 @@
         let rank = tr.querySelector('[data-k="rank"]').value;
         if (top10 && !rank) rank = '5';
         if (!top10 && mention) rank = rank || '12';
+        const dtype = (tr.querySelector('[data-k="dtype"]') || {}).value || '';
         return {
           question_id: tr.dataset.qid,
           question_text: tr.querySelector('[data-k="q"]').value.trim(),
@@ -264,6 +277,7 @@
           citation_rank: rank ? Number(rank) : null,
           citation_url: current.site_url || '',
           owned_citation: top10 && mention,
+          diagnosis_type: dtype || null,
           answer_text: tr.querySelector('[data-k="note"]').value.trim() || null,
           informal: true,
         };
@@ -277,6 +291,56 @@
         });
         strategies = strategies.map(function (s) { return s.id === current.id ? current : s; });
         setMsg('已回传 ' + samples.length + ' 条（' + (phase === 'baseline' ? '摸底' : '复测') + '）', true);
+        renderAlerts();
+      } catch (e) {
+        setMsg(String(e.message || e), false);
+      }
+    });
+    document.getElementById('ob-dl-csv').addEventListener('click', async function () {
+      if (!current) { setMsg('请先选策略', false); return; }
+      const snapOk = phase === 'baseline' ? current.baseline_snapshot_id : current.after_snapshot_id;
+      if (!snapOk) { setMsg('请先点「先建摸底/复测快照」', false); return; }
+      try {
+        const t = token();
+        const res = await fetch(
+          '/api/geo-strategies/' + current.id + '/obs-sample-sheet.csv?phase=' + encodeURIComponent(phase),
+          { headers: t ? { Authorization: 'Bearer ' + t } : {} }
+        );
+        if (!res.ok) throw new Error('下载失败 ' + res.status);
+        const blob = await res.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'obs-' + phase + '-sample-sheet.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        setMsg('答题卡已下载，填完后点「上传答题卡」', true);
+      } catch (e) {
+        setMsg(String(e.message || e), false);
+      }
+    });
+    document.getElementById('ob-up-csv').addEventListener('change', async function (ev) {
+      const file = ev.target.files && ev.target.files[0];
+      ev.target.value = '';
+      if (!file || !current) { setMsg('请先选策略并选择文件', false); return; }
+      const snapOk = phase === 'baseline' ? current.baseline_snapshot_id : current.after_snapshot_id;
+      if (!snapOk) { setMsg('请先点「先建摸底/复测快照」', false); return; }
+      try {
+        setMsg('正在上传答题卡…');
+        const fd = new FormData();
+        fd.append('file', file);
+        const t = token();
+        const res = await fetch(
+          '/api/geo-strategies/' + current.id + '/obs-sample-sheet?phase=' + encodeURIComponent(phase),
+          { method: 'POST', headers: t ? { Authorization: 'Bearer ' + t } : {}, body: fd }
+        );
+        const data = await res.json().catch(function () { return {}; });
+        if (!res.ok) {
+          const d = data.detail;
+          throw new Error(typeof d === 'string' ? d : (data.message || res.statusText));
+        }
+        current = data;
+        strategies = strategies.map(function (s) { return s.id === current.id ? current : s; });
+        setMsg('答题卡已导入', true);
         renderAlerts();
       } catch (e) {
         setMsg(String(e.message || e), false);

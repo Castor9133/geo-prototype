@@ -4,15 +4,18 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
-from app.core.deps import CurrentUser, DbSession, OptionalUser
+from app.core.deps import CurrentUser, DbSession
 from app.models.content_engine import KnowledgeBase
 from app.models.geo_run import GeoRun
 from app.models.geo_strategy import GeoStrategy
+from app.models.real_obs import RealObsSnapshot
 from app.services import geo_strategy_svc as svc
+from app.services import real_obs as real_obs_svc
 from app.services.geo_kb import serialize_task
 
 router = APIRouter()
@@ -72,6 +75,11 @@ class AttachTaskBody(BaseModel):
 
 class VerdictBody(BaseModel):
     verdict: str | None = Field(default=None, description="effective|partial|ineffective，空则用建议")
+    force_reason: str | None = Field(default=None, description="管理员强开判定（正式模式样本不足时）")
+
+
+class ApproveBody(BaseModel):
+    force_reason: str | None = Field(default=None, description="管理员强开批准（正式模式摸底样本不足时）")
 
 
 class ForceBody(BaseModel):
@@ -103,6 +111,8 @@ class ObsSampleItem(BaseModel):
     strong_adopted: bool = False
     answer_text: str | None = None
     informal: bool = False
+    competitor_mention: bool = False
+    diagnosis_type: str | None = None
 
 
 class RecordObsBody(BaseModel):
@@ -126,7 +136,7 @@ async def _ser(db: DbSession, s: GeoStrategy) -> dict:
 @router.get("/")
 async def list_strategies(
     db: DbSession,
-    _: OptionalUser,
+    _: CurrentUser,
     status: str | None = None,
     platform: str | None = None,
     limit: int = 50,
@@ -245,7 +255,7 @@ async def create_strategy(payload: CreateBody, db: DbSession, user: CurrentUser)
 
 
 @router.get("/{strategy_id}")
-async def get_strategy(strategy_id: uuid.UUID, db: DbSession, _: OptionalUser):
+async def get_strategy(strategy_id: uuid.UUID, db: DbSession, _: CurrentUser):
     s = await _get(db, strategy_id)
     return await _ser(db, s)
 
@@ -319,8 +329,109 @@ async def record_obs_samples(strategy_id: uuid.UUID, payload: RecordObsBody, db:
     return await _ser(db, s)
 
 
+@router.get("/{strategy_id}/obs-sample-sheet.csv")
+async def download_strategy_obs_sheet(
+    strategy_id: uuid.UUID,
+    db: DbSession,
+    _: CurrentUser,
+    phase: str = "baseline",
+):
+    """按策略导出摸底/复测答题卡 CSV。"""
+    s = await _get(db, strategy_id)
+    ph = (phase or "baseline").strip().lower()
+    snap_id = s.baseline_snapshot_id if ph == "baseline" else s.after_snapshot_id
+    if not snap_id:
+        raise HTTPException(400, "请先建立摸底/复测快照后再下载答题卡")
+    snap = await db.get(RealObsSnapshot, snap_id)
+    if not snap:
+        raise HTTPException(404, "快照不存在")
+    body = real_obs_svc.build_sample_sheet_csv(snap, platform=s.platform)
+    filename = f"strategy-{strategy_id}-{ph}-sample-sheet.csv"
+    return Response(
+        content=body.encode("utf-8-sig"),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.post("/{strategy_id}/obs-sample-sheet")
+async def upload_strategy_obs_sheet(
+    strategy_id: uuid.UUID,
+    db: DbSession,
+    user: CurrentUser,
+    phase: str = "baseline",
+    file: UploadFile = File(...),
+):
+    """上传答题卡 CSV → 写入观测样本（同 record-obs-samples）。"""
+    s = await _get(db, strategy_id)
+    ph = (phase or "baseline").strip().lower()
+    snap_id = s.baseline_snapshot_id if ph == "baseline" else s.after_snapshot_id
+    if not snap_id:
+        raise HTTPException(400, "请先建立摸底/复测快照后再上传答题卡")
+    snap = await db.get(RealObsSnapshot, snap_id)
+    if not snap:
+        raise HTTPException(404, "快照不存在")
+    qmap = {
+        str(q.get("id")): str(q.get("text") or "")
+        for q in (snap.questions or [])
+        if isinstance(q, dict)
+    }
+    raw = await file.read()
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        text = raw.decode("gbk", errors="replace")
+    try:
+        items = real_obs_svc.parse_sample_sheet_csv(text)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    # 策略页按本策略平台过滤；同问法多行取第一条匹配平台
+    plat = (s.platform or "").strip().lower()
+    samples_for_strategy = []
+    seen_q: set[str] = set()
+    for item in items:
+        if plat and item["platform"] != plat:
+            continue
+        qid = item["question_id"]
+        if qid in seen_q:
+            continue
+        seen_q.add(qid)
+        meta = item.get("raw_meta") or {}
+        samples_for_strategy.append(
+            {
+                "question_id": qid,
+                "question_text": qmap.get(qid) or "",
+                "mention": bool(meta.get("sheet_mention")),
+                "competitor_mention": bool(meta.get("sheet_competitor_mention")),
+                "owned_citation": bool(meta.get("sheet_owned_citation")),
+                "citation_rank": meta.get("citation_rank"),
+                "diagnosis_type": meta.get("diagnosis_override"),
+                "answer_text": item.get("answer_text"),
+                "informal": True,
+            }
+        )
+    if not samples_for_strategy:
+        raise HTTPException(400, f"CSV 中没有平台为 {plat or '策略平台'} 的有效行")
+    try:
+        s = await svc.record_obs_samples(
+            db,
+            s,
+            actor=user,
+            phase=ph,
+            samples=samples_for_strategy,
+            account_label="sample-sheet-csv",
+        )
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    await db.commit()
+    await db.refresh(s)
+    return await _ser(db, s)
+
+
 @router.get("/{strategy_id}/handoff-checklist")
-async def get_handoff_checklist(strategy_id: uuid.UUID, db: DbSession, _: OptionalUser):
+async def get_handoff_checklist(strategy_id: uuid.UUID, db: DbSession, _: CurrentUser):
     s = await _get(db, strategy_id)
     summary = await svc.task_summary_for(db, s.id)
     return svc.handoff_checklist(s, task_summary=summary)
@@ -358,10 +469,20 @@ async def submit_strategy(strategy_id: uuid.UUID, db: DbSession, user: CurrentUs
 
 
 @router.post("/{strategy_id}/approve")
-async def approve_strategy(strategy_id: uuid.UUID, db: DbSession, user: CurrentUser):
+async def approve_strategy(
+    strategy_id: uuid.UUID,
+    db: DbSession,
+    user: CurrentUser,
+    payload: ApproveBody | None = None,
+):
     s = await _get(db, strategy_id)
     try:
-        s = await svc.approve_executable(db, s, actor=user)
+        s = await svc.approve_executable(
+            db,
+            s,
+            actor=user,
+            force_reason=(payload.force_reason if payload else None),
+        )
     except PermissionError as exc:
         raise HTTPException(403, str(exc)) from exc
     except ValueError as exc:
@@ -416,7 +537,7 @@ async def generate_strategy_task(
 
 
 @router.get("/{strategy_id}/tasks")
-async def list_strategy_tasks(strategy_id: uuid.UUID, db: DbSession, _: OptionalUser):
+async def list_strategy_tasks(strategy_id: uuid.UUID, db: DbSession, _: CurrentUser):
     await _get(db, strategy_id)
     from app.models.content_engine import ContentTask
 
@@ -464,7 +585,13 @@ async def verdict_suggestion(strategy_id: uuid.UUID, db: DbSession, user: Curren
 async def confirm_verdict(strategy_id: uuid.UUID, payload: VerdictBody, db: DbSession, user: CurrentUser):
     s = await _get(db, strategy_id)
     try:
-        s = await svc.confirm_verdict(db, s, actor=user, verdict=payload.verdict)
+        s = await svc.confirm_verdict(
+            db,
+            s,
+            actor=user,
+            verdict=payload.verdict,
+            force_reason=payload.force_reason,
+        )
     except PermissionError as exc:
         raise HTTPException(403, str(exc)) from exc
     except ValueError as exc:

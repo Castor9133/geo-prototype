@@ -13,7 +13,7 @@ class RegisterRequest(BaseModel):
     phone: Optional[str] = Field(default=None, min_length=6, max_length=30)
     email: Optional[EmailStr] = None
     username: Optional[str] = Field(default=None, min_length=2, max_length=100)
-    password: str = Field(min_length=6, max_length=128)
+    password: str = Field(min_length=8, max_length=128)
     remember_me: bool = True
 
     @model_validator(mode="after")
@@ -38,8 +38,8 @@ class LoginRequest(BaseModel):
 
 
 class PasswordChangeRequest(BaseModel):
-    current_password: str = Field(min_length=6, max_length=128)
-    new_password: str = Field(min_length=6, max_length=128)
+    current_password: str = Field(min_length=8, max_length=128)
+    new_password: str = Field(min_length=8, max_length=128)
 
 
 class UserProfileUpdateRequest(BaseModel):

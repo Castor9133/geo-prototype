@@ -11,7 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.content_engine import ContentTask, KnowledgeBase, KnowledgeDocument
 from app.models.user import User
 from app.services import content_engine as ce
-from app.services.geo_roles import has_business_geo_role, has_geo_role
+from app.services.draft_lint import lint_task_draft
+from app.services.geo_roles import has_business_geo_role, has_geo_role, is_platform_admin
 
 REQUIRED_TAG_KEYS = ("site_id", "task_bajua", "doc_type")
 VALID_TIERS = frozenset({"L1", "L2", "L3", "L4"})
@@ -272,14 +273,46 @@ async def submit_for_review(db: AsyncSession, task: ContentTask) -> ContentTask:
     return task
 
 
-async def approve_ready(db: AsyncSession, task: ContentTask, *, actor: User) -> ContentTask:
-    # 日常过审仅审核岗；admin 不顶替（PRD：技术支持不做日常业务审批）
-    if not has_business_geo_role(actor, "reviewer"):
+async def approve_ready(
+    db: AsyncSession,
+    task: ContentTask,
+    *,
+    actor: User,
+    force_reason: str | None = None,
+) -> ContentTask:
+    # 日常过审仅审核岗；admin 不顶替日常过审，但可用 force_reason 红牌放行
+    if not has_business_geo_role(actor, "reviewer") and not (
+        is_platform_admin(actor) and (force_reason or "").strip()
+    ):
         raise PermissionError("需要审核岗位过审稿件（技术支持不可日常过审）")
-    if task.claimed_by and task.claimed_by == actor.id:
+    if task.claimed_by and task.claimed_by == actor.id and not is_platform_admin(actor):
         raise PermissionError("编写人不可过审自己领取的稿件，请换审核账号")
     if (task.workflow_status or "") not in ("in_review", "channel_draft", "template_draft"):
         raise ValueError("仅审核中或已出稿件可过审")
+
+    lint = await lint_task_draft(db, task)
+    if lint.get("blocking"):
+        if is_platform_admin(actor) and (force_reason or "").strip():
+            task.meta = {
+                **(task.meta or {}),
+                "lint_force_reason": force_reason.strip(),
+                "lint_forced_by": str(actor.id),
+                "lint_last": lint,
+            }
+        else:
+            msgs = "；".join(
+                i.get("message") or i.get("code") or ""
+                for i in (lint.get("issues") or [])
+                if i.get("severity") == "error"
+            )
+            raise ValueError(
+                "写稿体检未通过（红牌）："
+                + (msgs or "存在严重问题")
+                + "。管理员可填写 force_reason 强行过审。"
+            )
+    else:
+        task.meta = {**(task.meta or {}), "lint_last": lint}
+
     task.workflow_status = "ready"
     task.reviewed_by = actor.id
     task.status = "completed"

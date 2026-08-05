@@ -1,4 +1,4 @@
-"""Local demo API: force GEORANK_ALLOW_ANONYMOUS_AI and bind 127.0.0.1:8000."""
+"""Local demo API: allow anonymous AI usage only; bind 127.0.0.1:8000 (not admin bypass)."""
 from __future__ import annotations
 
 import os

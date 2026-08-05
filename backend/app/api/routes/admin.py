@@ -22,6 +22,11 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from sqlalchemy import String, cast, delete, select, func, text, update, or_, case
 
 from app.api.routes.auth import _hash_password, _normalize_phone
+from app.services.phone_security import (
+    assign_user_phone,
+    phone_lookup_hash,
+    reveal_user_phone,
+)
 from app.core.config import settings
 from app.core.database import engine
 from app.core.deps import DbSession, AdminUser
@@ -2618,7 +2623,7 @@ def _serialize_admin_user(user: User) -> dict:
         "id": str(user.id),
         "email": user.email,
         "username": user.username,
-        "phone": user.phone,
+        "phone": reveal_user_phone(user),
         "role": user.role.value if hasattr(user.role, "value") else user.role,
         "is_active": user.is_active,
         "is_verified": user.is_verified,
@@ -2653,7 +2658,7 @@ async def _ensure_unique_user_fields(
     if username:
         filters.append(User.username == username)
     if phone:
-        filters.append(User.phone == phone)
+        filters.append(User.phone_hash == phone_lookup_hash(phone))
     if not filters:
         return
 
@@ -2758,13 +2763,17 @@ async def list_users(
     if is_active is not None:
         query = query.where(User.is_active == is_active)
     if search:
-        query = query.where(
-            or_(
-                User.username.ilike(f"%{search}%"),
-                User.email.ilike(f"%{search}%"),
-                User.phone.ilike(f"%{search}%"),
-            )
-        )
+        search_filters = [
+            User.username.ilike(f"%{search}%"),
+            User.email.ilike(f"%{search}%"),
+        ]
+        # 手机号已加密：仅支持规范化后的精确匹配（HMAC）
+        try:
+            digits = _normalize_phone(search)
+            search_filters.append(User.phone_hash == phone_lookup_hash(digits))
+        except HTTPException:
+            pass
+        query = query.where(or_(*search_filters))
     query = query.order_by(User.created_at.desc())
 
     total = await db.scalar(select(func.count()).select_from(query.subquery()))
@@ -2812,13 +2821,13 @@ class AdminUserUpdateRequest(BaseModel):
 
 
 class AdminPasswordResetRequest(BaseModel):
-    password: str = Field(min_length=6, max_length=128)
+    password: str = Field(min_length=8, max_length=128)
 
 
 class AdminUserCreateRequest(BaseModel):
     email: EmailStr
     username: str = Field(min_length=2, max_length=100)
-    password: str = Field(min_length=6, max_length=128)
+    password: str = Field(min_length=8, max_length=128)
     role: str = Field(default="user", pattern="^(admin|enterprise|user)$")
     phone: str | None = Field(default=None, min_length=6, max_length=30)
 
@@ -2904,12 +2913,12 @@ async def create_user_admin(data: AdminUserCreateRequest, db: DbSession, _: Admi
     user = User(
         email=email,
         username=username,
-        phone=phone,
         hashed_password=_hash_password(data.password),
         role=UserRole(data.role),
         is_active=True,
         is_verified=False,
     )
+    assign_user_phone(user, phone)
     db.add(user)
     await db.commit()
     await db.refresh(user)
@@ -2991,12 +3000,13 @@ async def update_user_admin(
     if phone_was_provided:
         next_phone = _normalize_phone(updates["phone"]) if updates["phone"] else None
 
+    current_plain_phone = reveal_user_phone(user)
     await _ensure_unique_user_fields(
         db,
         user.id,
         email=next_email if next_email and next_email != user.email else None,
         username=next_username if next_username and next_username != user.username else None,
-        phone=next_phone if phone_was_provided and next_phone != user.phone else None,
+        phone=next_phone if phone_was_provided and next_phone != current_plain_phone else None,
     )
 
     next_role = UserRole(updates["role"]) if updates.get("role") else None
@@ -3015,7 +3025,7 @@ async def update_user_admin(
     if next_username:
         user.username = next_username
     if phone_was_provided:
-        user.phone = next_phone
+        assign_user_phone(user, next_phone)
     if next_role:
         user.role = next_role
     if next_active is not None:

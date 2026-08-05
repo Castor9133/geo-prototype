@@ -682,6 +682,7 @@
       empty.hidden = true;
       body.hidden = false;
       const d = sixTupleDefaults(s);
+      const cl = s.handoff_checklist || {};
       const mediaSelected = (d.media_types || 'wechat').split(',')[0] || 'wechat';
       body.innerHTML =
         '<p class="st-hint">正在补全：<strong>' + escapeHtml(s.title || s.question_class) + '</strong> · ' +
@@ -740,12 +741,24 @@
             '</div>' +
             '<p class="st-hint">' + (s.baseline_snapshot_id ? '<span class="st-ok">已确认摸底完成</span>' : '摸底回传后，再点「确认摸底已完成」') + '</p>' +
           '</div>' +
-          (!(s.diagnostic_report_id && s.baseline_snapshot_id)
-            ? '<div class="st-gate"><strong>还不能批准可以写稿</strong><div>请先完成：查页面 + 投放前摸底</div></div>'
+          (!(cl.ready_for_approve)
+            ? '<div class="st-gate"><strong>还不能批准可以写稿</strong><div>' +
+              (cl.demo_metrics
+                ? '请先完成：查页面 + 投放前摸底（演示模式可占位）'
+                : '请先完成：查页面 + ≥3 条真实摸底样本（正式模式硬拦门）') +
+              '</div></div>'
             : '') +
+          (cl.demo_metrics
+            ? '<p class="st-hint">演示指标已开启：可用占位摸底；上线请关闭 GEORANK_DEMO_METRICS</p>'
+            : '<p class="st-hint">正式指标：摸底样本不足时批准按钮不可用（管理员可填理由强开）</p>') +
           '<div class="st-actions">' +
             '<button type="button" class="btn primary" id="btn-submit">送审</button>' +
-            '<button type="button" class="btn teal" id="btn-approve">批准可以开工</button>' +
+            '<button type="button" class="btn teal" id="btn-approve"' +
+              (!(cl.ready_for_approve) ? ' disabled title="前置未齐"' : '') +
+              '>批准可以开工</button>' +
+            (!(cl.ready_for_approve)
+              ? '<button type="button" class="btn" id="btn-approve-force">管理员强开批准</button>'
+              : '') +
             (s.status === 'executable'
               ? '<button type="button" class="btn primary" id="btn-confirm-queries">确认上方问法用于写稿</button>'
                 + '<a class="btn" href="/keywords?strategy=' + encodeURIComponent(s.id) + '">去拓词页确认</a>'
@@ -792,7 +805,15 @@
         act(s.id, '/register-baseline', null, '正在确认摸底…');
       };
       body.querySelector('#btn-submit').onclick = function () { act(s.id, '/submit', null, '正在送审…'); };
-      body.querySelector('#btn-approve').onclick = function () { act(s.id, '/approve', null, '正在批准…'); };
+      body.querySelector('#btn-approve').onclick = function () { act(s.id, '/approve', {}, '正在批准…'); };
+      const forceApprove = body.querySelector('#btn-approve-force');
+      if (forceApprove) {
+        forceApprove.onclick = function () {
+          const reason = window.prompt('管理员强开批准：请填写理由（必填）', '');
+          if (!reason || !String(reason).trim()) { showMsg('须填写强开理由', 'err'); return; }
+          act(s.id, '/approve', { force_reason: String(reason).trim() }, '正在强开批准…');
+        };
+      }
       const confirmBtn = body.querySelector('#btn-confirm-queries');
       if (confirmBtn) {
         confirmBtn.onclick = async function () {
@@ -852,11 +873,42 @@
               showMsg('稿件已送审', 'ok'); await load();
             } catch (e) { showMsg(String(e.message || e), 'err'); }
           });
+          mk('体检', async function () {
+            try {
+              const lint = await api('/content-engine/tasks/' + t.id + '/lint');
+              const errs = (lint.issues || []).filter(function (i) { return i.severity === 'error'; });
+              const warns = (lint.issues || []).filter(function (i) { return i.severity === 'warn'; });
+              showMsg(
+                '体检分 ' + (lint.score != null ? lint.score : '—') +
+                ' · 红牌 ' + errs.length + ' · 黄牌 ' + warns.length +
+                (errs[0] ? ' · ' + errs[0].message : ''),
+                lint.blocking ? 'err' : 'ok'
+              );
+            } catch (e) { showMsg(String(e.message || e), 'err'); }
+          });
           mk('审核通过', async function () {
             try {
-              await api('/content-engine/tasks/' + t.id + '/approve-ready', { method: 'POST' });
+              await api('/content-engine/tasks/' + t.id + '/approve-ready', {
+                method: 'POST',
+                body: JSON.stringify({}),
+              });
               showMsg('稿件已过审，可以对外发布', 'ok'); await load();
-            } catch (e) { showMsg(String(e.message || e), 'err'); }
+            } catch (e) {
+              const msg = String(e.message || e);
+              if (/红牌|体检未通过/.test(msg)) {
+                const reason = window.prompt(msg + '\n\n管理员可填理由强行过审（取消则放弃）：', '');
+                if (!reason || !String(reason).trim()) { showMsg(msg, 'err'); return; }
+                try {
+                  await api('/content-engine/tasks/' + t.id + '/approve-ready', {
+                    method: 'POST',
+                    body: JSON.stringify({ force_reason: String(reason).trim() }),
+                  });
+                  showMsg('已强开过审', 'ok'); await load();
+                } catch (e2) { showMsg(String(e2.message || e2), 'err'); }
+                return;
+              }
+              showMsg(msg, 'err');
+            }
           });
           host.appendChild(row);
         });
@@ -1001,6 +1053,19 @@
         act(s.id, '/start-observe', null, '正在开始复测…');
       };
       body.querySelector('#btn-verdict').onclick = function () {
+        const cl = s.handoff_checklist || {};
+        if (cl.ready_for_verdict === false && !cl.demo_metrics) {
+          const reason = window.prompt(
+            '正式模式：复测样本不足 3 条时不能判定。管理员可填理由强开（取消则放弃）：',
+            ''
+          );
+          if (!reason || !String(reason).trim()) {
+            showMsg('复测样本不足，无法确认效果', 'err');
+            return;
+          }
+          act(s.id, '/confirm-verdict', { force_reason: String(reason).trim() }, '正在强开确认效果…');
+          return;
+        }
         act(s.id, '/confirm-verdict', {}, '正在确认效果…');
       };
       body.querySelector('#btn-fork').onclick = function () {

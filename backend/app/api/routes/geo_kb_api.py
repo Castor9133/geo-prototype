@@ -8,7 +8,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
-from app.core.deps import AdminUser, CurrentUser, DbSession, OptionalUser
+from app.core.deps import AdminUser, CurrentUser, DbSession
 from app.models.content_engine import ContentTask, KnowledgeBase, KnowledgeDocument
 from app.models.user import User
 from app.services import geo_kb as gkb
@@ -145,7 +145,7 @@ async def confirm_l1(kb_id: uuid.UUID, doc_id: uuid.UUID, db: DbSession, user: C
 
 
 @router.get("/knowledge-bases/{kb_id}/geo-stats")
-async def geo_stats(kb_id: uuid.UUID, db: DbSession, _: OptionalUser):
+async def geo_stats(kb_id: uuid.UUID, db: DbSession, _: CurrentUser):
     kb = await db.get(KnowledgeBase, kb_id)
     if not kb:
         raise HTTPException(404, "知识库不存在")
@@ -157,7 +157,7 @@ async def geo_stats(kb_id: uuid.UUID, db: DbSession, _: OptionalUser):
 async def list_docs_geo(
     kb_id: uuid.UUID,
     db: DbSession,
-    _: OptionalUser,
+    _: CurrentUser,
     tier: str | None = None,
     review_state: str | None = None,
     bajua: str | None = None,
@@ -253,15 +253,44 @@ async def submit_review(task_id: uuid.UUID, db: DbSession, user: CurrentUser):
     return gkb.serialize_task(task)
 
 
+class ApproveReadyBody(BaseModel):
+    force_reason: str | None = Field(default=None, description="管理员红牌强开理由")
+
+
+@router.get("/tasks/{task_id}/lint")
+async def lint_task(task_id: uuid.UUID, db: DbSession, user: CurrentUser):
+    """写稿体检预览（不过审）。"""
+    if not has_geo_role(user, "admin", "reviewer", "editor"):
+        raise HTTPException(403, "权限不足")
+    from app.services.draft_lint import lint_task_draft
+
+    task = await db.get(ContentTask, task_id)
+    if not task:
+        raise HTTPException(404, "任务不存在")
+    return await lint_task_draft(db, task)
+
+
 @router.post("/tasks/{task_id}/approve-ready")
-async def approve_ready(task_id: uuid.UUID, db: DbSession, user: CurrentUser):
+async def approve_ready(
+    task_id: uuid.UUID,
+    db: DbSession,
+    user: CurrentUser,
+    payload: ApproveReadyBody | None = None,
+):
     task = await db.get(ContentTask, task_id)
     if not task:
         raise HTTPException(404, "任务不存在")
     try:
-        task = await gkb.approve_ready(db, task, actor=user)
+        task = await gkb.approve_ready(
+            db,
+            task,
+            actor=user,
+            force_reason=(payload.force_reason if payload else None),
+        )
     except PermissionError as exc:
         raise HTTPException(403, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
     await db.commit()
     await db.refresh(task)
     return gkb.serialize_task(task)
@@ -319,7 +348,7 @@ async def confirm_reject(task_id: uuid.UUID, db: DbSession, user: CurrentUser):
 @router.get("/tasks-geo")
 async def list_tasks_geo(
     db: DbSession,
-    _: OptionalUser,
+    _: CurrentUser,
     workflow_status: str | None = None,
     suggestion: str | None = None,
     limit: int = 50,

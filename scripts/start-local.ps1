@@ -66,8 +66,11 @@ Get-Content "$Root\.env" | ForEach-Object {
     Set-Item -Path "Env:$k" -Value $v
 }
 
-# 本地演示默认免登录（Admin / 内容引擎）；生产部署勿复制此强制项
+# 本地演示：仅开放匿名 AI 用量（诊断/拓词/问答）。管理后台与业务写接口仍需登录。
+# 生产部署务必设为 false（DEBUG=false 时后端也会拒绝该开关）。
 $env:GEORANK_ALLOW_ANONYMOUS_AI = "true"
+# 领导 demo：允许 Suite 演示剧本 KPI（大字标「演示」）。上线必须 false。
+$env:GEORANK_DEMO_METRICS = "true"
 
 if (-not $SkipMigrate) {
     Write-Host "Alembic migrate..." -ForegroundColor Cyan

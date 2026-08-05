@@ -13,6 +13,13 @@ from app.core.database import Base
 REAL_OBS_PLATFORMS = ("doubao", "yuanbao", "deepseek")
 REAL_OBS_PHASES = ("baseline", "after")
 REAL_OBS_STATUSES = ("pending", "sampling", "completed", "partial", "failed")
+# GeoLook 式诊断分型（问题向）；健康样本可为 null
+DIAGNOSIS_TYPES = (
+    "absent",
+    "competitor_dominated",
+    "low_ranked",
+    "suspected_negative",
+)
 
 
 class RealObsSnapshot(Base):
@@ -73,6 +80,7 @@ class RealObsSample(Base):
     competitor_mention: Mapped[bool] = mapped_column(Boolean, default=False)
     owned_citation: Mapped[bool] = mapped_column(Boolean, default=False)
     strong_adopted: Mapped[bool] = mapped_column(Boolean, default=False)
+    diagnosis_type: Mapped[str | None] = mapped_column(String(40), nullable=True, index=True)
     hit_snippet: Mapped[str | None] = mapped_column(Text)
     label_source: Mapped[str] = mapped_column(String(20), nullable=False, default="rule")
     ok: Mapped[bool] = mapped_column(Boolean, default=True)

@@ -278,13 +278,27 @@ app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.TRUSTED_HOSTS)
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
 
-# CORS — 开发模式允许所有来源，生产环境使用配置白名单
+# CORS — 始终白名单；DEBUG 时额外合并本机常用源（绝不使用 *）
+_DEV_CORS = [
+    "http://localhost:3009",
+    "http://127.0.0.1:3009",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "http://localhost:8899",
+    "http://localhost",
+    "http://127.0.0.1",
+]
+_cors_origins = list(
+    dict.fromkeys(
+        list(settings.CORS_ORIGINS or []) + (_DEV_CORS if settings.DEBUG else [])
+    )
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if settings.DEBUG else settings.CORS_ORIGINS,
-    allow_credentials=False if settings.DEBUG else True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=_cors_origins or ["http://127.0.0.1:3009"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "X-Request-Id"],
     max_age=3600,
 )
 

@@ -1,6 +1,8 @@
 """真实点名观测：规则打标、快照编排、前后对比与归因卡（独立于 trust_obs）。"""
 from __future__ import annotations
 
+import csv
+import io
 import re
 from datetime import datetime, timedelta
 from typing import Any
@@ -11,7 +13,41 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.geo_run import GeoRun
-from app.models.real_obs import REAL_OBS_PLATFORMS, RealObsSample, RealObsSnapshot
+from app.models.real_obs import (
+    DIAGNOSIS_TYPES,
+    REAL_OBS_PLATFORMS,
+    RealObsSample,
+    RealObsSnapshot,
+)
+
+NEGATIVE_HINTS = (
+    "坑",
+    "翻车",
+    "不推荐",
+    "别买",
+    "避雷",
+    "负面",
+    "丑闻",
+    "造假",
+    "虚假",
+    "投诉",
+    "差评如潮",
+)
+
+SAMPLE_SHEET_HEADERS = (
+    "question_id",
+    "question_text",
+    "platform",
+    "attempt",
+    "mention",
+    "competitor_mention",
+    "owned_citation",
+    "citation_rank",
+    "diagnosis_type",
+    "answer_text",
+    "ok",
+    "notes",
+)
 
 METHOD_NOTE = (
     "约定账号网页端点名抽样（半自动浏览器）；"
@@ -171,6 +207,157 @@ def classify_sample(
     }
 
 
+def _citation_rank(citations: list[Any] | None, raw_meta: dict[str, Any] | None = None) -> int | None:
+    if raw_meta and raw_meta.get("citation_rank") is not None:
+        try:
+            return int(raw_meta["citation_rank"])
+        except (TypeError, ValueError):
+            pass
+    for c in citations or []:
+        if isinstance(c, dict) and c.get("rank") is not None:
+            try:
+                return int(c["rank"])
+            except (TypeError, ValueError):
+                continue
+    return None
+
+
+def infer_diagnosis_type(
+    *,
+    mention: bool,
+    competitor_mention: bool,
+    owned_citation: bool,
+    answer_text: str | None = None,
+    citations: list[Any] | None = None,
+    raw_meta: dict[str, Any] | None = None,
+    diagnosis_override: str | None = None,
+) -> str | None:
+    """问题向分型；健康提及返回 None。优先级：负面 > 竞品主导 > 缺席 > 靠后。"""
+    if diagnosis_override:
+        key = str(diagnosis_override).strip().lower()
+        if key in DIAGNOSIS_TYPES:
+            return key
+        if key in ("", "ok", "none", "null"):
+            return None
+    text = (answer_text or "").lower()
+    if text and any(h in text for h in NEGATIVE_HINTS):
+        return "suspected_negative"
+    if competitor_mention and not mention:
+        return "competitor_dominated"
+    if competitor_mention and mention and not owned_citation:
+        return "competitor_dominated"
+    if not mention:
+        return "absent"
+    rank = _citation_rank(citations, raw_meta)
+    if rank is not None and rank > 10:
+        return "low_ranked"
+    if mention and not owned_citation:
+        return "low_ranked"
+    return None
+
+
+def diagnosis_type_label(key: str | None) -> str:
+    return {
+        "absent": "完全没提",
+        "competitor_dominated": "竞品抢戏",
+        "low_ranked": "提了但靠后",
+        "suspected_negative": "疑似负面",
+    }.get(key or "", "正常/未标")
+
+
+def build_sample_sheet_csv(snap: RealObsSnapshot, *, platform: str | None = None) -> str:
+    """导出空表（或带平台列）供人工填写后回灌。"""
+    platforms = [platform] if platform else list(snap.platforms or REAL_OBS_PLATFORMS)
+    platforms = [str(p).strip().lower() for p in platforms if str(p).strip()]
+    if not platforms:
+        platforms = list(REAL_OBS_PLATFORMS)
+    buf = io.StringIO()
+    buf.write("# 填写说明: mention/competitor_mention/owned_citation/ok 填 1/0 或 true/false\n")
+    buf.write(
+        "# diagnosis_type 可选: absent|competitor_dominated|low_ranked|suspected_negative|（空=自动推断）\n"
+    )
+    writer = csv.DictWriter(buf, fieldnames=list(SAMPLE_SHEET_HEADERS), extrasaction="ignore")
+    writer.writeheader()
+    for q in snap.questions or []:
+        if not isinstance(q, dict):
+            continue
+        qid = str(q.get("id") or "").strip()
+        qtext = str(q.get("text") or "").strip()
+        if not qid or not qtext:
+            continue
+        for plat in platforms:
+            writer.writerow(
+                {
+                    "question_id": qid,
+                    "question_text": qtext,
+                    "platform": plat,
+                    "attempt": 1,
+                    "mention": "",
+                    "competitor_mention": "",
+                    "owned_citation": "",
+                    "citation_rank": "",
+                    "diagnosis_type": "",
+                    "answer_text": "",
+                    "ok": "1",
+                    "notes": "",
+                }
+            )
+    return buf.getvalue()
+
+
+def _truthy(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    s = str(value or "").strip().lower()
+    return s in {"1", "true", "yes", "y", "是", "有"}
+
+
+def parse_sample_sheet_csv(content: str) -> list[dict[str, Any]]:
+    """解析人工填写的采样表为 upsert_sample 参数列表。"""
+    text = (content or "").lstrip("\ufeff")
+    lines = [ln for ln in text.splitlines() if ln.strip() and not ln.strip().startswith("#")]
+    if not lines:
+        raise ValueError("CSV 为空")
+    reader = csv.DictReader(io.StringIO("\n".join(lines)))
+    if not reader.fieldnames or "question_id" not in reader.fieldnames:
+        raise ValueError("CSV 须含表头 question_id / platform 等列")
+    out: list[dict[str, Any]] = []
+    for i, row in enumerate(reader, start=2):
+        qid = str(row.get("question_id") or "").strip()
+        plat = str(row.get("platform") or "").strip().lower()
+        if not qid or not plat:
+            raise ValueError(f"第 {i} 行缺少 question_id 或 platform")
+        rank_raw = str(row.get("citation_rank") or "").strip()
+        rank = int(rank_raw) if rank_raw.isdigit() else None
+        citations: list[dict[str, Any]] = []
+        if rank is not None:
+            citations.append({"rank": rank, "url": "", "owned": _truthy(row.get("owned_citation"))})
+        raw_meta: dict[str, Any] = {"source": "sample_sheet_csv", "notes": str(row.get("notes") or "")}
+        if rank is not None:
+            raw_meta["citation_rank"] = rank
+        dtype = str(row.get("diagnosis_type") or "").strip().lower() or None
+        out.append(
+            {
+                "question_id": qid,
+                "platform": plat,
+                "attempt": int(row.get("attempt") or 1) or 1,
+                "answer_text": str(row.get("answer_text") or "").strip() or None,
+                "citations": citations,
+                "ok": _truthy(row.get("ok")) if str(row.get("ok") or "").strip() != "" else True,
+                "raw_meta": {
+                    **raw_meta,
+                    "sheet_mention": _truthy(row.get("mention")),
+                    "sheet_competitor_mention": _truthy(row.get("competitor_mention")),
+                    "sheet_owned_citation": _truthy(row.get("owned_citation")),
+                    "diagnosis_override": dtype,
+                },
+            }
+        )
+    if not out:
+        raise ValueError("CSV 无有效数据行")
+    return out
+
+
 def serialize_snapshot(snap: RealObsSnapshot) -> dict[str, Any]:
     return {
         "id": str(snap.id),
@@ -197,6 +384,7 @@ def serialize_snapshot(snap: RealObsSnapshot) -> dict[str, Any]:
 
 
 def serialize_sample(sample: RealObsSample) -> dict[str, Any]:
+    dtype = getattr(sample, "diagnosis_type", None)
     return {
         "id": str(sample.id),
         "snapshot_id": str(sample.snapshot_id),
@@ -211,6 +399,8 @@ def serialize_sample(sample: RealObsSample) -> dict[str, Any]:
         "competitor_mention": bool(sample.competitor_mention),
         "owned_citation": bool(sample.owned_citation),
         "strong_adopted": bool(sample.strong_adopted),
+        "diagnosis_type": dtype,
+        "diagnosis_label": diagnosis_type_label(dtype),
         "hit_snippet": sample.hit_snippet,
         "label_source": sample.label_source,
         "ok": bool(sample.ok),
@@ -487,6 +677,15 @@ async def upsert_sample(
         fact_source_urls=snap.fact_source_urls or [],
         citations=citations,
     )
+    meta = dict(raw_meta or {})
+    # CSV 表单显式勾选可覆盖规则（仍保留规则 citations）
+    if "sheet_mention" in meta:
+        labels["mention"] = bool(meta.get("sheet_mention"))
+    if "sheet_competitor_mention" in meta:
+        labels["competitor_mention"] = bool(meta.get("sheet_competitor_mention"))
+    if "sheet_owned_citation" in meta:
+        labels["owned_citation"] = bool(meta.get("sheet_owned_citation"))
+        labels["strong_adopted"] = bool(labels["mention"] and labels["owned_citation"])
 
     if existing:
         sample = existing
@@ -510,10 +709,19 @@ async def upsert_sample(
     sample.owned_citation = labels["owned_citation"]
     sample.strong_adopted = labels["strong_adopted"]
     sample.hit_snippet = labels["hit_snippet"]
+    sample.diagnosis_type = infer_diagnosis_type(
+        mention=labels["mention"],
+        competitor_mention=labels["competitor_mention"],
+        owned_citation=labels["owned_citation"],
+        answer_text=answer_text if ok else None,
+        citations=labels["citations"],
+        raw_meta=meta,
+        diagnosis_override=meta.get("diagnosis_override"),
+    )
     sample.label_source = "rule"
     sample.ok = bool(ok)
     sample.error_message = error_message
-    sample.raw_meta = raw_meta or {}
+    sample.raw_meta = meta
     sample.sampled_at = sampled_at or datetime.utcnow()
     sample.updated_at = datetime.utcnow()
 
@@ -548,6 +756,7 @@ async def override_sample_labels(
     owned_citation: bool | None = None,
     strong_adopted: bool | None = None,
     competitor_mention: bool | None = None,
+    diagnosis_type: str | None = None,
 ) -> RealObsSample:
     if mention is not None:
         sample.mention = bool(mention)
@@ -559,6 +768,25 @@ async def override_sample_labels(
         sample.strong_adopted = bool(strong_adopted)
     else:
         sample.strong_adopted = bool(sample.mention and sample.owned_citation)
+    if diagnosis_type is not None:
+        key = str(diagnosis_type).strip().lower()
+        if key in ("", "ok", "none", "null"):
+            sample.diagnosis_type = None
+        elif key in DIAGNOSIS_TYPES:
+            sample.diagnosis_type = key
+        else:
+            raise ValueError(
+                "diagnosis_type 须为 absent|competitor_dominated|low_ranked|suspected_negative 或清空"
+            )
+    else:
+        sample.diagnosis_type = infer_diagnosis_type(
+            mention=sample.mention,
+            competitor_mention=sample.competitor_mention,
+            owned_citation=sample.owned_citation,
+            answer_text=sample.answer_text,
+            citations=sample.citations,
+            raw_meta=sample.raw_meta,
+        )
     sample.label_source = "human"
     sample.updated_at = datetime.utcnow()
     await db.commit()

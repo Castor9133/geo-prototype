@@ -27,7 +27,15 @@ class Settings(BaseSettings):
     ]
 
     # ----- CORS -----
-    CORS_ORIGINS: List[str] = ["http://localhost:8899", "http://localhost:80", "http://localhost", "http://127.0.0.1"]
+    # 永不使用 *；本地端口在 DEBUG 时由 main 合并补充
+    CORS_ORIGINS: List[str] = [
+        "http://localhost:3009",
+        "http://127.0.0.1:3009",
+        "http://localhost:8899",
+        "http://localhost:80",
+        "http://localhost",
+        "http://127.0.0.1",
+    ]
 
     # ----- PostgreSQL -----
     # 裸跑本机时设 POSTGRES_HOST=127.0.0.1；Compose 内默认 hostname=postgres
@@ -113,8 +121,12 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL: str = "text-embedding-v4"
     EMBEDDING_DIMENSIONS: int = 1024
 
-    # 本地 / Suite 演示：允许未登录调用诊断、拓词、问答等 AI 接口
+    # 仅开放匿名 AI 用量（诊断/拓词/问答）；绝不等于免管理员鉴权
     GEORANK_ALLOW_ANONYMOUS_AI: bool = False
+
+    # 演示指标：为 true 时 Suite 可用剧本 KPI（须标「演示」）；false 时未测不编数、观测硬样本闸门
+    # 本地/领导 demo 可开；上线（DEBUG=false）必须关
+    GEORANK_DEMO_METRICS: bool = False
 
     # ----- GEO Suite / GEOFlow 集成 -----
     GEOFLOW_ENABLED: bool = False
@@ -160,7 +172,13 @@ class Settings(BaseSettings):
         if self.DEBUG:
             return
 
-        weak_values = {"", "change-me-in-production", "change-me-jwt-secret"}
+        weak_values = {
+            "",
+            "change-me-in-production",
+            "change-me-jwt-secret",
+            "change-me-secret-key",
+            "change-me-settings-encryption-key",
+        }
         problems: list[str] = []
         if self.SECRET_KEY in weak_values or len(self.SECRET_KEY) < 32:
             problems.append("SECRET_KEY 必须使用至少 32 字符的随机值")
@@ -173,6 +191,12 @@ class Settings(BaseSettings):
             or self.SETTINGS_ENCRYPTION_KEY in {self.SECRET_KEY, self.JWT_SECRET}
         ):
             problems.append("SETTINGS_ENCRYPTION_KEY 必须使用至少 32 字符的独立随机值")
+        if self.GEORANK_ALLOW_ANONYMOUS_AI:
+            problems.append("生产环境必须关闭 GEORANK_ALLOW_ANONYMOUS_AI")
+        if self.GEORANK_DEMO_METRICS:
+            problems.append("生产环境必须关闭 GEORANK_DEMO_METRICS（上线不可用演示剧本冒充 KPI）")
+        if self.POSTGRES_PASSWORD.startswith("change-me") or len(self.POSTGRES_PASSWORD) < 16:
+            problems.append("POSTGRES_PASSWORD 必须使用足够强度的随机值")
 
         public_origin = urlparse(self.PUBLIC_BASE_URL)
         if public_origin.scheme != "https" or not public_origin.hostname:
