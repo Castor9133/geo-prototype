@@ -33,6 +33,12 @@ test-results/
 
 # Local agent and verification artifacts
 .longtask/
+backend/.agents/
+backend/skills-lock.json
+skills/**/reports/
+
+# Prefer not re-installing bulky vendor skill packs into this repo.
+# Use: npx skills add <source> --skill <one>  (user/global scope) when needed.
 
 # Runtime state
 backend/celerybeat-schedule
@@ -101,4 +107,19 @@ logs/
 # Stitch design exports (not product runtime)
 stitch_geo_design_system_prototype/
 stitch_geo_design_system_prototype.zip
+
+# Local scratch / deck build leftovers
+_build_deck*.py
+_encode_images.py
+_extract_*.py
+_optimize_moat.py
+_read_docx.py
+_replace_slide*.py
+_rewrite_moat.py
+_css_extract.txt
+_img_b64.txt
+_original_pptx_content.txt
+_slides_data.json
+_pptx_images/
+temp_screenshots/
 

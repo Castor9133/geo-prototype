@@ -329,6 +329,12 @@
   flex-wrap: wrap;
   gap: 0.45rem;
   align-items: center;
+  justify-content: flex-end;
+  align-self: flex-start;
+}
+.ce-public-hero__actions .btn {
+  white-space: nowrap;
+  min-height: 2.25rem;
 }
 .ce-wrap--public {
   max-width: none;
@@ -888,15 +894,32 @@ select:focus-visible,
 .ce-ai-platforms {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 14px;
+  align-items: center;
+  gap: 8px 16px;
   margin-bottom: 0.55rem;
 }
 .ce-ai-plat {
   display: inline-flex;
+  flex-direction: row;
   align-items: center;
   gap: 6px;
   font-size: 0.86rem;
   cursor: pointer;
+  white-space: nowrap;
+  writing-mode: horizontal-tb;
+  flex: 0 0 auto;
+  width: auto;
+  max-width: none;
+}
+/* 覆盖全局 input{width:100%}，避免复选框撑满把「豆包」挤成竖排 */
+.ce-ai-plat input[type="checkbox"],
+.ce-ai-inject input[type="checkbox"],
+.ce-section--ai-focus input[type="checkbox"] {
+  width: auto !important;
+  min-width: 1rem;
+  margin: 0 !important;
+  flex: 0 0 auto;
+  padding: 0;
 }
 .ce-ai-inject {
   display: flex;

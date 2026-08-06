@@ -212,6 +212,37 @@
         clear: () => localStorage.removeItem(TOKEN_KEY),
     };
 
+    function isPublicSettingsPage() {
+        if (document.body?.classList?.contains('settings-page--public')) return true;
+        const path = String(window.location.pathname || '').replace(/\/+$/, '') || '/';
+        return path === '/settings';
+    }
+
+    function isDemoOpenAccess() {
+        if (window.GEORANK_OPEN_DEMO === false) return false;
+        if (window.GEORANK_OPEN_DEMO === true) return true;
+        if (typeof window.GEOrank?.Auth?.isDemoOpenAccess === 'function') {
+            return Boolean(window.GEOrank.Auth.isDemoOpenAccess());
+        }
+        return true;
+    }
+
+    /** 前台「配置」页演示免登录：仅当匿名 AI 开关开启时向后端领取管理员会话 */
+    async function ensureDemoAdminSession() {
+        if (Auth.get()) return true;
+        if (!isDemoOpenAccess() || !isPublicSettingsPage()) return false;
+        try {
+            const data = await api('POST', '/api/auth/demo-admin-session', {});
+            if (data?.access_token) {
+                Auth.set(data.access_token);
+                return true;
+            }
+        } catch (_) {
+            /* 未开演示开关或未 seed 时回落登录页 */
+        }
+        return false;
+    }
+
     function formatApiErrorDetail(detail, fallback = '请求失败') {
         if (!detail) return fallback;
         if (typeof detail === 'string') return detail;
@@ -6229,7 +6260,21 @@ ${pages.map(p => p === '…'
 
     async function initPage() {
         try {
-            const me = await api('GET', '/api/auth/me');
+            if (!Auth.get()) {
+                await ensureDemoAdminSession();
+            }
+            let me;
+            try {
+                me = await api('GET', '/api/auth/me');
+            } catch (firstErr) {
+                // token 失效时演示配置页再领一次
+                Auth.clear();
+                if (await ensureDemoAdminSession()) {
+                    me = await api('GET', '/api/auth/me');
+                } else {
+                    throw firstErr;
+                }
+            }
             if (me.role !== 'admin') {
                 Auth.clear();
                 showLoginModal('需要管理员权限');
@@ -6261,6 +6306,14 @@ ${pages.map(p => p === '…'
             const hadToken = Boolean(Auth.get());
             if (hadToken) Auth.clear();
             currentAdminUser = null;
+            if (isPublicSettingsPage() && isDemoOpenAccess()) {
+                showLoginModal(
+                    (err && err.message)
+                        ? `${err.message}（演示会话不可用时可手动登录 admin）`
+                        : '演示会话不可用，请手动登录管理员'
+                );
+                return;
+            }
             showLoginModal(hadToken ? '登录已过期，请重新登录' : undefined);
         }
     }

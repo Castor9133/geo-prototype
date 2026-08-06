@@ -66,7 +66,7 @@
   <div id="header-container"></div>
   <main class="ob-page">
     <header class="ob-hero">
-      <p class="ob-hint" style="margin:0">党建党媒 · 半自动观测</p>
+      <p class="ob-hint" style="margin:0">GEO · 半自动观测</p>
       <h1>观测与回传</h1>
       <p class="ob-lead">用白号在豆包 / 元宝 / DeepSeek 按问法提问，把「有没有被提到、引用有没有进前十」登记回来。系统不代问。</p>
       <div class="ob-actions">
@@ -128,8 +128,14 @@
     const PLATFORM = { doubao: '豆包', yuanbao: '元宝', deepseek: 'DeepSeek' };
 
     function token() {
-      try { return localStorage.getItem(tokenKey) || sessionStorage.getItem(tokenKey) || ''; }
-      catch (_) { return ''; }
+      try {
+        return (window.GEOrank && window.GEOrank.Auth && window.GEOrank.Auth.getToken && window.GEOrank.Auth.getToken())
+          || localStorage.getItem('georank_user_token')
+          || localStorage.getItem(tokenKey)
+          || sessionStorage.getItem('georank_user_token')
+          || sessionStorage.getItem(tokenKey)
+          || '';
+      } catch (_) { return ''; }
     }
     async function api(path, opts) {
       const headers = Object.assign({ 'Content-Type': 'application/json' }, (opts && opts.headers) || {});
@@ -216,7 +222,7 @@
     async function loadStrategies() {
       const sel = document.getElementById('ob-strategy');
       try {
-        const data = await api('/geo-strategies?limit=50');
+        const data = await api('/geo-strategies/?limit=50');
         strategies = data.items || [];
         sel.innerHTML = '<option value="">请选择策略</option>' + strategies.map(function (s) {
           return '<option value="' + s.id + '">' +

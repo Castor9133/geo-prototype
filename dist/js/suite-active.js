@@ -21,7 +21,12 @@
   };
 
   function token() {
-    try { return localStorage.getItem('georank_token') || ''; } catch (_) { return ''; }
+    try {
+      return (window.GEOrank && window.GEOrank.Auth && window.GEOrank.Auth.getToken && window.GEOrank.Auth.getToken())
+        || localStorage.getItem('georank_user_token')
+        || localStorage.getItem('georank_token')
+        || '';
+    } catch (_) { return ''; }
   }
 
   function escapeHtml(s) {
@@ -45,9 +50,10 @@
     if (!host) return;
     host.innerHTML = '<p class="cockpit-muted">正在加载进行中选题…</p>';
     try {
-      var res = await fetch('/api/geo-strategies?limit=50', {
+      var res = await fetch('/api/geo-strategies/?limit=50', {
         headers: token() ? { Authorization: 'Bearer ' + token() } : {},
         credentials: 'same-origin',
+        redirect: 'follow',
       });
       if (!res.ok) throw new Error('加载失败');
       var data = await res.json();

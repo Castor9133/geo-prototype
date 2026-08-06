@@ -1,12 +1,16 @@
 (function () {
-  const TOKEN_KEYS = ["georank_admin_token", "georank_token", "token"];
+  const TOKEN_KEYS = ["georank_user_token", "georank_admin_token", "georank_token", "token"];
   const isPublicShell =
     document.body.classList.contains("ce-page--public")
     || document.body.dataset.ceShell === "public";
 
   function getToken() {
+    try {
+      const fromAuth = window.GEOrank?.Auth?.getToken?.();
+      if (fromAuth) return fromAuth;
+    } catch (_) {}
     for (const key of TOKEN_KEYS) {
-      const value = localStorage.getItem(key);
+      const value = localStorage.getItem(key) || sessionStorage.getItem(key);
       if (value) return value;
     }
     return "";
@@ -753,21 +757,30 @@
   }
 
   async function refreshChannels() {
-    if (!$("ch-table")) return;
     const data = await api("/channels");
-    $("ch-table").innerHTML =
-      data.items
-        .map(
-          (c) => `<tr>
+    const items = data.items || [];
+    if ($("ch-table")) {
+      $("ch-table").innerHTML =
+        items
+          .map(
+            (c) => `<tr>
         <td>${escapeHtml(c.name)}</td>
         <td>${escapeHtml(c.channel_type)}</td>
         <td>${escapeHtml(c.template_key || "—")}</td>
       </tr>`
-        )
-        .join("") || "<tr><td colspan=3>暂无</td></tr>";
-    $("task-channel").innerHTML =
-      `<option value="">不分发渠道</option>` +
-      data.items.map((c) => `<option value="${c.id}" data-tk="${escapeHtml(c.template_key || "")}">${escapeHtml(c.name)}</option>`).join("");
+          )
+          .join("") || "<tr><td colspan=3>暂无</td></tr>";
+    }
+    if ($("task-channel")) {
+      $("task-channel").innerHTML =
+        `<option value="">不分发渠道</option>` +
+        items
+          .map(
+            (c) =>
+              `<option value="${c.id}" data-tk="${escapeHtml(c.template_key || "")}">${escapeHtml(c.name)}</option>`
+          )
+          .join("");
+    }
   }
 
   $("kb-select")?.addEventListener("change", () => {
@@ -1288,22 +1301,34 @@
 
   (async function init() {
     const authed = Boolean(getToken());
+    showAuthGate(isPublicShell && !authed);
+    await loadStatus();
+    // 目录下拉（渠道 / 模板壳 / 提示词）不依赖登录，先填满，避免空白框
+    await Promise.allSettled([loadTemplates(), refreshPrompts(), refreshChannels()]);
     if (!authed) {
       if (isPublicShell) {
-        showAuthGate(true);
-        await loadStatus();
+        try {
+          await refreshKbs();
+        } catch (_) {}
         try {
           await refreshHubDashboard();
         } catch (e) {
           if ($("hub-out")) $("hub-out").textContent = String(e.message || e);
         }
+        await loadAiFocusScript();
+        renderTaskAiPlatforms();
+        renderTaskAiFocusCard();
+        renderPendingKeywords();
+        ceBootReady = true;
+        const deep = params.get("tab");
+        if (deep === "prompts") activateTab("prompts");
+        if (params.get("from") === "keywords") activateTab("tasks");
         return;
       }
       redirectToLogin();
       return;
     }
     showAuthGate(false);
-    await loadStatus();
     // 中枢 + 提示词优先，避免后半段失败时下拉永久空白
     await Promise.allSettled([refreshHubDashboard(), refreshPrompts()]);
     await loadTemplates();

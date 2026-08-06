@@ -7,6 +7,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.services.content_engine_utils import (  # noqa: E402
     CHINA_PROMPTS,
+    GEO_METHOD_MARKER,
+    GEO_STRUCTURE_MARKER,
     cosine,
     local_hash_embedding,
     repo_root,
@@ -14,6 +16,10 @@ from app.services.content_engine_utils import (  # noqa: E402
     soften_markdown_prose,
     split_chunks,
 )
+from app.services.geo_prompt_rules import (  # noqa: E402
+    is_geo_title_acceptable,
+)
+from app.services.keyword_expansion import _sanitize_platform_title_hints  # noqa: E402
 
 
 class ContentEngineUnitTests(unittest.TestCase):
@@ -61,6 +67,37 @@ class ContentEngineUnitTests(unittest.TestCase):
             self.assertIn("sort_order", item)
             self.assertIn("禁止", item["body"])
             self.assertIn("Markdown", item["body"])
+            self.assertIn(GEO_METHOD_MARKER, item["body"])
+            self.assertIn(GEO_STRUCTURE_MARKER, item["body"])
+            self.assertIn("Keyword Stuffing", item["body"])
+
+    def test_geo_title_gate_rejects_stuffing_and_semicolon(self):
+        self.assertFalse(is_geo_title_acceptable("深圳广电;第一现场;党媒栏目"))
+        self.assertFalse(is_geo_title_acceptable("GEO优化"))
+        self.assertFalse(is_geo_title_acceptable("党媒平台"))
+        self.assertFalse(is_geo_title_acceptable("ab"))
+        self.assertTrue(is_geo_title_acceptable("第一现场是什么栏目"))
+        self.assertTrue(is_geo_title_acceptable("党媒语境下如何讲第一现场"))
+
+    def test_sanitize_platform_title_hints_drops_bad_titles(self):
+        raw = [
+            {
+                "platform": "豆包",
+                "titles": [
+                    "深圳广电;第一现场栏目",
+                    "GEO优化",
+                    "第一现场是什么栏目",
+                    "党媒定位下深圳广电怎么报道第一现场",
+                ],
+            }
+        ]
+        platforms = [{"platform": "豆包", "generation_focus": "", "avoid": []}]
+        out = _sanitize_platform_title_hints(raw, platforms, entity="深圳广电", titles_per=3)
+        self.assertEqual(out[0]["platform"], "豆包")
+        self.assertEqual(
+            out[0]["titles"],
+            ["第一现场是什么栏目", "党媒定位下深圳广电怎么报道第一现场"],
+        )
 
     def test_soften_markdown_prose(self):
         raw = (

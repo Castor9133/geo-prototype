@@ -17,6 +17,82 @@
     let targetPlatforms = new Set(DEFAULT_AI_PLATFORMS);
     const strategyId = new URLSearchParams(location.search || '').get('strategy') || '';
     let boundStrategy = null;
+    let selectedKnowledgeBaseId = '';
+
+    function getKbSelectEl() {
+        return document.getElementById('kw-kb-select');
+    }
+
+    function syncKbSelectValue(kbId) {
+        const el = getKbSelectEl();
+        if (!el) return;
+        const value = kbId ? String(kbId) : '';
+        if (value && ![...el.options].some((opt) => opt.value === value)) {
+            const opt = document.createElement('option');
+            opt.value = value;
+            opt.textContent = '已绑定知识库';
+            el.appendChild(opt);
+        }
+        el.value = value;
+        selectedKnowledgeBaseId = el.value || '';
+    }
+
+    async function loadKnowledgeBases() {
+        const el = getKbSelectEl();
+        if (!el) return;
+        try {
+            const token = localStorage.getItem('georank_token') || localStorage.getItem('georank_admin_token') || '';
+            const res = await fetch('/api/content-engine/knowledge-bases', {
+                headers: token ? { Authorization: 'Bearer ' + token } : {},
+                credentials: 'same-origin',
+            });
+            if (!res.ok) return;
+            const rows = await res.json();
+            const list = Array.isArray(rows) ? rows : (rows.items || rows.knowledge_bases || []);
+            const current = el.value;
+            el.innerHTML = '<option value="">不选 · 仅按种子启发式</option>';
+            list.forEach((row) => {
+                const id = row.id || row.knowledge_base_id;
+                if (!id) return;
+                const opt = document.createElement('option');
+                opt.value = String(id);
+                opt.textContent = row.name || row.slug || String(id);
+                el.appendChild(opt);
+            });
+            if (current) syncKbSelectValue(current);
+        } catch (_) {
+            /* 匿名或未登录时允许不选库继续拓词 */
+        }
+        el.addEventListener('change', () => {
+            selectedKnowledgeBaseId = el.value || '';
+        });
+    }
+
+    async function prefillKnowledgeBase() {
+        // Run artifacts
+        try {
+            const runId = Workflow?.getRunId?.();
+            if (runId) {
+                const token = localStorage.getItem('georank_token') || '';
+                const res = await fetch('/api/geo-runs/' + encodeURIComponent(runId), {
+                    headers: token ? { Authorization: 'Bearer ' + token } : {},
+                    credentials: 'same-origin',
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    const kbId = data?.artifacts?.knowledge_base_id || data?.knowledge_base_id;
+                    if (kbId) {
+                        syncKbSelectValue(kbId);
+                        return;
+                    }
+                }
+            }
+        } catch (_) { /* ignore */ }
+        // Strategy binding
+        if (boundStrategy?.knowledge_base_id) {
+            syncKbSelectValue(boundStrategy.knowledge_base_id);
+        }
+    }
 
     async function loadAiFocusScript() {
         if (aiFocusScript) return aiFocusScript;
@@ -333,6 +409,10 @@
     const statHighRecEl = document.getElementById('stat-high-rec');
     const statHighBizEl = document.getElementById('stat-high-biz');
 
+    const MAX_KEYWORDS_PER_INPUT = 5;
+    /** 一次输入可用英文分号分隔多个词；兼容中文分号与逗号 */
+    const KEYWORD_SPLIT_RE = /[;；,，\n\r\t]+/;
+
     let tags = [];
     let currentDimensions = [];
     let flatList = [];
@@ -405,12 +485,35 @@
         return detail || `请求失败 (${status})`;
     }
 
-    function addTag(text) {
+    function addTag(text, options = {}) {
+        const silent = Boolean(options.silent);
         const value = String(text || '').trim();
-        if (!value || tags.includes(value)) return;
+        if (!value || tags.includes(value)) return false;
         tags.push(value.slice(0, 40));
         renderTags();
-        setFeedback('');
+        if (!silent) setFeedback('');
+        return true;
+    }
+
+    function splitKeywordBatch(raw) {
+        return String(raw || '')
+            .split(KEYWORD_SPLIT_RE)
+            .map((item) => item.trim())
+            .filter(Boolean);
+    }
+
+    /** 解析一次输入：英文分号分隔，最多 5 个词 */
+    function addTagsFromBatch(raw) {
+        const parts = splitKeywordBatch(raw);
+        if (!parts.length) return 0;
+        const limited = parts.slice(0, MAX_KEYWORDS_PER_INPUT);
+        limited.forEach((item) => addTag(item, { silent: true }));
+        if (parts.length > MAX_KEYWORDS_PER_INPUT) {
+            setFeedback(`一次最多添加 ${MAX_KEYWORDS_PER_INPUT} 个词，已录入前 ${MAX_KEYWORDS_PER_INPUT} 个。`);
+        } else {
+            setFeedback('');
+        }
+        return limited.length;
     }
 
     function removeTag(text) {
@@ -432,10 +535,26 @@
     function consumeDraftInput() {
         const draft = String(inputEl.value || '').trim();
         if (!draft) return;
-        draft
-            .split(/[,，\n\r\t]+/)
-            .forEach((item) => addTag(item));
+        addTagsFromBatch(draft);
         inputEl.value = '';
+    }
+
+    /** 生成前：标签内若仍含分号则再拆开，避免整串当一个种子 */
+    function flattenSeedTags() {
+        const next = [];
+        const seen = new Set();
+        tags.forEach((tag) => {
+            splitKeywordBatch(tag).forEach((part) => {
+                const value = part.slice(0, 40);
+                if (!value || seen.has(value) || next.length >= 8) return;
+                seen.add(value);
+                next.push(value);
+            });
+        });
+        if (next.length !== tags.length || next.some((item, index) => item !== tags[index])) {
+            tags = next;
+            renderTags();
+        }
     }
 
     function rebuildFlatList() {
@@ -790,6 +909,7 @@
     async function generate() {
         if (loading) return;
         consumeDraftInput();
+        flattenSeedTags();
         if (!tags.length) {
             setFeedback('请输入至少一个关键词，再生成词包。');
             inputEl.focus();
@@ -802,15 +922,28 @@
         setFeedback('');
         setLoading(true);
         try {
+            const body = { seeds: tags };
+            const kbEl = getKbSelectEl();
+            const kbId = (kbEl && kbEl.value) || selectedKnowledgeBaseId || '';
+            if (kbId) body.knowledge_base_id = kbId;
             const payload = await request('/api/keywords/expand', {
                 method: 'POST',
-                body: JSON.stringify({ seeds: tags }),
+                body: JSON.stringify(body),
             });
             renderResults(payload, {
                 isExample: false,
                 seedLabel: tags.join('、'),
                 disableRefine: false,
             });
+            if (payload?.knowledge_meta?.kb_id) {
+                const meta = payload.knowledge_meta;
+                setFeedback(
+                    '已用知识库约束：事实卡 ' + (meta.cards_used || 0)
+                    + ' · 切片 ' + (meta.chunks_used || 0)
+                    + (meta.owns_edges ? (' · 隶属边 ' + meta.owns_edges) : ''),
+                    'success'
+                );
+            }
         } catch (error) {
             setFeedback(error.message || '生成词包失败，请稍后重试。');
             if (window.GEOrank?.APIKeyStore?.shouldPromptForError?.(error)) {
@@ -895,10 +1028,13 @@
     inputEl.addEventListener('compositionend', () => { composing = false; });
     inputEl.addEventListener('keydown', (event) => {
         if (composing) return;
-        if (event.key === 'Enter' || event.key === ',') {
+        // Enter 提交：英文分号分隔的多个词一次最多 5 个
+        if (event.key === 'Enter') {
             event.preventDefault();
-            addTag(inputEl.value);
-            inputEl.value = '';
+            if (String(inputEl.value || '').trim()) {
+                addTagsFromBatch(inputEl.value);
+                inputEl.value = '';
+            }
             return;
         }
         if (event.key === 'Backspace' && !inputEl.value && tags.length) {
@@ -907,9 +1043,8 @@
     });
     inputEl.addEventListener('paste', (event) => {
         event.preventDefault();
-        (event.clipboardData || window.clipboardData).getData('text')
-            .split(/[,，\n\r\t]+/)
-            .forEach((item) => addTag(item));
+        const text = (event.clipboardData || window.clipboardData).getData('text');
+        addTagsFromBatch(text);
         inputEl.value = '';
     });
     inputEl.addEventListener('input', () => {
@@ -953,10 +1088,12 @@
         renderTitleHints();
     });
 
-    void loadBoundStrategy().then(() => {
+    void loadBoundStrategy().then(async () => {
         if (!strategyId) {
             DEMO_SEEDS.forEach((seed) => addTag(seed));
         }
+        await loadKnowledgeBases();
+        await prefillKnowledgeBase();
         if (!strategyId || !tags.length) {
             renderResults(clonePayload(SAMPLE_PAYLOAD), {
                 isExample: true,

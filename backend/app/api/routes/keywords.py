@@ -47,6 +47,8 @@ async def expand_keyword_pack(payload: KeywordExpandRequest, request: Request, d
         result, provider_succeeded = await expand_keywords_with_status(
             payload.seeds,
             provider_override=access.provider_override,
+            knowledge_base_id=payload.knowledge_base_id,
+            db=db,
         )
         await record_ai_usage(
             db,
@@ -61,6 +63,7 @@ async def expand_keyword_pack(payload: KeywordExpandRequest, request: Request, d
             metadata={
                 "seeds": result.get("seeds", []),
                 "fallback_generated": not provider_succeeded,
+                "knowledge_meta": result.get("knowledge_meta") or {},
                 "title_hint_count": sum(
                     len(row.get("titles") or [])
                     for row in (result.get("platform_title_hints") or [])

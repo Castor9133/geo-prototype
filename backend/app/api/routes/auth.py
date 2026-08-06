@@ -179,6 +179,44 @@ async def login(request: Request, data: LoginRequest, db: DbSession):
     return TokenResponse(access_token=token)
 
 
+@router.post("/demo-admin-session", response_model=TokenResponse)
+async def demo_admin_session(db: DbSession):
+    """本地演示：在 GEORANK_ALLOW_ANONYMOUS_AI 开启时签发管理员 JWT，供 /settings 免弹登录。
+
+    不放宽 AdminUser 依赖；生产环境配置校验会禁止该开关。
+    """
+    if not bool(getattr(settings, "GEORANK_ALLOW_ANONYMOUS_AI", False)):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="演示管理员会话未开启",
+        )
+    result = await db.execute(
+        select(User)
+        .where(User.role == UserRole.ADMIN, User.is_active.is_(True))
+        .order_by(User.created_at.asc())
+        .limit(1)
+    )
+    user = result.scalar_one_or_none()
+    if user is None:
+        result = await db.execute(
+            select(User).where(User.username == "admin", User.is_active.is_(True)).limit(1)
+        )
+        user = result.scalar_one_or_none()
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="未找到演示管理员，请先执行 seed",
+        )
+    if user.role != UserRole.ADMIN and str(getattr(user.role, "value", user.role)) != UserRole.ADMIN.value:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="演示账号不是管理员")
+    token = _create_access_token(
+        str(user.id),
+        token_version=user.token_version,
+        persistent=True,
+    )
+    return TokenResponse(access_token=token)
+
+
 @router.get("/me", response_model=UserOut)
 async def get_me(current_user: CurrentUser):
     """获取当前登录用户信息"""

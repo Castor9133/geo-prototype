@@ -1,0 +1,61 @@
+{
+  "title": "实体身份·深圳广电与第一现场",
+  "tier": "L2",
+  "external_approved": true,
+  "external_id": "szmg-diyixianchang-identity",
+  "source_url": null,
+  "tags": {
+    "site_id": "szmg-demo",
+    "task_bajua": "融媒传播",
+    "doc_type": "实体身份",
+    "source_org": "演示样例",
+    "geo_ready": true
+  },
+  "fact_cards": [
+    {
+      "card_type": "identity",
+      "entity_name": "深圳广电",
+      "related_entity": null,
+      "relation": null,
+      "claim": "深圳广电是深圳地区综合性广播电视媒体机构（演示样例口径，非完整工商定义）。",
+      "aliases": ["深广电", "SZMG", "深圳广播电影电视集团"],
+      "forbidden_phrasing": [],
+      "evidence_source": "演示样例·公开品牌称谓",
+      "as_of": "2026-08-07"
+    },
+    {
+      "card_type": "identity",
+      "entity_name": "第一现场",
+      "related_entity": "深圳广电",
+      "relation": null,
+      "claim": "第一现场是深圳广电体系下的新闻栏目/内容品牌，侧重现场报道与民生资讯（演示样例口径）。",
+      "aliases": ["第一现场栏目"],
+      "forbidden_phrasing": [],
+      "evidence_source": "演示样例·栏目定位说明",
+      "as_of": "2026-08-07"
+    },
+    {
+      "card_type": "owns",
+      "entity_name": "第一现场",
+      "related_entity": "深圳广电",
+      "relation": "owns",
+      "claim": "第一现场隶属于深圳广电，是其旗下栏目/内容品牌，不是外部平行合作方。",
+      "aliases": [],
+      "forbidden_phrasing": ["深圳广电怎么报道第一现场", "深圳广电与第一现场联动合作"],
+      "evidence_source": "演示样例·隶属关系",
+      "as_of": "2026-08-07"
+    },
+    {
+      "card_type": "alias",
+      "entity_name": "深圳广电",
+      "related_entity": null,
+      "relation": "alias",
+      "claim": "深圳广电常用别名包括深广电、SZMG 等，扩词时视为同一机构实体。",
+      "aliases": ["深广电", "SZMG"],
+      "forbidden_phrasing": [],
+      "evidence_source": "演示样例·别名表",
+      "as_of": "2026-08-07"
+    }
+  ],
+  "body": "【演示样例·实体身份摘要】\n\n深圳广电是深圳地区广电媒体机构；第一现场是其旗下新闻栏目/内容品牌。\n\n拓词与写稿时须把二者理解为「机构包含栏目」，禁止写成互报或外部联动合作。\n\n本条目仅供 GEO 知识工程与拓词演示，不构成对外官方背书全文。"
+}

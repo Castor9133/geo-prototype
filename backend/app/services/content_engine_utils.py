@@ -7,6 +7,12 @@ import re
 from pathlib import Path
 from typing import Any
 
+from app.services.geo_prompt_rules import (
+    GEO_METHOD_MARKER,
+    GEO_STRUCTURE_MARKER,
+    geo_prompt_blocks,
+)
+
 # 正文排版约束：少 Markdown，像已排版的公众号/官网稿
 _PLAIN_PROSE_RULES = (
     "【排版】输出纯中文成稿，像已排版的公众号/官网正文，不要像 Markdown 源文件。\n"
@@ -22,24 +28,30 @@ _EVIDENCE_RULES = (
 
 _SLOTS = "标题：{{title}}\n实体：{{entity}}\n关键词：{{keyword}}\n知识：\n{{Knowledge}}\n"
 
-# 演示主路径 10 条细版提示词（产品通用，实体用 {{entity}}）
+_GEO_TAIL = (
+    f"{_EVIDENCE_RULES}"
+    f"{_PLAIN_PROSE_RULES}"
+    f"{geo_prompt_blocks(include_title_gate=False)}"
+    f"{_SLOTS}"
+)
+
+# 演示主路径 10 条细版提示词（产品通用，实体用 {{entity}}；注入 GEO 方法+结构）
 CHINA_PROMPTS: list[dict[str, Any]] = [
     {
         "title": "七段式产品说明·结论前置",
         "sort_order": 10,
         "body": (
             "【角色】品牌内容编辑。仅依据【知识】撰写「{{entity}}」产品说明，全中文。\n"
+            "【GEO侧重】答案前置 + Statistics + Cite：首段点名实体并给可核验要点。\n"
             "【必含七段】缺一不可，用「一、二、三…」编号：\n"
-            "一、结论前置（40–80 字回答「它是什么」）\n"
+            "一、结论前置（40–150 字回答「它是什么」，可独立摘取）\n"
             "二、核心能力分层（按知识中出现的能力维度写，无则跳过并注明）\n"
-            "三、关键参数（只写知识中有数字的项，文字罗列，勿用表格语法）\n"
+            "三、关键参数（只写知识中有数字的项，文字罗列，数字靠前；勿用表格语法）\n"
             "四、适用场景（2–4 个，不编造客户名）\n"
-            "五、FAQ（3 问，格式「问：」「答：」）\n"
+            "五、FAQ（3 问，问句像真实检索；格式「问：」「答：」）\n"
             "六、边界与条件（实验室数据、地区差异、使用限制等，有则写）\n"
             "七、行动建议（查阅官方资料，不强迫成交）\n"
-            f"{_EVIDENCE_RULES}"
-            f"{_PLAIN_PROSE_RULES}"
-            f"{_SLOTS}"
+            f"{_GEO_TAIL}"
         ),
     },
     {
@@ -47,12 +59,11 @@ CHINA_PROMPTS: list[dict[str, Any]] = [
         "sort_order": 20,
         "body": (
             "【角色】产品支持文案。根据【知识】为「{{entity}}」生成 6–8 条中文 FAQ。\n"
-            "【格式】每条固定为「问：……」「答：……」（两句结论 + 一条证据要点）。\n"
+            "【GEO侧重】问句=真实检索/问 AI 题面；答=可摘块 + Cite/Statistics。\n"
+            "【格式】每条固定为「问：……」「答：……」（两句结论 + 一条证据要点；有数字写数字）。\n"
             "【覆盖】定位、核心参数、使用条件、限制、相对上代/竞品差异（有知识才写）。\n"
-            "【验收】读者可不看上下文单独摘取一条问答；禁止编造规格。\n"
-            f"{_EVIDENCE_RULES}"
-            f"{_PLAIN_PROSE_RULES}"
-            f"{_SLOTS}"
+            "【验收】读者可不看上下文单独摘取一条问答；禁止编造规格；禁止 Keyword Stuffing。\n"
+            f"{_GEO_TAIL}"
         ),
     },
     {
@@ -60,15 +71,14 @@ CHINA_PROMPTS: list[dict[str, Any]] = [
         "sort_order": 30,
         "body": (
             "【角色】评测编辑。围绕「{{entity}}」与知识中出现的对照对象写中立决策说明。\n"
+            "【GEO侧重】分维可摘 + 条件边界；有对比数据用 Statistics，无则声明缺口。\n"
             "【结构】\n"
-            "一、对比结论（80 字内）\n"
+            "一、对比结论（80 字内，开篇即答）\n"
             "二、分维度说明（每个维度一段：维度名 → 本品据知识 → 对照/备注/条件）\n"
             "三、适用谁选本品 / 谁更适合对照方案\n"
             "四、限制与资料缺口\n"
             "【约束】只转述知识中的对比表述；不得贬低第三方或捏造评测分；勿输出 Markdown 表格。\n"
-            f"{_EVIDENCE_RULES}"
-            f"{_PLAIN_PROSE_RULES}"
-            f"{_SLOTS}"
+            f"{_GEO_TAIL}"
         ),
     },
     {
@@ -76,13 +86,12 @@ CHINA_PROMPTS: list[dict[str, Any]] = [
         "sort_order": 40,
         "body": (
             "【角色】答案引擎友好的摘要作者。为「{{entity}}」写 120–180 字可独立摘取的答案摘要。\n"
-            "【必含】开篇直接回答用户问题（关键词：{{keyword}}）；"
+            "【GEO侧重】首段即答案块（Macro answer-first）+ Statistics + Cite。\n"
+            "【必含】开篇直接回答用户问题（关键词：{{keyword}}），点名实体；"
             "穿插知识中可核验的关键参数或事实；"
             "文末一句：「以上摘自公开资料/知识库，以官方最新说明为准。」\n"
-            "【验收】单段或两段纯正文，无标题井号、无列表符号堆砌，可被直接引用。\n"
-            f"{_EVIDENCE_RULES}"
-            f"{_PLAIN_PROSE_RULES}"
-            f"{_SLOTS}"
+            "【验收】单段或两段纯正文，无标题井号、无列表符号堆砌，可被直接引用；禁止堆砌关键词。\n"
+            f"{_GEO_TAIL}"
         ),
     },
     {
@@ -90,12 +99,11 @@ CHINA_PROMPTS: list[dict[str, Any]] = [
         "sort_order": 50,
         "body": (
             "【角色】合规顾问。单独输出「{{entity}}」的使用与宣传限制说明。\n"
+            "【GEO侧重】Authoritative 克制口径 + Cite；禁恐吓与无法溯源承诺。\n"
             "【结构】用「1. 2. 3.」列出限制条目；每条含：限制点 → 条件/适用范围 → 建议表述。\n"
             "【覆盖】安全、防水/防护、法规/认证、地区差异、宣传禁区（有知识才写）。\n"
             "【语气】克制、可执行；禁止恐吓式营销与无法溯源承诺。\n"
-            f"{_EVIDENCE_RULES}"
-            f"{_PLAIN_PROSE_RULES}"
-            f"{_SLOTS}"
+            f"{_GEO_TAIL}"
         ),
     },
     {
@@ -103,16 +111,15 @@ CHINA_PROMPTS: list[dict[str, Any]] = [
         "sort_order": 60,
         "body": (
             "【角色】生活方式内容作者。围绕关键词「{{keyword}}」写「{{entity}}」的场景种草文，全中文。\n"
+            "【GEO侧重】Fluency + 限制段；参数须 Cite/Statistics，禁 Keyword Stuffing。\n"
             "【结构】\n"
-            "一、场景开场（谁、在哪、要解决什么，不编造具体客户姓名）\n"
+            "一、场景开场（谁、在哪、要解决什么，不编造具体客户姓名；40 字内点题）\n"
             "二、关键能力如何落到该场景（只写知识中有的能力）\n"
             "三、体验细节 2–3 点（参数须可溯源）\n"
             "四、不适合的情况（有知识写限制；无则写「资料未覆盖」）\n"
             "五、收尾行动建议（查官方资料，不强迫下单）\n"
             "【语气】有画面感，但不夸张、不保证效果。\n"
-            f"{_EVIDENCE_RULES}"
-            f"{_PLAIN_PROSE_RULES}"
-            f"{_SLOTS}"
+            f"{_GEO_TAIL}"
         ),
     },
     {
@@ -120,13 +127,12 @@ CHINA_PROMPTS: list[dict[str, Any]] = [
         "sort_order": 70,
         "body": (
             "【角色】产品文档编辑。为「{{entity}}」输出一页式参数速查卡，回答「{{keyword}}」。\n"
-            "【结构】先用 40 字结论，再用「一、二、三…」分类罗列参数/规格；"
+            "【GEO侧重】Statistics 靠前 + 缺口声明。\n"
+            "【结构】先用 40–80 字结论（答案前置），再用「一、二、三…」分类罗列参数/规格；"
             "每项格式：「名称：数值或表述（来源：知识）」；知识没有的项写「未在资料中找到」。\n"
-            "【禁止】编造单位换算、捏造缺失参数、输出 Markdown 表格。\n"
+            "【禁止】编造单位换算、捏造缺失参数、输出 Markdown 表格、关键词堆砌。\n"
             "【验收】读者可快速扫读并核对数字。\n"
-            f"{_EVIDENCE_RULES}"
-            f"{_PLAIN_PROSE_RULES}"
-            f"{_SLOTS}"
+            f"{_GEO_TAIL}"
         ),
     },
     {
@@ -134,15 +140,14 @@ CHINA_PROMPTS: list[dict[str, Any]] = [
         "sort_order": 80,
         "body": (
             "【角色】购前顾问。帮助读者围绕「{{entity}}」做购买决策（关键词：{{keyword}}）。\n"
+            "【GEO侧重】结论前置 + Statistics（有价/套装才写）+ 缺口声明。\n"
             "【结构】\n"
             "一、适不适合买（结论 50 字内）\n"
             "二、预算与套装怎么选（只写知识中出现的版本/配件/服务）\n"
             "三、必看条件与隐藏成本（有则写）\n"
-            "四、三问 FAQ（问：/答：）\n"
+            "四、三问 FAQ（问句像真实检索；问：/答：）\n"
             "五、建议下一步（对比官方渠道信息，不承诺最低价）\n"
-            f"{_EVIDENCE_RULES}"
-            f"{_PLAIN_PROSE_RULES}"
-            f"{_SLOTS}"
+            f"{_GEO_TAIL}"
         ),
     },
     {
@@ -150,16 +155,15 @@ CHINA_PROMPTS: list[dict[str, Any]] = [
         "sort_order": 90,
         "body": (
             "【角色】产品演进分析作者。回答「从旧款/对照方案升级到 {{entity}} 值不值得」。\n"
+            "【GEO侧重】Statistics 差异清单 + Cite；对照不足须声明。\n"
             "【结构】\n"
-            "一、一句话结论\n"
+            "一、一句话结论（答案前置）\n"
             "二、提升点清单（仅知识中明确对比或参数差异）\n"
             "三、不变或仍需注意的点\n"
             "四、谁值得换 / 谁可暂缓\n"
             "五、资料缺口声明\n"
             "【约束】不得虚构旧款参数；知识未提对照型号时，只写本品能力并说明「对照信息不足」。\n"
-            f"{_EVIDENCE_RULES}"
-            f"{_PLAIN_PROSE_RULES}"
-            f"{_SLOTS}"
+            f"{_GEO_TAIL}"
         ),
     },
     {
@@ -167,17 +171,29 @@ CHINA_PROMPTS: list[dict[str, Any]] = [
         "sort_order": 100,
         "body": (
             "【角色】短视频编导。为「{{entity}}」写 45–60 秒口播提纲（主题：{{keyword}}）。\n"
+            "【GEO侧重】Fluency + 钩子结论前置 + 限制段（反夸大/反 stuffing）。\n"
             "【结构】按时间轴输出：\n"
-            "0–5 秒钩子（一句结论）\n"
-            "5–25 秒三个证据点（每点一句口播 + 一句画面提示）\n"
+            "0–5 秒钩子（一句结论，点名实体）\n"
+            "5–25 秒三个证据点（每点一句口播 + 一句画面提示；证据须可溯源）\n"
             "25–45 秒限制/条件（避免夸大）\n"
             "45–60 秒收束与行动号召（引导查官方资料，不保证转化）\n"
             "【格式】纯中文；每行「口播：… / 画面：…」；禁止 Markdown 符号。\n"
-            f"{_EVIDENCE_RULES}"
-            f"{_PLAIN_PROSE_RULES}"
-            f"{_SLOTS}"
+            f"{_GEO_TAIL}"
         ),
     },
+]
+
+# 再导出标记，便于测试断言
+__all__ = [
+    "CHINA_PROMPTS",
+    "GEO_METHOD_MARKER",
+    "GEO_STRUCTURE_MARKER",
+    "soften_markdown_prose",
+    "slugify",
+    "split_chunks",
+    "local_hash_embedding",
+    "cosine",
+    "repo_root",
 ]
 
 

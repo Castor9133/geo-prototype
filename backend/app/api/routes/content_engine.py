@@ -206,7 +206,8 @@ async def list_channel_templates(_: OptionalUser):
 
 
 @router.get("/knowledge-bases")
-async def list_knowledge_bases(db: DbSession, _: AdminUser):
+async def list_knowledge_bases(db: DbSession, _: OptionalUser):
+    """知识库目录只读：前台任务多选卡片需要。"""
     rows = (await db.execute(select(KnowledgeBase).order_by(KnowledgeBase.created_at.desc()))).scalars().all()
     return {"items": [_kb_dict(r) for r in rows]}
 
@@ -386,7 +387,8 @@ async def import_dji(db: DbSession, _: AdminUser):
 
 
 @router.get("/prompts")
-async def list_prompts(db: DbSession, _: AdminUser):
+async def list_prompts(db: DbSession, _: OptionalUser):
+    """提示词目录只读：前台分发页下拉需要，不要求管理员。"""
     await ce.ensure_default_prompts(db)
     await db.commit()
     rows = (
@@ -425,7 +427,7 @@ async def create_prompt(payload: PromptCreate, db: DbSession, _: AdminUser):
 
 
 @router.get("/prompts/{prompt_id}")
-async def get_prompt(prompt_id: uuid.UUID, db: DbSession, _: AdminUser):
+async def get_prompt(prompt_id: uuid.UUID, db: DbSession, _: OptionalUser):
     p = await db.get(ContentPrompt, prompt_id)
     if not p:
         raise HTTPException(404, "提示词不存在")
@@ -565,7 +567,8 @@ async def mark_distributed(task_id: uuid.UUID, db: DbSession, _: AdminUser):
 
 
 @router.get("/channels")
-async def list_channels(db: DbSession, _: AdminUser):
+async def list_channels(db: DbSession, _: OptionalUser):
+    """渠道目录只读：前台「预览渠道」下拉需要，不要求管理员。"""
     await ce.ensure_default_channels(db)
     await db.commit()
     rows = (

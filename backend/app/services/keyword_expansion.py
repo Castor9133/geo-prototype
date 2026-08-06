@@ -13,6 +13,7 @@ import re
 from typing import Any
 
 from app.services.ai_client import ai_client
+from app.services.geo_prompt_rules import GEO_TITLE_GATE_BRIEF, is_geo_title_acceptable
 
 DIMENSIONS = [
     {
@@ -551,16 +552,25 @@ _LOW_QUALITY_SUFFIXES = {
 
 
 def normalize_seeds(seeds: list[str]) -> list[str]:
+    """规范化种子：拆分英文/中文分号与逗号，去重，最多 8 个。"""
     normalized: list[str] = []
     seen = set()
     for item in seeds:
         text = re.sub(r"\s+", " ", str(item or "").strip())
-        if not text or text in seen:
+        if not text:
             continue
-        normalized.append(text[:40])
-        seen.add(text)
-        if len(normalized) >= 8:
-            break
+        parts = re.split(r"[;；,，\n\r\t]+", text)
+        for part in parts:
+            piece = re.sub(r"\s+", " ", (part or "").strip())
+            if not piece or piece in seen:
+                continue
+            # 残留分隔符的整串不可作为种子（避免「A;B;C栏目」式拼接）
+            if re.search(r"[;；]", piece):
+                continue
+            normalized.append(piece[:40])
+            seen.add(piece)
+            if len(normalized) >= 8:
+                return normalized
     return normalized
 
 
@@ -582,11 +592,11 @@ def _infer_keyword_profile(seeds: list[str]) -> dict:
         profile_key = "enterprise_service"
 
     profile = PROFILE_LIBRARY[profile_key]
-    primary_seed = seeds[0]
+    seed_label = "、".join(seeds[:5]) if seeds else ""
     return {
         "key": profile_key,
         "name": profile["name"],
-        "company_hint": profile["company_hint"].format(seed=primary_seed),
+        "company_hint": profile["company_hint"].format(seed=seed_label),
         "business_model": profile["business_model"],
         "target_users": profile["target_users"],
         "keyword_strategy": profile["keyword_strategy"],
@@ -612,6 +622,9 @@ def _is_low_quality_keyword(keyword: str, seed: str, dimension_key: str) -> bool
     text = re.sub(r"\s+", " ", (keyword or "").strip())
     if len(text) < 2:
         return True
+    # 分号残留 = 多种子未拆开就被模板粘在一起
+    if ";" in text or "；" in text:
+        return True
     if re.fullmatch(r"[\W_]+", text, flags=re.UNICODE):
         return True
     # 连续重复片段：如「最佳最佳」「GEOGEO」
@@ -635,6 +648,127 @@ def _is_low_quality_keyword(keyword: str, seed: str, dimension_key: str) -> bool
             if not any(token in prefix for token in ("怎么", "如何", "选", "用", "写", "拍", "带", "找", "约", "讲", "推", "学")):
                 return True
     return False
+
+
+def _normalize_seed_key(text: str) -> str:
+    """归一化种子便于别名判断（空格、大小写、大疆↔DJI）。"""
+    compact = re.sub(r"\s+", "", (text or "").lower())
+    return compact.replace("大疆", "dji")
+
+
+def _seed_core_token(text: str) -> str:
+    """去掉常见属性后缀后的主体串，用于识别「产品 + 续航」类近亲种子。"""
+    core = _normalize_seed_key(text)
+    for suffix in (
+        "续航",
+        "价格",
+        "报价",
+        "评测",
+        "怎么样",
+        "多少钱",
+        "参数",
+        "规格",
+        "套装",
+        "配件",
+        "图传",
+        "避障",
+    ):
+        if core.endswith(suffix) and len(core) > len(suffix) + 2:
+            core = core[: -len(suffix)]
+    return core
+
+
+def _seeds_are_near_duplicates(a: str, b: str) -> bool:
+    """中英品牌名、同款别名、或「产品+属性」近亲 → 不可做关系型交叉。"""
+    ka, kb = _normalize_seed_key(a), _normalize_seed_key(b)
+    if not ka or not kb:
+        return False
+    if ka == kb or ka in kb or kb in ka:
+        return True
+    ca, cb = _seed_core_token(a), _seed_core_token(b)
+    if ca and cb and (ca == cb or ca in cb or cb in ca):
+        return True
+    return False
+
+
+def _relation_seed_pairs(seeds: list[str]) -> list[tuple[str, str]]:
+    pairs: list[tuple[str, str]] = []
+    for i, a in enumerate(seeds):
+        for b in seeds[i + 1 :]:
+            if _seeds_are_near_duplicates(a, b):
+                continue
+            pairs.append((a, b))
+    return pairs
+
+
+def _cross_templates_for(profile_key: str, dimension_key: str) -> list[str]:
+    """按画像选择交叉模板；消费电子禁用「报道/栏目/旗下」等媒体硬套。"""
+    media_like = profile_key in {"content_media", "enterprise_service"}
+    if media_like:
+        by_dim = {
+            "semantic": ["{a}与{b}", "{a}·{b}"],
+            "scenario": ["{a}怎么报道{b}", "{a}栏目怎么讲{b}", "围绕{a}做{b}内容"],
+            "commercial": ["{a}与{b}联动合作", "{a}{b}联合投放"],
+            "ranking": ["{a}相关的{b}推荐", "值得关注的{a}与{b}"],
+            "review": ["{a}对{b}的报道怎么样", "{b}在{a}表现如何"],
+            "brand": ["{a}旗下{b}", "{b}和{a}什么关系"],
+            "question": ["{a}的{b}是什么", "{b}和{a}有什么区别", "如何理解{a}与{b}"],
+            "technical": ["{a}如何沉淀{b}知识库", "{a}{b}选题怎么结构化"],
+        }
+    else:
+        # 消费电子 / 教育 / 本地等：仅在真·不同实体时用温和交叉；别名对不会走到这里
+        by_dim = {
+            "semantic": ["{a}与{b}怎么区分"],
+            "scenario": ["选{a}还是{b}", "{a}和{b}一起怎么用"],
+            "commercial": ["{a}和{b}怎么搭配买"],
+            "ranking": ["{a}和{b}哪个性价比高"],
+            "review": ["{a}对比{b}怎么样"],
+            "brand": ["{a}和{b}什么关系"],
+            "question": ["{a}和{b}有什么区别", "如何在{a}与{b}之间选择"],
+            "technical": ["{a}与{b}参数怎么对照"],
+        }
+    return by_dim.get(dimension_key) or by_dim["semantic"]
+
+
+def _cross_seed_items(seeds: list[str], profile: dict, dimension_key: str) -> list[dict]:
+    """多种子交叉：跳过别名/近亲对；模板跟画像/知识库隶属走，避免媒体话术套到消费电子。"""
+    from app.services.keyword_kb_context import (
+        competitor_cross_templates,
+        is_competitor_pair,
+        is_owns_related_pair,
+        is_owns_self_harm_keyword,
+        owns_cross_templates,
+    )
+
+    pairs = _relation_seed_pairs(seeds)
+    if not pairs:
+        return []
+    brief = profile.get("knowledge_brief") if isinstance(profile.get("knowledge_brief"), dict) else None
+    default_templates = _cross_templates_for(str(profile.get("key") or ""), dimension_key)
+    items: list[dict] = []
+    seen: set[str] = set()
+    for a, b in pairs:
+        if brief and is_owns_related_pair(a, b, brief):
+            templates = owns_cross_templates(dimension_key)
+        elif brief and is_competitor_pair(a, b, brief):
+            templates = competitor_cross_templates(dimension_key)
+        else:
+            templates = default_templates
+        for template in templates:
+            keyword = template.format(a=a, b=b).strip()
+            if (
+                not keyword
+                or keyword in seen
+                or not _is_keyword_allowed(profile, keyword)
+                or _is_low_quality_keyword(keyword, a, dimension_key)
+                or is_owns_self_harm_keyword(keyword, brief)
+            ):
+                continue
+            seen.add(keyword)
+            items.append(_fallback_item(f"{a}+{b}", dimension_key, keyword))
+            if len(items) >= 4:
+                return items
+    return items
 
 
 def _fallback_item(seed: str, dimension_key: str, keyword: str) -> dict:
@@ -686,30 +820,170 @@ def _fallback_dimension_items(seed: str, profile: dict, dimension_key: str, limi
 
 
 def _fallback_expand(seeds: list[str], profile: dict) -> list[dict]:
-    merged: dict[str, list[dict]] = {item["key"]: [] for item in DIMENSIONS}
-    seen: dict[str, set[str]] = {item["key"]: set() for item in DIMENSIONS}
-    for seed in seeds:
-        for dim in DIMENSIONS:
-            key = dim["key"]
-            for item in _fallback_dimension_items(seed, profile, key):
+    result: list[dict] = []
+    for dim in DIMENSIONS:
+        key = dim["key"]
+        collected: list[dict] = []
+        seen: set[str] = set()
+        # 交叉短语优先占席，再按各种子模板扩，最后均衡截断
+        for item in _cross_seed_items(seeds, profile, key):
+            keyword = item["keyword"]
+            if keyword in seen:
+                continue
+            seen.add(keyword)
+            collected.append(item)
+        for seed in seeds:
+            for item in _fallback_dimension_items(seed, profile, key, limit=10):
                 keyword = item["keyword"]
-                if keyword in seen[key]:
+                if keyword in seen:
                     continue
-                merged[key].append(item)
-                seen[key].add(keyword)
-                if len(merged[key]) >= 10:
-                    break
-    return [
-        {
-            **dim,
-            "count": len(merged[dim["key"]]),
-            "items": merged[dim["key"]][:10],
-        }
-        for dim in DIMENSIONS
-    ]
+                seen.add(keyword)
+                collected.append(item)
+        items = _ensure_multi_seed_coverage(collected, seeds, profile, key, limit=10)
+        result.append(
+            {
+                **dim,
+                "count": len(items),
+                "items": items,
+            }
+        )
+    return result
 
 
-def _sanitize_dimension_items(seed: str, dimension_key: str, raw_items: list[dict], profile: dict) -> list[dict]:
+def _compact_text(text: str) -> str:
+    return re.sub(r"\s+", "", (text or "").lower())
+
+
+def _keyword_mentions_seed(keyword: str, seed: str) -> bool:
+    kw = _compact_text(keyword)
+    sd = _compact_text(seed)
+    if not kw or not sd:
+        return False
+    return sd in kw or kw in sd
+
+
+def _matching_seed_for_keyword(keyword: str, seeds: list[str]) -> str:
+    """优先匹配词面中出现的种子，便于多种子时的质量过滤。"""
+    if not seeds:
+        return ""
+    for seed in seeds:
+        if _keyword_mentions_seed(keyword, seed):
+            return seed
+    return seeds[0]
+
+
+def _is_low_quality_for_seeds(
+    keyword: str,
+    seeds: list[str],
+    dimension_key: str,
+    profile: dict | None = None,
+) -> bool:
+    from app.services.keyword_kb_context import is_owns_self_harm_keyword
+
+    if _is_alias_cross_nonsense(keyword, seeds):
+        return True
+    brief = None
+    if isinstance(profile, dict) and isinstance(profile.get("knowledge_brief"), dict):
+        brief = profile.get("knowledge_brief")
+    if is_owns_self_harm_keyword(keyword, brief):
+        return True
+    seed = _matching_seed_for_keyword(keyword, seeds)
+    return _is_low_quality_keyword(keyword, seed, dimension_key)
+
+
+def _is_alias_cross_nonsense(keyword: str, seeds: list[str]) -> bool:
+    """同一实体的别名/近亲同时出现在一条词里 → 糙词（含无标记的粘连）。"""
+    text = keyword or ""
+    if not text:
+        return False
+    for i, a in enumerate(seeds):
+        for b in seeds[i + 1 :]:
+            if not _seeds_are_near_duplicates(a, b):
+                continue
+            if a in text and b in text:
+                return True
+    return False
+
+
+def _ensure_multi_seed_coverage(
+    items: list[dict],
+    seeds: list[str],
+    profile: dict,
+    dimension_key: str,
+    *,
+    limit: int = 10,
+    min_per_seed: int = 2,
+) -> list[dict]:
+    """多种子时：若某种子在该维几乎未出现，用模板词回填，避免只扩 seeds[0]。"""
+    if len(seeds) <= 1:
+        return items[:limit]
+
+    merged = list(items[:limit])
+    seen = {str(item.get("keyword") or "") for item in merged}
+    min_needed = min(min_per_seed, max(1, limit // len(seeds)))
+
+    def coverage_count(seed: str) -> int:
+        return sum(1 for item in merged if _keyword_mentions_seed(str(item.get("keyword") or ""), seed))
+
+    for seed in seeds:
+        if coverage_count(seed) >= min_needed:
+            continue
+        for fb in _fallback_dimension_items(seed, profile, dimension_key, limit=limit):
+            keyword = fb["keyword"]
+            if keyword in seen:
+                continue
+            merged.append(fb)
+            seen.add(keyword)
+            if coverage_count(seed) >= min_needed or len(merged) >= limit * 2:
+                break
+
+    for fb in _cross_seed_items(seeds, profile, dimension_key):
+        keyword = fb["keyword"]
+        if keyword in seen:
+            continue
+        merged.append(fb)
+        seen.add(keyword)
+        if len(merged) >= limit * 2:
+            break
+
+    # 均衡截断：轮询各种子，保证尽量都留下席位
+    buckets: dict[str, list[dict]] = {seed: [] for seed in seeds}
+    other: list[dict] = []
+    for item in merged:
+        keyword = str(item.get("keyword") or "")
+        placed = False
+        for seed in seeds:
+            if _keyword_mentions_seed(keyword, seed) and len(buckets[seed]) < min_needed:
+                buckets[seed].append(item)
+                placed = True
+                break
+        if not placed:
+            other.append(item)
+
+    balanced: list[dict] = []
+    seen_out: set[str] = set()
+    # 先各种子保底
+    for seed in seeds:
+        for item in buckets[seed]:
+            kw = item["keyword"]
+            if kw in seen_out:
+                continue
+            balanced.append(item)
+            seen_out.add(kw)
+    # 再按原序补满
+    for item in merged + other:
+        kw = str(item.get("keyword") or "")
+        if not kw or kw in seen_out:
+            continue
+        balanced.append(item)
+        seen_out.add(kw)
+        if len(balanced) >= limit:
+            break
+    return balanced[:limit]
+
+
+def _sanitize_dimension_items(seeds: list[str], dimension_key: str, raw_items: list[dict], profile: dict) -> list[dict]:
+    primary = seeds[0] if seeds else ""
     items: list[dict] = []
     seen = set()
     for raw in raw_items or []:
@@ -718,10 +992,11 @@ def _sanitize_dimension_items(seed: str, dimension_key: str, raw_items: list[dic
             not keyword
             or keyword in seen
             or not _is_keyword_allowed(profile, keyword)
-            or _is_low_quality_keyword(keyword, seed, dimension_key)
+            or _is_low_quality_for_seeds(keyword, seeds, dimension_key, profile)
         ):
             continue
         seen.add(keyword)
+        seed_for_score = _matching_seed_for_keyword(keyword, seeds) or primary
         try:
             recommendation = int(raw.get("recommendation_score", raw.get("rec", 0)))
         except Exception:
@@ -730,8 +1005,8 @@ def _sanitize_dimension_items(seed: str, dimension_key: str, raw_items: list[dic
             business = int(raw.get("business_score", raw.get("biz", 0)))
         except Exception:
             business = 0
-        recommendation = max(35, min(99, recommendation or _stable_score(seed, dimension_key, keyword, 60, 28)))
-        business = max(35, min(99, business or _stable_score(seed, f"{dimension_key}-biz", keyword, 58, 26)))
+        recommendation = max(35, min(99, recommendation or _stable_score(seed_for_score, dimension_key, keyword, 60, 28)))
+        business = max(35, min(99, business or _stable_score(seed_for_score, f"{dimension_key}-biz", keyword, 58, 26)))
         reason = str(raw.get("reason") or "").strip()[:120] or None
         items.append(
             {
@@ -743,7 +1018,115 @@ def _sanitize_dimension_items(seed: str, dimension_key: str, raw_items: list[dic
         )
         if len(items) >= 10:
             break
-    return items
+    return _ensure_multi_seed_coverage(items, seeds, profile, dimension_key, limit=10)
+
+
+def _infer_seed_role_hints(seeds: list[str]) -> list[dict]:
+    """轻量角色提示；别名/属性近亲显式标出，避免模型当两个主体交叉。"""
+    org_markers = ("广电", "集团", "广播", "电视台", "日报", "传媒", "通讯社", "报社", "出版社")
+    product_markers = ("客户端", "栏目", "频道", "节目", "app", "号", "矩阵", "官网")
+    topic_markers = ("党媒", "主流", "融媒", "短视频", "直播", "舆情", "政务", "宣传")
+    aspect_markers = ("续航", "价格", "评测", "参数", "规格", "套装", "配件", "图传", "避障")
+    hints: list[dict] = []
+    for seed in seeds:
+        role = "other"
+        gloss = "待确认的业务实体"
+        low = seed.lower()
+        if any(marker in seed for marker in org_markers):
+            role, gloss = "organization", "疑似机构/媒体主体"
+        elif any(marker in low for marker in product_markers):
+            role, gloss = "product_or_column", "疑似栏目/产品/客户端"
+        elif any(marker in seed for marker in topic_markers):
+            role, gloss = "topic_or_attribute", "疑似属性/议题/定位"
+        elif any(seed.endswith(marker) or marker in seed for marker in aspect_markers):
+            # 可能是「产品+属性」；若与其他种子近亲则标 aspect
+            role, gloss = "aspect", "疑似规格/卖点属性词"
+        hints.append({"seed": seed, "hint_role": role, "hint_gloss": gloss, "alias_group": None, "of": None})
+
+    # 别名成组 + 属性挂靠主体
+    groups: list[list[str]] = []
+    for seed in seeds:
+        placed = False
+        for group in groups:
+            if any(_seeds_are_near_duplicates(seed, member) for member in group):
+                group.append(seed)
+                placed = True
+                break
+        if not placed:
+            groups.append([seed])
+
+    seed_to_group = {}
+    for idx, group in enumerate(groups):
+        label = f"g{idx + 1}"
+        for member in group:
+            seed_to_group[member] = label
+
+    for hint in hints:
+        seed = hint["seed"]
+        hint["alias_group"] = seed_to_group.get(seed)
+        group = next((g for g in groups if seed in g), [seed])
+        if len(group) > 1:
+            # 同组多词：中英品牌等 → alias；勿当两个主体
+            others = [item for item in group if item != seed]
+            hint["alias_of"] = others[0]
+            if hint["hint_role"] not in {"organization", "product_or_column", "topic_or_attribute"}:
+                hint["hint_role"] = "alias"
+                hint["hint_gloss"] = f"与「{others[0]}」同实体别名，禁止交叉成关系问法"
+        # 属性挂靠：自身含属性后缀且与某主体近亲
+        if hint["hint_role"] == "aspect" or any(seed.endswith(m) for m in aspect_markers):
+            for other in seeds:
+                if other == seed:
+                    continue
+                if _seeds_are_near_duplicates(seed, other) and len(_normalize_seed_key(other)) <= len(_normalize_seed_key(seed)):
+                    # prefer shorter/core as parent when other is contained
+                    pass
+                core_self, core_other = _seed_core_token(seed), _seed_core_token(other)
+                if core_self and core_other and (core_self == core_other or core_other in core_self):
+                    if len(_normalize_seed_key(other)) < len(_normalize_seed_key(seed)):
+                        hint["of"] = other
+                        hint["hint_role"] = "aspect"
+                        hint["hint_gloss"] = f"「{other}」的属性/卖点，禁止与主体做「报道/旗下/联动」交叉"
+                        break
+    return hints
+
+
+def _build_seed_entity_graph(seeds: list[str], hints: list[dict]) -> dict:
+    """给模型的实体图：canonical / aliases / aspects，减少别名互啄。"""
+    groups: dict[str, list[str]] = {}
+    for hint in hints:
+        gid = hint.get("alias_group") or hint["seed"]
+        groups.setdefault(gid, []).append(hint["seed"])
+    aliases = [members for members in groups.values() if len(members) > 1]
+    aspects = [
+        {"seed": h["seed"], "of": h.get("of")}
+        for h in hints
+        if h.get("hint_role") == "aspect" and h.get("of")
+    ]
+    canonical = []
+    seen = set()
+    for members in groups.values():
+        # 选最短归一化串作代表
+        primary = sorted(members, key=lambda s: len(_normalize_seed_key(s)))[0]
+        if primary not in seen:
+            canonical.append(primary)
+            seen.add(primary)
+    return {
+        "canonical_entities": canonical,
+        "alias_groups": aliases,
+        "aspects": aspects,
+        "rule": "同 alias_group 内词是同一实体的别名；aspect.of 是主体。禁止别名之间、主体与自身属性写成两个主体的关系问法。",
+    }
+
+
+def _compose_expansion_system_prompt(base: str, seeds: list[str]) -> str:
+    text = (base or "").strip()
+    if len(seeds) > 1:
+        from app.services.runtime_settings import MULTI_SEED_METHOD_ADDENDUM
+
+        addendum = MULTI_SEED_METHOD_ADDENDUM.strip()
+        if addendum and addendum not in text:
+            text = f"{text}\n\n{addendum}"
+    return text
 
 
 async def _ai_expand(
@@ -754,15 +1137,80 @@ async def _ai_expand(
     from app.services.runtime_settings import get_keyword_expansion_config
 
     config = await get_keyword_expansion_config()
-    system = config["system_prompt"]
+    system = _compose_expansion_system_prompt(config["system_prompt"], seeds)
     titles_per = int(config.get("titles_per_platform") or 3)
     platforms = list(config.get("platforms") or [])
-    entity = str(profile.get("name") or seeds[0] or "主体").strip()
+    seed_label = "、".join(seeds[:5]) if seeds else "主体"
+    entity = seed_label
+    multi = len(seeds) > 1
+    seed_role_hints = _infer_seed_role_hints(seeds)
+    knowledge_brief = profile.get("knowledge_brief") if isinstance(profile.get("knowledge_brief"), dict) else None
+    knowledge_snippets = profile.get("knowledge_snippets") if isinstance(profile.get("knowledge_snippets"), list) else []
+    if knowledge_brief:
+        from app.services.keyword_kb_context import merge_brief_into_role_hints
+
+        seed_role_hints = merge_brief_into_role_hints(seed_role_hints, knowledge_brief)
+    seed_entity_graph = _build_seed_entity_graph(seeds, seed_role_hints)
 
     user = json.dumps(
         {
+            "task": "keyword_expansion_for_geo_content",
+            "steps": [
+                "根据 seed_entity_graph、seed_role_hints 与 knowledge_entity_brief 写出 seed_map（brief 优先）",
+                "先过标题第一关：question 维与 platform_title_hints",
+                "按真正不同的实体关系扩写其余 dimensions（别名只做 semantic 变体；owns 禁止互报/联动）",
+                "按 platforms 写 platform_title_hints",
+            ],
             "seeds": seeds,
             "entity": entity,
+            "multi_seed": multi,
+            "seed_role_hints": seed_role_hints,
+            "seed_entity_graph": seed_entity_graph,
+            "knowledge_entity_brief": knowledge_brief,
+            "knowledge_snippets": [
+                {"score": s.get("score"), "content": (s.get("content") or "")[:400]}
+                for s in (knowledge_snippets or [])[:6]
+            ],
+            "knowledge_rules": (
+                [
+                    "关系以 knowledge_entity_brief 为准，可纠正字面启发式",
+                    "owns 两端禁止：怎么报道/联动合作/对…报道怎么样",
+                    "competitors 仅用于对比/差异/选型问法",
+                    "forbidden 短语不得出现在关键词中",
+                    "knowledge_snippets 只补场景，不可编造收视率或实测引用率",
+                ]
+                if knowledge_brief
+                else None
+            ),
+            "title_gate": GEO_TITLE_GATE_BRIEF,
+            "geo_methods_priority": [
+                "statistics_addition",
+                "cite_sources",
+                "quotation_addition",
+                "fluency",
+                "avoid_keyword_stuffing",
+            ],
+            "coverage_rule": (
+                "每个维度覆盖全部种子；至少 3 条交叉关系型问法；禁止分号粘词；禁止只扩第一个种子"
+                if multi
+                else "围绕唯一种子扩写，问法要像真人检索并通过标题门"
+            ),
+            "negative_examples": [
+                "深圳广电;第一现场;党媒栏目",
+                "广电媒体怎么做种子A;种子B",
+                "深圳广电怎么报道第一现场",
+                "深圳广电与第一现场联动合作",
+                "只输出与第一种子相关的词",
+                "GEO优化",
+                "党媒平台",
+            ],
+            "positive_direction": (
+                "先区分机构/栏目/属性（优先采用 knowledge_entity_brief）；"
+                "owns 写「机构如何运营栏目」「旗下栏目定位」；竞品写对照；"
+                "标题须能直接交给内容模板写结论前置+证据短文"
+                if multi
+                else "围绕实体写可检索长尾与问题式选题；优先 Statistics/Cite/Quotation 可写方向"
+            ),
             "titles_per_platform": titles_per,
             "profile": {
                 "name": profile["name"],
@@ -787,7 +1235,7 @@ async def _ai_expand(
             "handoff_hint": {
                 "consumer": "GEOFlow",
                 "expected_use": "每个关键词可独立生成知识约束正文/FAQ/榜单任务；标题建议可作选题",
-                "avoid": "空泛词、跨维度重复、把页面 citation 就绪度说成答案引用率、垂类硬套话",
+                "avoid": "空泛词、跨维度重复、把页面 citation 就绪度说成答案引用率、垂类硬套话、Keyword Stuffing",
             },
         },
         ensure_ascii=False,
@@ -796,7 +1244,7 @@ async def _ai_expand(
         raw = await ai_client.complete(
             system,
             user,
-            temperature=0.45,
+            temperature=0.35 if multi else 0.45,
             provider_override=provider_override,
         )
     except Exception as exc:
@@ -814,10 +1262,19 @@ async def _ai_expand(
 
     for dim in DIMENSIONS:
         items = _sanitize_dimension_items(
-            seeds[0], dim["key"], mapping.get(dim["key"]) or [], profile
+            seeds, dim["key"], mapping.get(dim["key"]) or [], profile
         )
         if not items:
-            items = _fallback_dimension_items(seeds[0], profile, dim["key"])
+            # 整维为空：按全部种子模板合并，而不是只填 seeds[0]
+            merged_fb: list[dict] = []
+            seen_fb: set[str] = set()
+            for seed in seeds:
+                for fb in _fallback_dimension_items(seed, profile, dim["key"]):
+                    if fb["keyword"] in seen_fb:
+                        continue
+                    seen_fb.add(fb["keyword"])
+                    merged_fb.append(fb)
+            items = _ensure_multi_seed_coverage(merged_fb, seeds, profile, dim["key"], limit=10)
         if not items:
             raise ValueError(f"维度 {dim['key']} 没有生成有效关键词")
         result.append(
@@ -858,6 +1315,8 @@ def _sanitize_platform_title_hints(
                 for title in titles_raw:
                     text = str(title or "").strip()
                     if not text or text in cleaned:
+                        continue
+                    if not is_geo_title_acceptable(text):
                         continue
                     cleaned.append(text[:120])
                     if len(cleaned) >= titles_per:
@@ -914,6 +1373,9 @@ class KeywordProviderCallError(RuntimeError):
 async def expand_keywords_with_status(
     seeds: list[str],
     provider_override=None,
+    *,
+    knowledge_base_id=None,
+    db=None,
 ) -> tuple[dict, bool]:
     from app.services.runtime_settings import get_keyword_expansion_config
 
@@ -922,6 +1384,38 @@ async def expand_keywords_with_status(
         raise ValueError("请至少输入一个关键词")
 
     profile = _infer_keyword_profile(normalized)
+    knowledge_meta = {
+        "kb_id": None,
+        "cards_used": 0,
+        "chunks_used": 0,
+        "owns_edges": 0,
+        "competitors": [],
+    }
+    if knowledge_base_id and db is not None:
+        try:
+            import uuid as uuid_mod
+
+            from app.services.keyword_kb_context import load_knowledge_context
+
+            kb_uuid = (
+                knowledge_base_id
+                if isinstance(knowledge_base_id, uuid_mod.UUID)
+                else uuid_mod.UUID(str(knowledge_base_id))
+            )
+            brief, snippets, meta = await load_knowledge_context(
+                db,
+                kb_id=kb_uuid,
+                seeds=normalized,
+                chunk_limit=6,
+            )
+            profile["knowledge_brief"] = brief
+            profile["knowledge_snippets"] = snippets
+            knowledge_meta = meta
+        except Exception:
+            # 库无效或检索失败时降级为无知识库拓词
+            profile.pop("knowledge_brief", None)
+            profile.pop("knowledge_snippets", None)
+
     config = await get_keyword_expansion_config()
     timeout = float(config.get("timeout_seconds") or 20)
     platforms_meta = [
@@ -973,6 +1467,7 @@ async def expand_keywords_with_status(
             "platforms": [row["platform"] for row in platforms_meta],
             "items": platforms_meta,
         },
+        "knowledge_meta": knowledge_meta,
     }, provider_succeeded
 
 

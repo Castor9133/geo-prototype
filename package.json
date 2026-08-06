@@ -53,5 +53,8 @@
     "typescript": "^5.8.0",
     "webpack": "^5.102.1",
     "yaml": "^2.8.1"
+  },
+  "dependencies": {
+    "docx": "^9.7.1"
   }
 }

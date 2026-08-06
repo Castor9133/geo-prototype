@@ -1,0 +1,97 @@
+{
+  "title": "选题角度·禁语·竞品",
+  "tier": "L2",
+  "external_approved": true,
+  "external_id": "szmg-diyixianchang-angles-competitors",
+  "source_url": null,
+  "tags": {
+    "site_id": "szmg-demo",
+    "task_bajua": "融媒传播",
+    "doc_type": "选题与对标",
+    "source_org": "演示样例",
+    "geo_ready": true
+  },
+  "fact_cards": [
+    {
+      "card_type": "angle",
+      "entity_name": "第一现场",
+      "related_entity": "深圳广电",
+      "relation": null,
+      "claim": "选题角度：融媒报道——机构如何用短视频/客户端运营栏目内容。",
+      "aliases": [],
+      "forbidden_phrasing": [],
+      "evidence_source": "演示样例·选题角度",
+      "as_of": "2026-08-07",
+      "angle": "融媒报道"
+    },
+    {
+      "card_type": "angle",
+      "entity_name": "第一现场",
+      "related_entity": "深圳广电",
+      "relation": null,
+      "claim": "选题角度：民生现场——栏目如何覆盖社区民生与现场连线。",
+      "aliases": [],
+      "forbidden_phrasing": [],
+      "evidence_source": "演示样例·选题角度",
+      "as_of": "2026-08-07",
+      "angle": "民生现场"
+    },
+    {
+      "card_type": "angle",
+      "entity_name": "深圳广电",
+      "related_entity": null,
+      "relation": null,
+      "claim": "选题角度：政务传播——广电机构在政务公开与权威解读中的角色。",
+      "aliases": [],
+      "forbidden_phrasing": [],
+      "evidence_source": "演示样例·选题角度",
+      "as_of": "2026-08-07",
+      "angle": "政务传播"
+    },
+    {
+      "card_type": "forbidden",
+      "entity_name": "深圳广电",
+      "related_entity": "第一现场",
+      "relation": null,
+      "claim": "对外口径禁止使用「全国第一」「保证被大模型引用」等无法核验表述。",
+      "aliases": [],
+      "forbidden_phrasing": ["全国第一", "保证被大模型引用", "实测引用率第一"],
+      "evidence_source": "演示样例·风险禁语",
+      "as_of": "2026-08-07"
+    },
+    {
+      "card_type": "competitor",
+      "entity_name": "深圳新闻网",
+      "related_entity": "深圳广电",
+      "relation": "competitor",
+      "claim": "对标竞品：深圳新闻网——本地资讯门户，可写对比/差异化，不可写成深圳广电旗下。",
+      "aliases": [],
+      "forbidden_phrasing": [],
+      "evidence_source": "演示样例·竞品栏",
+      "as_of": "2026-08-07"
+    },
+    {
+      "card_type": "competitor",
+      "entity_name": "独特",
+      "related_entity": "深圳广电",
+      "relation": "competitor",
+      "claim": "对标竞品：独特——本地内容/资讯品牌，可用于 brand 维对照问法。",
+      "aliases": [],
+      "forbidden_phrasing": [],
+      "evidence_source": "演示样例·竞品栏",
+      "as_of": "2026-08-07"
+    },
+    {
+      "card_type": "competitor",
+      "entity_name": "深圳报业集团",
+      "related_entity": "深圳广电",
+      "relation": "competitor",
+      "claim": "对标竞品：深圳报业集团——平面与融媒报业集团，可写媒体矩阵差异，勿混淆隶属。",
+      "aliases": ["深报集团"],
+      "forbidden_phrasing": [],
+      "evidence_source": "演示样例·竞品栏",
+      "as_of": "2026-08-07"
+    }
+  ],
+  "body": "【演示样例·角度与对标】\n\n拓词时优先覆盖：融媒报道、民生现场、政务传播。\n\n竞品对照仅限：深圳新闻网、独特、深圳报业集团。\n\n禁止空泛「全国第一」与「保证被大模型引用」类话术。"
+}

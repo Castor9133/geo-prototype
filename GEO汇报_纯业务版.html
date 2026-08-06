@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI搜索时代的品牌内容主权工程 — GEO能力建设方案2.0</title>
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:100%; height:100%; overflow:hidden; }
+body { background:#e2e0d8; font-family:Georgia,'Times New Roman',serif; -webkit-font-smoothing:antialiased; }
+:root {
+  --color-slate-dark:#141413; --color-ivory-medium:#f0eee6; --color-ivory-light:#faf9f5;
+  --color-cloud-medium:#b0aea5; --color-cloud-dark:#87867f; --color-stone:#cccbc8;
+  --color-slate-medium:#3d3d3a; --color-oat-warm:#e3dacc; --color-manilla:#f5e3c7;
+  --color-clay:#d97757; --color-clay-deep:#c6613f;
+  --font-serif:Georgia,'Times New Roman',Times,serif;
+  --font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  --pad-x:72px; --pad-y:56px;
+}
+.canvas { position:fixed; top:50%; left:50%; width:1280px; height:720px; background:var(--color-ivory-medium); box-shadow:0 10px 60px rgba(0,0,0,.16),0 2px 8px rgba(0,0,0,.08); overflow:hidden; transform:translate(-50%,-50%) scale(1); transform-origin:center center; }
+.chrome-top { position:absolute; top:0; left:0; right:0; height:40px; display:flex; align-items:center; justify-content:space-between; padding:0 72px; font-family:var(--font-sans); font-size:11px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; color:var(--color-cloud-medium); z-index:100; pointer-events:none; }
+.chrome-top .ct-left { color:var(--color-slate-dark); }
+.chrome-bottom { position:absolute; bottom:0; left:0; right:0; height:40px; display:flex; align-items:center; justify-content:space-between; padding:0 72px; font-family:var(--font-sans); font-size:11px; font-weight:500; color:var(--color-cloud-medium); z-index:100; pointer-events:none; }
+.chrome-bottom .cb-right { color:var(--color-slate-dark); font-weight:600; }
+.deck:has(.s-close.active) .chrome-top, .deck:has(.s-close.active) .chrome-bottom { opacity:0; visibility:hidden; }
+.nav-dots { position:absolute; bottom:14px; left:50%; transform:translateX(-50%); display:flex; gap:8px; z-index:200; }
+.nav-dot { width:6px; height:6px; border-radius:50%; background:var(--color-stone); border:none; cursor:pointer; padding:0; transition:background .3s, width .3s; }
+.nav-dot.active { background:var(--color-clay); width:20px; border-radius:3px; }
+.slide { position:absolute; inset:0; padding:var(--pad-y) var(--pad-x); opacity:0; visibility:hidden; transition:opacity .5s cubic-bezier(.2,.7,.2,1), visibility .5s; display:grid; }
+.slide.active { opacity:1; visibility:visible; }
+.stagger { opacity:0; transform:translateY(20px); }
+.slide.active .stagger { animation:staggerIn .7s cubic-bezier(.2,.7,.2,1) forwards; }
+@keyframes staggerIn { to { opacity:1; transform:translateY(0); } }
+.kicker { font-family:var(--font-sans); font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--color-cloud-dark); }
+.h-1 { font-family:var(--font-serif); font-size:36px; line-height:1.15; font-weight:400; color:var(--color-slate-dark); }
+.h-1 em { font-style:italic; color:var(--color-clay); }
+.lead { font-family:var(--font-serif); font-size:15px; line-height:1.6; color:var(--color-slate-dark); max-width:56ch; }
+
+/* ===== Slide 1: Cover ===== */
+.s-cover { grid-template-rows:1fr auto; }
+.cover-main { align-self:center; display:flex; flex-direction:column; }
+.cover-main .kicker { margin-bottom:22px; }
+.cover-chinese { font-family:var(--font-serif); font-size:52px; line-height:1.1; font-weight:400; color:var(--color-slate-dark); display:flex; flex-direction:column; gap:2px; }
+.cover-chinese em { font-style:italic; color:var(--color-clay); }
+.cover-sub { margin-top:22px; font-family:var(--font-serif); font-size:18px; line-height:1.6; color:var(--color-cloud-dark); max-width:64ch; }
+.cover-meta { display:grid; grid-template-columns:repeat(4,1fr); gap:32px; padding-top:28px; border-top:1px solid var(--color-stone); }
+.cover-meta > div { font-family:var(--font-sans); font-size:10px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--color-cloud-medium); }
+.cover-meta strong { display:block; font-family:var(--font-serif); font-size:16px; font-weight:400; color:var(--color-slate-dark); margin-top:8px; text-transform:none; letter-spacing:0; }
+
+/* ===== Slide 2: Solution ===== */
+.s-solution { grid-template-rows:auto 1fr auto; gap:28px; align-content:center; }
+.solution-head { display:flex; flex-direction:column; gap:8px; }
+.solution-head .h-1 { font-size:34px; line-height:1.2; }
+.solution-body { display:grid; grid-template-columns:1fr 1fr; gap:32px; }
+.solution-left { display:flex; flex-direction:column; gap:16px; }
+.solution-card { padding:24px 22px; background:var(--color-ivory-light); border:1px solid var(--color-stone); border-left:3px solid var(--color-clay); }
+.solution-card .sc-label { font-family:var(--font-sans); font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--color-clay); margin-bottom:10px; }
+.solution-card .sc-title { font-family:var(--font-serif); font-size:18px; font-weight:600; color:var(--color-slate-dark); line-height:1.4; }
+.solution-card .sc-desc { font-family:var(--font-serif); font-size:13px; line-height:1.6; color:var(--color-slate-medium); margin-top:10px; }
+.solution-right { display:flex; flex-direction:column; justify-content:flex-start; gap:20px; }
+.solution-point { font-family:var(--font-serif); font-size:15px; line-height:1.7; color:var(--color-slate-dark); padding-left:24px; position:relative; }
+.solution-point::before { content:""; position:absolute; left:0; top:10px; width:10px; height:10px; border-radius:50%; background:var(--color-clay); }
+.solution-point b { font-weight:600; }
+.solution-foot { font-family:var(--font-sans); font-size:12px; font-weight:500; color:var(--color-cloud-dark); text-align:center; padding:12px 16px; background:var(--color-oat-warm); letter-spacing:0.02em; }
+.solution-foot b { color:var(--color-clay-deep); font-weight:600; }
+
+/* ===== Slide 3: Capabilities ===== */
+.s-capability { grid-template-rows:auto 1fr auto; gap:20px; align-content:center; }
+.cap-head { display:flex; flex-direction:column; gap:6px; }
+.cap-head .h-1 { font-size:30px; line-height:1.2; }
+.cap-head .h-1 em { font-style:italic; color:var(--color-clay); }
+.cap-grid { display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:1fr 1fr; gap:14px; }
+.cap-card { padding:18px 20px; background:var(--color-ivory-light); border:1px solid var(--color-stone); display:flex; flex-direction:column; gap:8px; }
+.cap-card .cc-num { font-family:var(--font-serif); font-size:22px; font-weight:400; color:var(--color-clay); line-height:1; }
+.cap-card .cc-title { font-family:var(--font-serif); font-size:16px; font-weight:600; color:var(--color-slate-dark); }
+.cap-card .cc-desc { font-family:var(--font-serif); font-size:12px; line-height:1.5; color:var(--color-slate-medium); }
+.cap-foot { font-family:var(--font-sans); font-size:11px; font-weight:500; color:var(--color-cloud-dark); letter-spacing:0.03em; padding:10px 16px; background:var(--color-oat-warm); }
+
+/* ===== Slide 4: Workflow ===== */
+.s-flow { grid-template-rows:auto 1fr auto; gap:24px; align-content:center; }
+.flow-head { display:flex; flex-direction:column; gap:4px; }
+.flow-head .h-1 { font-size:30px; line-height:1.2; }
+.flow-head .h-1 em { font-style:italic; color:var(--color-clay); }
+.flow-body { display:flex; align-items:center; justify-content:center; }
+.flow-steps { display:flex; align-items:flex-start; justify-content:center; width:100%; }
+.flow-step { flex:1; max-width:130px; display:flex; flex-direction:column; align-items:center; gap:10px; }
+.flow-step .step-circle { width:34px; height:34px; border-radius:50%; background:var(--color-clay); color:var(--color-ivory-light); display:flex; align-items:center; justify-content:center; font-family:var(--font-sans); font-size:14px; font-weight:700; flex-shrink:0; }
+.flow-step.highlight .step-circle { background:var(--color-clay-deep); box-shadow:0 0 0 4px rgba(217,119,87,.2); }
+.flow-step .step-label { font-family:var(--font-serif); font-size:12px; line-height:1.4; color:var(--color-slate-dark); text-align:center; }
+.flow-step.highlight .step-label { color:var(--color-clay-deep); font-weight:600; }
+.flow-arrow { flex:0 0 auto; padding-top:9px; font-family:var(--font-sans); font-size:16px; color:var(--color-cloud-medium); }
+.flow-foot { font-family:var(--font-sans); font-size:12px; font-weight:500; color:var(--color-cloud-dark); text-align:center; padding:10px 16px; background:var(--color-oat-warm); letter-spacing:0.02em; }
+.flow-loop { position:relative; margin-top:16px; padding:8px 20px; font-family:var(--font-sans); font-size:11px; font-weight:600; color:var(--color-clay-deep); text-align:center; letter-spacing:0.02em; border-top:2px dashed var(--color-clay); }
+.flow-loop::before { content:"\2190"; position:absolute; left:14%; top:-10px; font-size:18px; color:var(--color-clay); background:var(--color-ivory-medium); padding:0 4px; line-height:1; font-weight:700; }
+.flow-foot b { color:var(--color-clay-deep); font-weight:600; }
+
+/* ===== Slide 5: Observation ===== */
+.s-observe { grid-template-rows:auto 1fr; gap:28px; align-content:center; }
+.observe-head { display:flex; flex-direction:column; gap:4px; }
+.observe-head .h-1 { font-size:30px; line-height:1.2; }
+.observe-head .h-1 em { font-style:italic; color:var(--color-clay); }
+.observe-body { display:grid; grid-template-columns:1fr 1fr; gap:32px; }
+.observe-left { display:flex; flex-direction:column; gap:14px; }
+.observe-step { display:grid; grid-template-columns:auto 1fr; gap:14px; padding:14px 16px; background:var(--color-ivory-light); border:1px solid var(--color-stone); align-items:start; }
+.observe-step .os-num { font-family:var(--font-serif); font-size:20px; font-weight:400; color:var(--color-clay); line-height:1; }
+.observe-step .os-content h3 { font-family:var(--font-serif); font-size:14px; font-weight:600; color:var(--color-slate-dark); margin-bottom:4px; }
+.observe-step .os-content p { font-family:var(--font-serif); font-size:12px; line-height:1.5; color:var(--color-slate-medium); }
+.observe-right { display:flex; flex-direction:column; gap:16px; }
+.observe-metrics { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.observe-metric { padding:20px 18px; background:var(--color-ivory-light); border:1px solid var(--color-stone); border-top:3px solid var(--color-clay); display:flex; flex-direction:column; gap:6px; }
+.observe-metric .om-value { font-family:var(--font-serif); font-size:32px; font-weight:400; color:var(--color-clay); line-height:1; }
+.observe-metric .om-label { font-family:var(--font-sans); font-size:11px; font-weight:600; color:var(--color-slate-dark); }
+.observe-metric .om-desc { font-family:var(--font-serif); font-size:11px; line-height:1.4; color:var(--color-slate-medium); }
+.observe-note { padding:14px 18px; background:var(--color-oat-warm); font-family:var(--font-serif); font-size:13px; line-height:1.6; color:var(--color-slate-dark); }
+.observe-note b { color:var(--color-clay-deep); font-weight:600; }
+
+/* ===== Slide 6: Accumulate ===== */
+.s-accumulate { grid-template-rows:auto 1fr; gap:28px; align-content:center; }
+.accumulate-head { display:flex; flex-direction:column; gap:4px; }
+.accumulate-head .h-1 { font-size:30px; line-height:1.2; }
+.accumulate-head .h-1 em { font-style:italic; color:var(--color-clay); }
+.accumulate-body { display:grid; grid-template-columns:repeat(2,1fr); grid-template-rows:1fr 1fr; gap:16px; }
+.acc-card { padding:22px 20px; background:var(--color-ivory-light); border:1px solid var(--color-stone); display:flex; flex-direction:column; gap:10px; }
+.acc-card .ac-icon { font-family:var(--font-serif); font-size:24px; font-weight:400; color:var(--color-clay); line-height:1; }
+.acc-card .ac-title { font-family:var(--font-serif); font-size:16px; font-weight:600; color:var(--color-slate-dark); }
+.acc-card .ac-desc { font-family:var(--font-serif); font-size:13px; line-height:1.6; color:var(--color-slate-medium); }
+.acc-card .ac-tag { font-family:var(--font-sans); font-size:10px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; color:var(--color-clay); padding-top:4px; border-top:1px solid var(--color-stone); margin-top:auto; }
+
+/* ===== Slide 7: Outsource Risk ===== */
+.s-risk { grid-template-rows:auto 1fr; gap:28px; align-content:center; }
+.risk-head { display:flex; flex-direction:column; gap:4px; }
+.risk-head .h-1 { font-size:30px; line-height:1.2; }
+.risk-head .h-1 em { font-style:italic; color:var(--color-clay); }
+.risk-body { display:grid; grid-template-columns:1fr 1fr; gap:28px; }
+.risk-left { display:flex; flex-direction:column; }
+.risk-left .rl-label { font-family:var(--font-sans); font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--color-cloud-dark); padding-bottom:8px; border-bottom:2px solid var(--color-cloud-medium); margin-bottom:4px; }
+.risk-item { display:grid; grid-template-columns:auto 1fr; gap:14px; padding:12px 0; border-bottom:1px solid var(--color-stone); align-items:start; }
+.risk-item:last-child { border-bottom:none; }
+.risk-item .ri-num { font-family:var(--font-serif); font-size:22px; font-weight:400; color:var(--color-cloud-medium); line-height:1; }
+.risk-item .ri-content h3 { font-family:var(--font-serif); font-size:14px; font-weight:600; color:var(--color-slate-dark); margin-bottom:3px; }
+.risk-item .ri-content p { font-family:var(--font-serif); font-size:12px; line-height:1.5; color:var(--color-slate-medium); }
+.risk-right { display:flex; flex-direction:column; }
+.risk-right .rr-label { font-family:var(--font-sans); font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--color-clay); padding-bottom:8px; border-bottom:2px solid var(--color-clay); margin-bottom:4px; }
+.benefit-item { display:grid; grid-template-columns:auto 1fr; gap:14px; padding:12px 0; border-bottom:1px solid var(--color-stone); align-items:start; }
+.benefit-item:last-child { border-bottom:none; }
+.benefit-item .bi-num { font-family:var(--font-serif); font-size:22px; font-weight:400; color:var(--color-clay); line-height:1; }
+.benefit-item .bi-content h3 { font-family:var(--font-serif); font-size:14px; font-weight:600; color:var(--color-slate-dark); margin-bottom:3px; }
+.benefit-item .bi-content p { font-family:var(--font-serif); font-size:12px; line-height:1.5; color:var(--color-slate-medium); }
+
+/* ===== Slide 8: Closing ===== */
+.s-close { grid-template-columns:1fr 1fr; padding:0; }
+.close-left { background:var(--color-slate-dark); padding:28px 46px 28px 72px; display:flex; flex-direction:column; justify-content:space-between; }
+.close-left .chrome-min { display:flex; justify-content:space-between; font-family:var(--font-sans); font-size:11px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; color:var(--color-cloud-dark); }
+.close-left .manifesto { display:flex; flex-direction:column; }
+.close-left .manifesto .meta { font-family:var(--font-sans); font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--color-clay); margin-bottom:16px; }
+.close-left .manifesto h2 { font-family:var(--font-serif); font-size:38px; font-weight:400; line-height:1.15; color:var(--color-ivory-light); }
+.close-left .manifesto h2 em { font-style:italic; color:var(--color-clay); }
+.close-left .manifesto .sub { font-family:var(--font-serif); font-size:14px; line-height:1.6; color:var(--color-cloud-medium); margin-top:16px; max-width:42ch; }
+.close-left .sig { display:flex; justify-content:space-between; font-family:var(--font-sans); font-size:11px; font-weight:500; color:var(--color-cloud-dark); }
+.close-right { background:var(--color-ivory-medium); padding:28px 72px 28px 46px; display:flex; flex-direction:column; justify-content:space-between; }
+.close-right .chrome-min { display:flex; justify-content:space-between; font-family:var(--font-sans); font-size:11px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; color:var(--color-cloud-dark); }
+.close-right .takeaways { display:flex; flex-direction:column; }
+.take-item { display:grid; grid-template-columns:auto 1fr; gap:20px; padding:18px 0; border-bottom:1px solid var(--color-stone); align-items:start; }
+.take-item:last-child { border-bottom:none; }
+.take-item .num { font-family:var(--font-serif); font-size:34px; font-weight:400; color:var(--color-cloud-medium); line-height:1; }
+.take-item h3 { font-family:var(--font-serif); font-size:17px; font-weight:600; color:var(--color-slate-dark); margin-bottom:5px; }
+.take-item p { font-family:var(--font-serif); font-size:12px; line-height:1.5; color:var(--color-slate-medium); }
+.close-right .foot { font-family:var(--font-sans); font-size:11px; font-weight:600; color:var(--color-clay); }
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+<div class="canvas" id="canvas">
+<div class="chrome-top"><span class="ct-left">深圳广电集团 · 数科公司</span><span>GEO 能力建设方案 2.0</span></div>
+<div class="chrome-bottom"><span>GEOrank · 自研GEO工作台</span><span class="cb-right" id="pageNum">01 / 08</span></div>
+<div class="nav-dots" id="navDots"></div>
+
+<!-- ===== Slide 1: Cover ===== -->
+<section class="slide s-cover active" data-title="封面">
+  <div class="cover-main stagger">
+    <span class="kicker">深圳广电集团 · 数科公司</span>
+    <div class="cover-chinese">
+      <span>AI搜索时代的<em>品牌内容主权</em>工程</span>
+    </div>
+    <p class="cover-sub">集团自有渠道 GEO 能力建设方案 2.0</p>
+  </div>
+  <div class="cover-meta stagger">
+    <div>汇报人 <strong>范振宁</strong></div>
+    <div>部门 <strong>数科公司</strong></div>
+    <div>版本 <strong>v2.0</strong></div>
+    <div>日期 <strong>2026年8月</strong></div>
+  </div>
+</section>
+
+<!-- ===== Slide 2: Solution ===== -->
+<section class="slide s-solution" data-title="核心方案">
+  <div class="solution-head stagger">
+    <h1 class="h-1">自研 <em>GEOrank</em> 平台，让 AI 主动引用自有可控的内容矩阵</h1>
+  </div>
+  <div class="solution-body">
+    <div class="solution-left stagger">
+      <div class="solution-card">
+        <div class="sc-label">做什么</div>
+        <div class="sc-title">建设 GEO 全链路工作平台，覆盖诊断、生产、分发、监测</div>
+        <div class="sc-desc">不是买工具，是建体系。从内容诊断到 AI 引用监测，全流程自主可控。</div>
+      </div>
+      <div class="solution-card">
+        <div class="sc-label">怎么做</div>
+        <div class="sc-title">以官网为事实核心，认证媒体号矩阵统一发稿，AI 引用效果可观测</div>
+        <div class="sc-desc">诊断排查 → 知识库 → 拓词 → 选题策略 → 分发预览 → 观测回传，六步闭环。</div>
+      </div>
+    </div>
+    <div class="solution-right stagger">
+      <div class="solution-point"><b>平台已上线</b>——100+ API 端点部署完成，六大能力闭环</div>
+      <div class="solution-point"><b>效果已验证</b>——发布后 2 小时内，豆包 / DeepSeek / 元宝 / Kimi 开始引用</div>
+      <div class="solution-point"><b>模式已跑通</b>——从"消耗型"转向"积累型"，一次投入，长期被 AI 引用</div>
+      <div class="solution-point"><b>技术自主可控</b>——全资子公司自研，数据不出域</div>
+    </div>
+  </div>
+  <div class="solution-foot stagger">核心转变：从 <b>花钱买量·触达即止</b> 到 <b>内容沉淀·AI 持续引用</b></div>
+</section>
+
+<!-- ===== Slide 3: Capabilities ===== -->
+<section class="slide s-capability" data-title="GEOrank六大能力">
+  <div class="cap-head stagger">
+    <h1 class="h-1"><em>GEOrank</em>——自研 GEO 工作台，六大能力覆盖全流程</h1>
+  </div>
+  <div class="cap-grid">
+    <div class="cap-card stagger">
+      <div class="cc-num">①</div>
+      <div class="cc-title">诊断排查</div>
+      <div class="cc-desc">页面结构、元数据、内容规范、引用密度四维打分，精准定位问题</div>
+    </div>
+    <div class="cap-card stagger">
+      <div class="cc-num">②</div>
+      <div class="cc-title">内容引擎</div>
+      <div class="cc-desc">自动切片与结构化处理，分级审核，内容质量可控</div>
+    </div>
+    <div class="cap-card stagger">
+      <div class="cc-num">③</div>
+      <div class="cc-title">GEO 拓词</div>
+      <div class="cc-desc">8 个维度扩展问题词库，6 种业务场景精准匹配</div>
+    </div>
+    <div class="cap-card stagger">
+      <div class="cc-num">④</div>
+      <div class="cc-title">多渠道分发</div>
+      <div class="cc-desc">5 个渠道统一模板，一次生产、多端发布</div>
+    </div>
+    <div class="cap-card stagger">
+      <div class="cc-num">⑤</div>
+      <div class="cc-title">可信观测</div>
+      <div class="cc-desc">API 采样基线对比，引用效果可量化、可追踪</div>
+    </div>
+    <div class="cap-card stagger">
+      <div class="cc-num">⑥</div>
+      <div class="cc-title">配置管理</div>
+      <div class="cc-desc">全链路参数可配置、可迭代，支撑持续优化</div>
+    </div>
+  </div>
+  <div class="cap-foot stagger">技术架构自主可控 · 100+ API 端点已上线</div>
+</section>
+
+<!-- ===== Slide 4: Workflow ===== -->
+<section class="slide s-flow" data-title="工作流">
+  <div class="flow-head stagger">
+    <h1 class="h-1">以官网为事实核心的 <em>GEO 工作流</em></h1>
+  </div>
+  <div class="flow-body stagger">
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-circle">1</div>
+        <div class="step-label">诊断排查<br>查页面缺口</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="step-circle">2</div>
+        <div class="step-label">知识库<br>备素材·切片向量化</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="step-circle">3</div>
+        <div class="step-label">拓词<br>找用户问法</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="step-circle">4</div>
+        <div class="step-label">选题策略<br>定策·审批·发布</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="step-circle">5</div>
+        <div class="step-label">分发预览<br>5 渠道覆盖</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step highlight">
+        <div class="step-circle">6</div>
+        <div class="step-label">观测回传<br>AI 引用检测·复测</div>
+      </div>
+    </div>
+    <div class="flow-loop stagger">如不及预期，回到拓词重新优化发布策略</div>
+  </div>
+  <div class="flow-foot stagger">以官网为事实核心，认证媒体号矩阵统一发稿，互相验证、互相提及 · <b>官网</b> &gt; 权威媒体 &gt; 专业社区 &gt; 普通内容</div>
+</section>
+
+<!-- ===== Slide 5: Observation ===== -->
+<section class="slide s-observe" data-title="可信观测">
+  <div class="observe-head stagger">
+    <h1 class="h-1"><em>可信观测</em>——引用效果看得见、可对比、可迭代</h1>
+  </div>
+  <div class="observe-body">
+    <div class="observe-left stagger">
+      <div class="observe-step">
+        <div class="os-num">01</div>
+        <div class="os-content">
+          <h3>先摸底</h3>
+          <p>发布前用白号在各 AI 平台提问，记录基线引用情况</p>
+        </div>
+      </div>
+      <div class="observe-step">
+        <div class="os-num">02</div>
+        <div class="os-content">
+          <h3>再复测</h3>
+          <p>发布后用同一批问题再次提问，对比引用变化</p>
+        </div>
+      </div>
+      <div class="observe-step">
+        <div class="os-num">03</div>
+        <div class="os-content">
+          <h3>强采纳判定</h3>
+          <p>提及 + 引用命中自有域/指定事实源，才算真正被采纳</p>
+        </div>
+      </div>
+      <div class="observe-step">
+        <div class="os-num">04</div>
+        <div class="os-content">
+          <h3>策略验证</h3>
+          <p>验收看选题策略有没有见效，不是看发了几篇文章</p>
+        </div>
+      </div>
+    </div>
+    <div class="observe-right stagger">
+      <div class="observe-metrics">
+        <div class="observe-metric">
+          <div class="om-value">4 大</div>
+          <div class="om-label">AI 平台覆盖</div>
+          <div class="om-desc">豆包 / DeepSeek / 元宝 / Kimi</div>
+        </div>
+        <div class="observe-metric">
+          <div class="om-value">2h</div>
+          <div class="om-label">引用检测周期</div>
+          <div class="om-desc">发布后 2 小时即可检测</div>
+        </div>
+        <div class="observe-metric">
+          <div class="om-value">API</div>
+          <div class="om-label">采样方式</div>
+          <div class="om-desc">可审计、可对比，非拍脑袋</div>
+        </div>
+        <div class="observe-metric">
+          <div class="om-value">Top10</div>
+          <div class="om-label">来源分析</div>
+          <div class="om-desc">定位 AI 内容取来源</div>
+        </div>
+      </div>
+      <div class="observe-note">核心价值：验收看选题策略有没有见效，不是看发了几篇文章。先<b>摸底</b>→发布→再<b>复测</b>，策略有没有用，数据说了算</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Slide 6: Accumulate ===== -->
+<section class="slide s-accumulate" data-title="可以沉淀什么">
+  <div class="accumulate-head stagger">
+    <h1 class="h-1">GEO 建设能<em>沉淀什么</em></h1>
+  </div>
+  <div class="accumulate-body">
+    <div class="acc-card stagger">
+      <div class="ac-icon">①</div>
+      <div class="ac-title">内容资产：全量结构化标注</div>
+      <div class="ac-desc">集团所有内容完成 GEO 标注，从"播完即过"变为"长期可被 AI 检索"。一次标注，持续被引用。</div>
+      <div class="ac-tag">内容团队 · 长期生效</div>
+    </div>
+    <div class="acc-card stagger">
+      <div class="ac-icon">②</div>
+      <div class="ac-title">技术资产：GEOrank 平台</div>
+      <div class="ac-desc">100+ API 端点、六大能力闭环、全链路工具链。平台在手里，每新增一个业务线只需配置，不用重建。</div>
+      <div class="ac-tag">技术团队 · 边际成本递减</div>
+    </div>
+    <div class="acc-card stagger">
+      <div class="ac-icon">③</div>
+      <div class="ac-title">数据资产：引用监测体系</div>
+      <div class="ac-desc">四大 AI 平台的引用数据持续积累，知道哪些内容被引用、哪些没有，优化方向越来越清晰。</div>
+      <div class="ac-tag">数据驱动 · 越做越精准</div>
+    </div>
+    <div class="acc-card stagger">
+      <div class="ac-icon">④</div>
+      <div class="ac-title">品牌资产：认证媒体号矩阵</div>
+      <div class="ac-desc">以官网为核心，大量认证媒体号矩阵统一发稿，形成 AI 时代的可信信源网络。每一次被引用，都是品牌信任的积累。</div>
+      <div class="ac-tag">集团壁垒 · 别人学不来</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Slide 7: Outsource Risk ===== -->
+<section class="slide s-risk" data-title="外包损失">
+  <div class="risk-head stagger">
+    <h1 class="h-1">如果<em>找外包</em>，会损失什么</h1>
+  </div>
+  <div class="risk-body">
+    <div class="risk-left stagger">
+      <div class="rl-label">外包的代价</div>
+      <div class="risk-item">
+        <div class="ri-num">01</div>
+        <div class="ri-content">
+          <h3>数据安全不可控</h3>
+          <p>核心内容和数据资产经第三方流转，合规风险不可控</p>
+        </div>
+      </div>
+      <div class="risk-item">
+        <div class="ri-num">02</div>
+        <div class="ri-content">
+          <h3>技术积累为零</h3>
+          <p>平台归外包方所有，做完即止，集团没有任何技术沉淀</p>
+        </div>
+      </div>
+      <div class="risk-item">
+        <div class="ri-num">03</div>
+        <div class="ri-content">
+          <h3>无法持续迭代</h3>
+          <p>AI 引用逻辑在变，外包无法长期跟踪调整，策略跟不上变化</p>
+        </div>
+      </div>
+      <div class="risk-item">
+        <div class="ri-num">04</div>
+        <div class="ri-content">
+          <h3>长期成本更高</h3>
+          <p>每新增一个业务线，都要重新采购，边际成本不降反升</p>
+        </div>
+      </div>
+    </div>
+    <div class="risk-right stagger">
+      <div class="rr-label">自建的优势</div>
+      <div class="benefit-item">
+        <div class="bi-num">01</div>
+        <div class="bi-content">
+          <h3>数据安全可控</h3>
+          <p>全资子公司，数据不出域，合规底线有保障</p>
+        </div>
+      </div>
+      <div class="benefit-item">
+        <div class="bi-num">02</div>
+        <div class="bi-content">
+          <h3>技术平台在手里</h3>
+          <p>GEOrank 六大能力闭环，100+ API 端点，技术积累持续增值</p>
+        </div>
+      </div>
+      <div class="benefit-item">
+        <div class="bi-num">03</div>
+        <div class="bi-content">
+          <h3>团队长期跟进</h3>
+          <p>内部团队持续迭代，引用策略跟着 AI 算法变，复利效应</p>
+        </div>
+      </div>
+      <div class="benefit-item">
+        <div class="bi-num">04</div>
+        <div class="bi-content">
+          <h3>边际成本递减</h3>
+          <p>平台搭好后，每多做一个业务线，新增成本越来越低</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Slide 8: Closing ===== -->
+<section class="slide s-close" data-title="结尾">
+  <div class="close-left">
+    <div class="chrome-min">
+      <span>深圳广电集团 · 数科公司</span>
+      <span>GEO 2.0</span>
+    </div>
+    <div class="manifesto stagger">
+      <div class="meta">GEO 能力建设方案 2.0</div>
+      <h2>从被看到，<br>到被信任，<br>到<em>被引用</em></h2>
+      <p class="sub">GEO 是长期的内容资产沉淀，一次投入，被 AI 持续引用，资产持续积累。</p>
+    </div>
+    <div class="sig stagger">
+      <span>数科公司 · 范振宁 · 2026年8月</span>
+      <span>v2.0</span>
+    </div>
+  </div>
+  <div class="close-right">
+    <div class="chrome-min">
+      <span>总结</span>
+      <span>GEOrank</span>
+    </div>
+    <div class="takeaways">
+      <div class="take-item stagger">
+        <div class="num">01</div>
+        <div>
+          <h3>平台已就绪</h3>
+          <p>GEOrank 六大能力闭环，100+ API 端点已上线</p>
+        </div>
+      </div>
+      <div class="take-item stagger">
+        <div class="num">02</div>
+        <div>
+          <h3>效果已验证</h3>
+          <p>以官网为核心，2 小时内 AI 开始引用</p>
+        </div>
+      </div>
+      <div class="take-item stagger">
+        <div class="num">03</div>
+        <div>
+          <h3>资产可沉淀</h3>
+          <p>内容、技术、数据、品牌四类资产持续积累</p>
+        </div>
+      </div>
+    </div>
+    <div class="foot stagger">GEOrank · 自研 GEO 工作台</div>
+  </div>
+</section>
+
+</div>
+</div>
+<script>
+(function(){
+  var canvas=document.getElementById('canvas');
+  var slides=document.querySelectorAll('.slide');
+  var navDotsContainer=document.getElementById('navDots');
+  var pageNum=document.getElementById('pageNum');
+  var total=slides.length;var current=0;
+  for(var i=0;i<total;i++){
+    var dot=document.createElement('button');
+    dot.className='nav-dot'+(i===0?' active':'');
+    dot.setAttribute('aria-label','Slide '+(i+1));
+    (function(idx){dot.addEventListener('click',function(){goTo(idx);});})(i);
+    navDotsContainer.appendChild(dot);
+  }
+  var dots=navDotsContainer.querySelectorAll('.nav-dot');
+  function scale(){var s=Math.min(window.innerWidth/1280,window.innerHeight/720);canvas.style.transform='translate(-50%, -50%) scale('+s+')';}
+  scale();window.addEventListener('resize',scale);
+  function goTo(idx){
+    if(idx<0)idx=0;if(idx>total-1)idx=total-1;if(idx===current)return;
+    slides[current].classList.remove('active');dots[current].classList.remove('active');
+    current=idx;slides[current].classList.add('active');dots[current].classList.add('active');
+    var st=slides[current].querySelectorAll('.stagger');
+    st.forEach(function(el,j){el.style.animationDelay=(j*0.12)+'s';});
+    pageNum.textContent=String(current+1).padStart(2,'0')+' / '+String(total).padStart(2,'0');
+  }
+  var is=slides[0].querySelectorAll('.stagger');
+  is.forEach(function(el,j){el.style.animationDelay=(j*0.12)+'s';});
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();goTo(current+1);}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();goTo(current-1);}
+    else if(e.key==='Home'){e.preventDefault();goTo(0);}
+    else if(e.key==='End'){e.preventDefault();goTo(total-1);}
+  });
+  var wl=false;
+  document.addEventListener('wheel',function(e){
+    if(wl)return;if(Math.abs(e.deltaY)<20)return;
+    wl=true;setTimeout(function(){wl=false;},800);
+    if(e.deltaY>0)goTo(current+1);else goTo(current-1);
+  },{passive:true});
+  var tsy=0,tsx=0;
+  document.addEventListener('touchstart',function(e){tsy=e.touches[0].clientY;tsx=e.touches[0].clientX;},{passive:true});
+  document.addEventListener('touchend',function(e){
+    var dy=tsy-e.changedTouches[0].clientY;var dx=tsx-e.changedTouches[0].clientX;
+    if(Math.abs(dy)>50&&Math.abs(dy)>Math.abs(dx)){if(dy>0)goTo(current+1);else goTo(current-1);}
+    else if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){if(dx>0)goTo(current+1);else goTo(current-1);}
+  },{passive:true});
+})();
+</script>
+</body>
+</html>

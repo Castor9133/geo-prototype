@@ -175,13 +175,48 @@ DEFAULT_LLM_PROVIDER_CONFIG = {
 
 # 拓词 + 目标 AI 标题建议（可后台改；禁止把提示词/模板塞进前台）
 KEYWORD_EXPANSION_SETTING_KEY = "keyword_expansion"
+# 多种子时追加到 system（即使 Admin 库内仍是旧版 prompt，也能套上方法）
+MULTI_SEED_METHOD_ADDENDUM = (
+    "【多种子扩词方法·强制】\n"
+    "A. 先在 JSON 内写 seed_map，再写 dimensions / platform_title_hints。"
+    "seed_map 含：entities[{seed,role,gloss}]、relations[短句]、content_angle（一句选题主线）。\n"
+    "B. role 只能从：organization|product_or_column|topic_or_attribute|brand|person|other。"
+    "多个种子默认不是同义词，而是可组合的实体图（例：机构×栏目/产品×属性/议题）。\n"
+    "C. 每个维度 8-10 词，且每个种子至少 2 条相关；至少 3 条是「双实体交叉」自然问法"
+    "（如「机构如何报道栏目」「属性定位下的产品差异」），禁止把多种子用分号/顿号粘成一词。\n"
+    "D. 差例（禁止）：「A;B;C栏目」「广电媒体怎么做A;B;C」「只扩第一个种子」、Keyword Stuffing。\n"
+    "E. 好例方向（泛化，勿照抄）："
+    "「某客户端是什么栏目」「党媒语境下如何讲某栏目」「机构官网与客户端内容如何分工」；"
+    "词要像真人会搜/会问 AI 的完整短语。\n"
+    "F. 标题第一关：platform_title_hints 与 question 维优先产出可作标题的题面"
+    "（实体+意图、可写证据文）；禁止分号粘词与空泛「优化/平台」后缀。\n"
+    "G. 别名勿交叉：中英品牌名、同款别名（如 DJI Mini 5 Pro 与 大疆 Mini 5 Pro）、"
+    "「产品+属性」近亲不要写成「A怎么报道B / A旗下B / 联动合作」；别名放 semantic，"
+    "关系型交叉只用于真正不同的实体（如机构×栏目）。"
+)
 DEFAULT_KEYWORD_EXPANSION_CONFIG: dict[str, Any] = {
     "system_prompt": (
-        "你是面向中文传媒与 GEO（生成式引擎优化）场景的关键词策略专家。\n"
-        "先理解种子词背后的业务画像与实体，再按 8 个意图维度输出可落地、可移交内容生产的词包，"
-        "并按给定平台侧重为种子实体生成标题/问法建议。\n\n"
+        "你是面向中文 GEO（生成式引擎优化，Generative Engine Optimization）与内容选题的关键词策略专家。\n"
+        "目标：把用户给出的种子词，扩成可检索、可写作、可移交内容生产的中文词包，"
+        "并按平台侧重给出标题/问法建议。标题与问法是 GEO 第一关。\n\n"
+        "论文方法口径（写入选题方向，禁止写成实测引用率）：\n"
+        "- 优先能支撑 Statistics / Cite Sources / Quotation 写作的问法（可核验数字、可引用来源、可摘短句）。\n"
+        "- 兼顾 Fluency（通顺、结论先行）；领域上事实类偏 Cite，观点/社会类偏 Quotation。\n"
+        "- 禁止 Keyword Stuffing（堆砌关键词、空泛「XX优化/平台/引擎」）。\n\n"
+        "工作步骤（必须按序体现在 JSON 中）：\n"
+        "1) 理解种子：推断每个种子的角色与彼此关系，写成 seed_map（勿假设它们是同义改写）。\n"
+        "2) 定主线：用一句 content_angle 概括本轮选题方向（服务后续写作，而非空泛「做 GEO」）。\n"
+        "3) 标题第一关：先保证 question 维与 platform_title_hints 通过标题门"
+        "（像真人问 AI、实体清晰、可答、可写「结论前置+证据」短文），再铺其余七维。\n"
+        "4) 按 8 个意图维扩词：每条 keyword 应能单独成为一篇稿或一次 AI 提问的题面。\n"
+        "5) 按 platforms 生成 platform_title_hints。\n\n"
         "严格只返回 JSON（不要 markdown，不要解释）：\n"
         "{\n"
+        '  "seed_map": {\n'
+        '    "entities": [{"seed": "原种子", "role": "organization|product_or_column|topic_or_attribute|brand|person|other", "gloss": "≤20字释义"}],\n'
+        '    "relations": ["实体关系短句"],\n'
+        '    "content_angle": "一句选题主线"\n'
+        "  },\n"
         '  "dimensions": [\n'
         "    {\n"
         '      "key": "semantic|scenario|commercial|ranking|review|brand|question|technical",\n'
@@ -190,7 +225,7 @@ DEFAULT_KEYWORD_EXPANSION_CONFIG: dict[str, Any] = {
         '          "keyword": "可检索、可写作的中文关键词或问题式查询",\n'
         '          "recommendation_score": 0-100整数,\n'
         '          "business_score": 0-100整数,\n'
-        '          "reason": "一句可审计理由：覆盖哪类意图/场景/实体"\n'
+        '          "reason": "一句可审计理由：覆盖哪类意图/哪个实体/何种关系"\n'
         "        }\n"
         "      ]\n"
         "    }\n"
@@ -203,31 +238,33 @@ DEFAULT_KEYWORD_EXPANSION_CONFIG: dict[str, Any] = {
         "  ]\n"
         "}\n\n"
         "质量硬约束：\n"
-        "1. 每个维度输出 8-10 个词；八维意图必须可区分，禁止把同一说法换皮塞进多个维度。\n"
-        "2. 实体一致：词必须锚定种子实体/业务（品牌、栏目、产品、主题、机构），禁止漂移到无关行业。\n"
-        "3. 少空泛：禁止「XX平台/工具/系统/引擎/优化/推荐/榜单」式无信息堆砌；优先具体场景、角色、任务与长尾。\n"
+        "1. 每个维度 8-10 个词；八维意图可区分，禁止同一说法换皮塞进多维。\n"
+        "2. 实体锚定：每条词须能追溯到 seed_map 中的某个实体或关系；禁止漂到无关行业。\n"
+        "3. 少空泛：禁止「XX平台/工具/系统/引擎/优化」无信息堆砌（Keyword Stuffing）；"
+        "优先具体场景、角色、任务、长尾问法。\n"
         "4. 维度细则：\n"
-        "   - semantic：同义近义、行业术语、实体别名、可检索变体（可含 1 个种子原词）\n"
-        "   - scenario：真实使用场景与任务语境，必须是完整人话短语；禁止「角色标签 + 空格 + 种子」硬拼接\n"
-        "   - commercial：采购、报价、选型、合作、预算等转化意图\n"
-        "   - ranking：推荐/对比/哪家好/清单类（需带比较对象或适用边界）\n"
+        "   - semantic：别名、术语、可检索变体（可含少量种子原词）；多种子时分别给各实体变体，勿粘成一串\n"
+        "   - scenario：完整人话场景/任务；禁止「短标签 + 空格 + 种子」硬拼接\n"
+        "   - commercial：合作、报价、投放、选型、预算等转化意图（媒体场景可写栏目合作/赞助）\n"
+        "   - ranking：推荐/对比/清单，须带比较对象或适用边界\n"
         "   - review：评测、优缺点、避坑、值不值、复盘\n"
-        "   - brand：品牌/栏目/竞品/替代方案关联\n"
-        "   - question：必须是问题式自然语言（如何/怎么/为什么/是否/有哪些/适合谁）\n"
-        "   - technical：落地方法、流程、指标、结构、工作流、实施清单\n"
-        "5. 长尾优先：至少一半词应像真实用户会搜/会问的完整短语（可含 6-20 字）。\n"
-        "6. 画像约束：严格遵守给定 profile。\n"
-        "7. 评分口径（代理信号，非实测）：recommendation_score=选题/内容生产优先级；"
-        "business_score=商业转化意图；禁止写成「AI 答案引用率」。\n"
-        "8. 去重：同一词包内禁止重复、近义重复。\n"
-        "9. 中文为主，自然可读。\n"
-        "10. platform_title_hints：必须覆盖输入中的每一个 platform；每平台恰好 titles_per_platform 条；"
-        "标题要贴合该平台的 generation_focus，并避开 avoid；围绕 entity 与 seeds 写，"
-        "通用站点可用（媒体/政务/品牌/电商等），禁止绑定某一垂类硬套话（如无人机续航/禁飞）。"
-        "标题可作独立选题，勿输出空串。"
+        "   - brand：主体/栏目/竞品/替代与归属关系\n"
+        "   - question：必须是问题式（如何/怎么/为什么/是否/有哪些/适合谁）；优先可作为标题的题面\n"
+        "   - technical：流程、结构、知识库、指标、工作流、实施清单\n"
+        "5. 长尾：至少一半词像真实用户会搜/会问 AI 的完整短语（约 6-24 字）。\n"
+        "6. 遵守输入 profile；若与常识冲突，以 seeds 字面与 seed_map 为准并在 reason 标明。\n"
+        "7. 评分（代理信号，非实测）：recommendation_score=选题/写作优先级；"
+        "business_score=转化/合作意图；禁止写成「AI 答案引用率」。\n"
+        "8. 去重：禁止重复与近义重复；禁止 keyword 内出现英文/中文分号。\n"
+        "9. 中文为主，自然可读（Fluency）。\n"
+        "10. platform_title_hints：覆盖每一个 platform；每平台恰好 titles_per_platform 条；"
+        "须通过标题门（实体+意图、6–28 字优先、可写证据文）；"
+        "贴合 generation_focus、避开 avoid；围绕 seed_map 主线写；禁止垂类硬套话与堆砌。\n"
+        "11. 多种子：每个维度覆盖全部种子（每词≥2 条相关或交叉）；"
+        "优先写「关系型」问法，而不是对每个种子机械套同一模板。"
     ),
     "titles_per_platform": 3,
-    "timeout_seconds": 20,
+    "timeout_seconds": 28,
     "disclaimer": "目标 AI 侧重来自后台配置 + 模型生成标题 · 非平台实测 · 禁止写成引用率",
     "platforms": [
         {

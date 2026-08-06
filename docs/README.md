@@ -7,9 +7,14 @@
 | [本地裸跑-postgres-redis.md](./本地裸跑-postgres-redis.md) | **默认启动**：本机 PG/Redis + `start-local.ps1` |
 | [m1-acceptance-checklist.md](./m1-acceptance-checklist.md) | **M1 验收门禁**（裸跑 + 内容引擎 UI + 登录回跳） |
 | [design/ref-ui/README.md](./design/ref-ui/README.md) | **参考 UI 映射**（内容增长工厂 / 驾驶舱 / 知识证据中枢） |
-| [REAL_OBSERVE_DESIGN.md](./REAL_OBSERVE_DESIGN.md) | **真实结果观测设计说明书**（改版前后对比 / 白号外置 / 给人评审，非实现清单） |
+| [AGENT_DESIGN_8_QUESTIONS.md](./AGENT_DESIGN_8_QUESTIONS.md) | **智能体设计八问**（GEO 回合门禁） |
+| [GEO_SUITE_AS_AGENT.md](./GEO_SUITE_AS_AGENT.md) | **整条 GEO Suite 能否做成智能体**（可行性 + 全链路数据流） |
+| [KEYWORD_EXPAND_PIPELINE.md](./KEYWORD_EXPAND_PIPELINE.md) | 拓词**一步**的数据流与加工（非独立 Agent 定义） |
+| [GEO_METHODS_IN_PROMPTS.md](./GEO_METHODS_IN_PROMPTS.md) | **GEO 论文方法 → 拓词/生成提示词对照** |
+| [REAL_OBSERVE_DESIGN.md](./REAL_OBSERVE_DESIGN.md) | **真实结果观测设计说明书**（改版前后对比 / 白号外置 / 给人评审的方案，非实现清单） |
 | [GEO-Suite-leadership-demo-guide.md](./GEO-Suite-leadership-demo-guide.md) | **领导汇报 / 演示剧本 / live 验收清单** |
 | [content-engineering-sop.md](./content-engineering-sop.md) | **内容工程 SOP / 清单（双层方法 → Suite 6 能力；演示走查）** |
+| [pilot-demo/szmg-diyixianchang-kb/README.md](./pilot-demo/szmg-diyixianchang-kb/README.md) | **媒体拓词示范：深圳广电×第一现场（事实卡+切片+选库扩词）** |
 | [pilot-demo/geo-demo-column/README.md](./pilot-demo/geo-demo-column/README.md) | **合成栏目演示资产（事实卡 / L3 样板；Flow 导入仅对照）** |
 | [pilot-demo/cn-product-demo-v2/README.md](./pilot-demo/cn-product-demo-v2/README.md) | **推荐：中文真实产品演示包 v2（DJI Mini 5 Pro）** |
 | [pilot-demo/cn-product-demo/README.md](./pilot-demo/cn-product-demo/README.md) | ~~飞书多维表格演示包~~（**已不推荐**，仅对照） |

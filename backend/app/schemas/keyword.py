@@ -1,13 +1,15 @@
 """
 拓词模块 Schemas
 """
-from typing import List
+from typing import Any, List
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
 
 class KeywordExpandRequest(BaseModel):
     seeds: List[str] = Field(default_factory=list, min_length=1, max_length=8)
+    knowledge_base_id: UUID | None = None
 
 
 class KeywordItemResponse(BaseModel):
@@ -68,3 +70,4 @@ class KeywordExpandResponse(BaseModel):
     summary: KeywordSummaryResponse
     platform_title_hints: List[KeywordPlatformTitleHintResponse] = Field(default_factory=list)
     ai_focus: KeywordAiFocusResponse | None = None
+    knowledge_meta: dict[str, Any] | None = None

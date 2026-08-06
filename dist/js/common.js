@@ -1992,23 +1992,21 @@ const FOOTER_HTML = `
         },
 
         openModal(mode = 'login', options = {}) {
-            this.ensureModal();
-            this.setMode(mode);
-            const modal = document.getElementById(this.MODAL_ID);
-            if (!modal) return;
-            const reasonEl = modal.querySelector('[data-auth-reason]');
-            const reason = options.reason || '';
-            reasonEl.textContent = reason;
-            reasonEl.classList.toggle('hidden', !reason);
-            modal.classList.remove('hidden');
-            document.body.classList.add('auth-modal-open');
-            this.showError('');
-            const boundPhone = this.getBoundPhone();
-            const phoneInput = modal.querySelector('input[name="phone"]');
-            if (boundPhone && phoneInput && !phoneInput.value) {
-                phoneInput.value = boundPhone;
+            // 不再使用全站手机号登录弹窗；需要账号时走独立登录/注册页。
+            this.closeModal();
+            if (this.isDemoOpenAccess()) return;
+            const path = mode === 'register' ? '/register' : '/login';
+            const href = Routes.buildUrl(path) || path;
+            try {
+                const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash || ''}`;
+                const url = new URL(href, window.location.origin);
+                if (returnTo && returnTo !== '/login' && returnTo !== '/register') {
+                    url.searchParams.set('return', returnTo);
+                }
+                window.location.href = `${url.pathname}${url.search}`;
+            } catch (_) {
+                window.location.href = href;
             }
-            phoneInput?.focus();
         },
 
         closeModal() {
@@ -2071,8 +2069,11 @@ const FOOTER_HTML = `
          * 不等于免管理员登录，也不应隐藏登录入口。
          */
         isDemoOpenAccess() {
+            if (window.GEORANK_OPEN_DEMO === false) return false;
             if (window.GEORANK_OPEN_DEMO === true) return true;
-            return Boolean(window.GEOrank?.APIKeyStore?.policy?.allow_anonymous_ai_usage);
+            if (window.GEOrank?.APIKeyStore?.policy?.allow_anonymous_ai_usage) return true;
+            // 本地演示默认放开功能页，不再弹手机号登录框
+            return true;
         },
 
         demoHomePath() {
@@ -2110,10 +2111,18 @@ const FOOTER_HTML = `
 
         requireAuth(options = {}) {
             if (this.isAuthenticated()) return true;
-            const translatedReason = options.reasonKey ? I18N.t(options.reasonKey) : '';
-            this.openModal(options.mode || 'login', {
-                reason: translatedReason || options.reason || I18N.t('auth.requireReason'),
-            });
+            // 演示匿名 AI：诊断/拓词等不再强制弹登录框
+            if (this.isDemoOpenAccess()) return true;
+            const path = (options.mode === 'register') ? '/register' : '/login';
+            const href = Routes.buildUrl(path) || path;
+            try {
+                const returnTo = `${window.location.pathname}${window.location.search}`;
+                const url = new URL(href, window.location.origin);
+                url.searchParams.set('return', returnTo);
+                window.location.href = `${url.pathname}${url.search}`;
+            } catch (_) {
+                window.location.href = href;
+            }
             return false;
         },
 
@@ -2128,11 +2137,11 @@ const FOOTER_HTML = `
             trigger.dataset.bound = '1';
             trigger.addEventListener('click', (event) => {
                 if (trigger.matches('[data-profile-link]')) return;
-                event.preventDefault();
                 if (!this.isAuthenticated()) {
-                    this.openModal('login');
+                    // 走顶栏链接到 /login，不再拦截出弹窗
                     return;
                 }
+                event.preventDefault();
                 menu?.classList.toggle('hidden');
             });
             menu?.addEventListener('click', (event) => {
@@ -2189,40 +2198,8 @@ const FOOTER_HTML = `
         },
 
         maybePromptFirstVisit() {
-            const path = Routes.normalizePath(window.location.pathname);
-            if (this.isAuthenticated()) return;
-            if (path.startsWith('/admin') || path === '/login' || path === '/register') return;
-            if (path === '/profile') return;
-            const moduleKey = ModuleGate.moduleKeyForPath(path);
-            if (moduleKey && !ModuleGate.isEnabled(moduleKey)) return;
-            if (
-                path === '/suite'
-                || path === '/c'
-                || path.startsWith('/c/')
-            ) return;
-            if (path === '/solutions' || path.startsWith('/solutions/') || path === '/plans' || path.startsWith('/plans/') || path === '/qa' || path.startsWith('/qa/')) return;
-            let submitAutoOpenFlag = false;
-            try {
-                submitAutoOpenFlag = sessionStorage.getItem('georank_open_submit_company') === '1';
-            } catch (_) {
-                submitAutoOpenFlag = false;
-            }
-            const submitRouteRequested = new URLSearchParams(window.location.search).get('submit') === 'company'
-                || window.location.hash === '#submit-company'
-                || submitAutoOpenFlag;
-            if (submitRouteRequested) {
-                try {
-                    sessionStorage.removeItem('georank_open_submit_company');
-                } catch (_) {
-                    // Storage can be unavailable in restricted browsing modes.
-                }
-                return;
-            }
-            if (localStorage.getItem(this.PROMPTED_KEY)) return;
-            localStorage.setItem(this.PROMPTED_KEY, '1');
-            this.openModal('register', {
-                reason: I18N.t('auth.firstVisitReason'),
-            });
+            // 已去掉首次访问强制弹出的手机号登录/注册框。
+            return;
         },
 
         authLinkWithReturn(path) {

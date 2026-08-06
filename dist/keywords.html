@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="utf-8">
@@ -12,9 +12,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="/css/public-tailwind.css?v=20260729-dji-kw1">
-    <link rel="stylesheet" href="/css/common.css?v=20260729-dji-kw1">
-    <link rel="stylesheet" href="/css/keywords.css?v=20260730-aifocus2">
+    <link rel="stylesheet" href="/css/public-tailwind.css?v=20260806-kwtidy1">
+    <link rel="stylesheet" href="/css/common.css?v=20260806-kwtidy1">
+    <link rel="stylesheet" href="/css/keywords.css?v=20260806-aihoriz1">
 </head>
 <body class="keywords-page bg-white text-on-surface antialiased">
     <div id="header-container"></div>
@@ -23,13 +23,24 @@
         <section class="kw-hero">
             <h1>选题清单 · 拓词</h1>
             <p class="kw-hero__lead">
-                生成问法清单，勾选后可写入当前选题（写稿前须确认至少 3 句）。知识库只备素材，写稿在选题工作台完成。
+                生成问法清单，勾选后可写入当前选题（写稿前须确认至少 3 句）。可选知识库后按事实卡约束实体关系；知识库只备素材，写稿在选题工作台完成。
             </p>
             <div id="kw-strategy-ctx" class="hidden mb-4 text-sm leading-6 px-4 py-3 rounded-lg border border-slate-200 bg-slate-50"></div>
+            <div class="kw-kb-row flex flex-wrap items-center gap-3 mb-3 max-w-3xl">
+                <label for="kw-kb-select" class="text-sm text-slate-600 shrink-0">知识库（可选）</label>
+                <select id="kw-kb-select" class="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white min-w-[12rem] max-w-full">
+                    <option value="">不选 · 仅按种子启发式</option>
+                </select>
+                <p class="text-xs text-slate-500 basis-full md:basis-auto">
+                    选库后优先读事实卡定隶属/竞品；
+                    <a class="underline" href="/pilot-demo/szmg-diyixianchang-kb/README.md" target="_blank" rel="noopener">业务备库样例</a>
+                    （深圳广电×第一现场）
+                </p>
+            </div>
             <div class="kw-search">
                 <div id="tag-input-wrapper">
                     <span class="material-symbols-outlined text-slate-500 mr-1 text-lg">search</span>
-                    <input id="keyword-input" class="flex-1 min-w-[120px] border-none focus:ring-0 bg-transparent placeholder:text-slate-400 py-1 text-sm" placeholder="输入关键词，按 Enter 添加" type="text">
+                    <input id="keyword-input" class="flex-1 min-w-[120px] border-none focus:ring-0 bg-transparent placeholder:text-slate-400 py-1 text-sm" placeholder="多个词用英文分号 ; 隔开，一次最多 5 个；Enter 添加" type="text">
                 </div>
                 <button id="generate-btn" class="btn btn-primary px-6 py-3 text-sm font-bold">生成词包</button>
             </div>
@@ -37,21 +48,27 @@
         </section>
 
         <div id="results-panel" class="hidden">
-            <div class="kw-results-head flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
-                <div>
-                    <h2 class="text-xl md:text-2xl tracking-tight">选题清单</h2>
-                    <p class="text-sm text-on-surface-variant mt-1">为 "<span id="seed-kw-display" class="font-medium text-on-surface"></span>" 生成了 <span id="total-kw-count" class="font-bold text-on-surface">0</span> 个选题 · 已选 <span id="selected-kw-count">0</span></p>
+            <div class="kw-results-head">
+                <div class="kw-results-head__text">
+                    <h2>选题清单</h2>
+                    <p>为「<span id="seed-kw-display"></span>」生成了 <span id="total-kw-count">0</span> 个选题 · 已选 <span id="selected-kw-count">0</span></p>
                 </div>
-                <div class="flex flex-wrap gap-3">
-                    <button id="write-strategy-queries-btn" class="btn btn-primary px-4 py-2 text-xs font-bold inline-flex items-center gap-1.5" type="button" disabled hidden>
-                        <span class="material-symbols-outlined text-sm">playlist_add_check</span>写入当前选题
+                <div class="kw-results-actions" role="group" aria-label="选题清单操作">
+                    <button id="write-strategy-queries-btn" class="btn btn-primary kw-action-btn" type="button" disabled hidden>
+                        <span class="material-symbols-outlined" aria-hidden="true">playlist_add_check</span>写入当前选题
                     </button>
-                    <button id="create-content-tasks-btn" class="btn btn-outline px-4 py-2 text-xs font-bold inline-flex items-center gap-1.5" type="button" disabled>
-                        <span class="material-symbols-outlined text-sm">edit_note</span>去选模板生成
+                    <button id="create-content-tasks-btn" class="btn btn-outline kw-action-btn" type="button" disabled>
+                        <span class="material-symbols-outlined" aria-hidden="true">edit_note</span>去选模板生成
                     </button>
-                    <button id="refine-btn" class="btn btn-outline px-4 py-2 text-xs font-bold inline-flex items-center gap-1.5"><span class="material-symbols-outlined text-sm">refresh</span>重新生成</button>
-                    <button id="send-geoflow-btn" class="btn btn-outline px-4 py-2 text-xs font-bold inline-flex items-center gap-1.5" hidden><span class="material-symbols-outlined text-sm">sync_alt</span>发送到 GEOFlow</button>
-                    <button id="download-csv-btn" class="btn btn-primary px-4 py-2 text-xs font-bold inline-flex items-center gap-1.5"><span class="material-symbols-outlined text-sm">download</span>批量导出</button>
+                    <button id="refine-btn" class="btn btn-outline kw-action-btn" type="button">
+                        <span class="material-symbols-outlined" aria-hidden="true">refresh</span>重新生成
+                    </button>
+                    <button id="send-geoflow-btn" class="btn btn-outline kw-action-btn" type="button" hidden>
+                        <span class="material-symbols-outlined" aria-hidden="true">sync_alt</span>发送到 GEOFlow
+                    </button>
+                    <button id="download-csv-btn" class="btn btn-outline kw-action-btn" type="button">
+                        <span class="material-symbols-outlined" aria-hidden="true">download</span>批量导出
+                    </button>
                 </div>
             </div>
             <p id="kw-task-feedback" class="hidden text-sm mb-4"></p>
@@ -71,51 +88,47 @@
                 </div>
             </section>
 
-            <div id="keyword-profile-card" class="kw-profile-card hidden mb-6 p-5 md:p-6">
-                <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                    <div class="max-w-2xl">
-                        <p class="kw-profile-eyebrow text-[11px] font-extrabold uppercase">AI 识别画像</p>
-                        <h3 id="keyword-profile-name" class="mt-2 text-xl font-bold tracking-tight">消费电子 · 航拍</h3>
-                        <p id="keyword-profile-hint" class="mt-2 text-sm leading-7 text-on-surface-variant"></p>
-                        <p id="keyword-profile-strategy" class="mt-3 text-sm leading-7 text-on-surface-variant"></p>
-                    </div>
-                    <div class="grid gap-3 sm:grid-cols-2 md:w-[26rem]">
-                        <div class="kw-profile-mini">
-                            <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-on-surface-variant">业务模型</p>
-                            <p id="keyword-profile-model" class="mt-2 text-sm font-semibold"></p>
-                        </div>
-                        <div class="kw-profile-mini">
-                            <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-on-surface-variant">目标用户</p>
-                            <div id="keyword-profile-audience" class="mt-2 flex flex-wrap gap-2"></div>
-                        </div>
-                    </div>
-                </div>
+            <div id="keyword-profile-card" class="kw-profile-grid hidden mb-6">
+                <article class="kw-profile-panel">
+                    <p class="kw-profile-eyebrow">AI 识别画像</p>
+                    <h3 id="keyword-profile-name">消费电子 · 航拍</h3>
+                    <p id="keyword-profile-hint" class="kw-profile-copy"></p>
+                    <p id="keyword-profile-strategy" class="kw-profile-copy"></p>
+                </article>
+                <article class="kw-profile-panel">
+                    <p class="kw-profile-eyebrow">业务模型</p>
+                    <p id="keyword-profile-model" class="kw-profile-model"></p>
+                </article>
+                <article class="kw-profile-panel">
+                    <p class="kw-profile-eyebrow">目标用户</p>
+                    <div id="keyword-profile-audience" class="kw-profile-audience"></div>
+                </article>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+            <div class="kw-stats-grid mb-8">
                 <div class="kw-stat kw-stat--blue">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-medium text-on-surface-variant">总关键词</span>
+                    <div class="kw-stat__top">
+                        <span>总关键词</span>
                         <span class="kw-stat__icon"><span class="material-symbols-outlined text-sm">bar_chart</span></span>
                     </div>
-                    <p class="text-2xl font-extrabold" id="stat-total">0</p>
-                    <p class="trend text-xs mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-xs">trending_up</span>8 个维度覆盖</p>
+                    <p class="kw-stat__value" id="stat-total">0</p>
+                    <p class="trend"><span class="material-symbols-outlined text-xs">trending_up</span>8 个维度覆盖</p>
                 </div>
                 <div class="kw-stat kw-stat--blue">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-medium text-on-surface-variant">平均推荐指数</span>
+                    <div class="kw-stat__top">
+                        <span>平均推荐指数</span>
                         <span class="kw-stat__icon"><span class="material-symbols-outlined text-sm">recommend</span></span>
                     </div>
-                    <p class="text-2xl font-extrabold"><span id="stat-avg-rec">0</span><span class="text-sm font-normal text-on-surface-variant">/100</span></p>
-                    <p class="trend text-xs mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-xs">trending_up</span>高价值词占比 <span id="stat-high-rec">0</span>%</p>
+                    <p class="kw-stat__value"><span id="stat-avg-rec">0</span><span class="kw-stat__unit">/100</span></p>
+                    <p class="trend"><span class="material-symbols-outlined text-xs">trending_up</span>高价值词占比 <span id="stat-high-rec">0</span>%</p>
                 </div>
                 <div class="kw-stat kw-stat--orange">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-medium text-on-surface-variant">平均商业指数</span>
+                    <div class="kw-stat__top">
+                        <span>平均商业指数</span>
                         <span class="kw-stat__icon"><span class="material-symbols-outlined text-sm">payments</span></span>
                     </div>
-                    <p class="text-2xl font-extrabold"><span id="stat-avg-biz">0</span><span class="text-sm font-normal text-on-surface-variant">/100</span></p>
-                    <p class="trend text-xs mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-xs">trending_up</span>商业意图词占比 <span id="stat-high-biz">0</span>%</p>
+                    <p class="kw-stat__value"><span id="stat-avg-biz">0</span><span class="kw-stat__unit">/100</span></p>
+                    <p class="trend"><span class="material-symbols-outlined text-xs">trending_up</span>商业意图词占比 <span id="stat-high-biz">0</span>%</p>
                 </div>
             </div>
 
@@ -142,9 +155,9 @@
     </main>
 
     <div id="footer-container"></div>
-    <script src="/js/common.js?v=20260804-foot1"></script>
+    <script src="/js/common.js?v=20260806-nolgin1"></script>
     <script src="/js/suite-workflow.js?v=20260730-nobar1"></script>
     <script src="/js/geoflow-handoff.js?v=20260729-dji-kw1"></script>
-    <script src="/js/keywords.js?v=20260804-confirm1"></script>
+    <script src="/js/keywords.js?v=20260806-multisplit1"></script>
 </body>
 </html>

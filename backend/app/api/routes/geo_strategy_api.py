@@ -133,6 +133,7 @@ async def _ser(db: DbSession, s: GeoStrategy) -> dict:
     return svc.serialize_strategy(s, task_summary=summary)
 
 
+@router.get("")
 @router.get("/")
 async def list_strategies(
     db: DbSession,

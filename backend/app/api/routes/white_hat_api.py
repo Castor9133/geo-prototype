@@ -22,6 +22,7 @@ async def summary(db: DbSession, _: CurrentUser):
     return await pool.pool_summary(db)
 
 
+@router.get("")
 @router.get("/")
 async def list_accounts(
     db: DbSession,
@@ -33,6 +34,7 @@ async def list_accounts(
     return {"items": [pool.serialize_account(r) for r in rows]}
 
 
+@router.post("")
 @router.post("/")
 async def upsert(payload: UpsertBody, db: DbSession, user: CurrentUser):
     try:

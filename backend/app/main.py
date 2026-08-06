@@ -269,6 +269,8 @@ app = FastAPI(
     # 生产环境关闭 API 文档，防止接口信息泄露
     docs_url="/api/docs" if settings.DEBUG else None,
     redoc_url="/api/redoc" if settings.DEBUG else None,
+    # 关闭尾斜杠 307：浏览器跟跳时会丢掉 Authorization，造成「无效或过期的认证令牌」假象
+    redirect_slashes=False,
     lifespan=lifespan,
 )
 

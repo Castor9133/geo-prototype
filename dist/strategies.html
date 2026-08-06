@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
@@ -144,7 +144,7 @@
   <div id="header-container"></div>
   <main class="st-page">
     <header class="st-hero">
-      <p style="margin:0;color:var(--st-muted);font-size:0.85rem">党建党媒 · 让栏目内容更容易被 AI 答到</p>
+      <p style="margin:0;color:var(--st-muted);font-size:0.85rem">GEO · 让栏目内容更容易被 AI 答到</p>
       <h1>选题策略工作台</h1>
       <p class="st-lead">一次只盯<strong>一个问题</strong>、<strong>一个问答平台</strong>（豆包 / 元宝 / DeepSeek）。先摸清现状，再写稿发布，最后看有没有被提到、有没有被引到前面。</p>
       <div class="st-pipe" aria-label="工作步骤">
@@ -268,13 +268,14 @@
     </section>
   </main>
 
-  <script src="/js/common.js?v=20260804-foot1"></script>
+  <script src="/js/common.js?v=20260806-nolgin1"></script>
   <script>
   (function () {
     const msgEl = document.getElementById('st-msg');
     const listEl = document.getElementById('st-list');
     const ctxEl = document.getElementById('st-ctx');
     const tokenKey = 'georank_token';
+    const tokenKeyPrimary = 'georank_user_token';
     const strategyKey = 'georank_current_strategy';
     let me = null;
     let strategies = [];
@@ -312,10 +313,41 @@
     };
 
     function token() {
-      try { return localStorage.getItem(tokenKey) || sessionStorage.getItem(tokenKey) || ''; }
-      catch (_) { return ''; }
+      try {
+        const fromAuth = window.GEOrank && window.GEOrank.Auth && window.GEOrank.Auth.getToken
+          ? window.GEOrank.Auth.getToken()
+          : '';
+        return fromAuth
+          || localStorage.getItem(tokenKeyPrimary)
+          || localStorage.getItem(tokenKey)
+          || sessionStorage.getItem(tokenKeyPrimary)
+          || sessionStorage.getItem(tokenKey)
+          || '';
+      } catch (_) { return ''; }
     }
-    function setToken(t) { try { localStorage.setItem(tokenKey, t); } catch (_) {} }
+    function setToken(t) {
+      try {
+        if (!t) {
+          localStorage.removeItem(tokenKeyPrimary);
+          localStorage.removeItem(tokenKey);
+          sessionStorage.removeItem(tokenKeyPrimary);
+          sessionStorage.removeItem(tokenKey);
+          if (window.GEOrank && window.GEOrank.Auth && window.GEOrank.Auth.clearSession) {
+            window.GEOrank.Auth.clearSession();
+          }
+          return;
+        }
+        localStorage.setItem(tokenKeyPrimary, t);
+        localStorage.setItem(tokenKey, t);
+        if (window.GEOrank && window.GEOrank.Auth) {
+          window.GEOrank.Auth.state = window.GEOrank.Auth.state || {};
+          window.GEOrank.Auth.state.token = t;
+        }
+      } catch (_) {}
+    }
+    function clearBadAuth() {
+      setToken('');
+    }
     function escapeHtml(s) {
       return String(s == null ? '' : s)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -343,6 +375,9 @@
     }
     function friendlyError(msg) {
       const s = String(msg || '');
+      if (/无效或过期的认证令牌|Not authenticated|Could not validate/i.test(s)) {
+        return '登录已失效，请到下方「账号与权限」重新登录后再刷新列表。';
+      }
       if (/geo_run/i.test(s)) return '请先选择「关联哪次摸底/复测」，再确认摸底。';
       if (/诊断/.test(s)) return '请先挂上查页面结果，再送审或批准。';
       if (/baseline|摸底|初次观测/i.test(s)) return '请先完成投放前摸底，再批准策略。';
@@ -363,6 +398,7 @@
         const msg = typeof detail === 'string' ? detail
           : (Array.isArray(detail) ? detail.map(function (x) { return x.msg || JSON.stringify(x); }).join('; ')
           : data.message || res.statusText || '操作失败');
+        if (res.status === 401) clearBadAuth();
         throw new Error(friendlyError(msg));
       }
       return data;
@@ -1219,7 +1255,7 @@
 
     async function load() {
       try {
-        const data = await api('/geo-strategies?limit=50');
+        const data = await api('/geo-strategies/?limit=50');
         strategies = data.items || [];
         listEl.innerHTML = '';
         if (!strategies.length) {
