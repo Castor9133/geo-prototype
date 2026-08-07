@@ -59,6 +59,57 @@
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .ob-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.85rem; }
     .ob-hint { font-size: 0.8rem; color: var(--ob-muted); }
+    .ob-rank-head {
+      display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
+      gap: 0.5rem; margin-bottom: 0.55rem;
+    }
+    .ob-rank-head h2 {
+      font-family: "Noto Serif SC", serif; font-size: 1.05rem; margin: 0; color: #003460;
+    }
+    .ob-rank-sub { margin: 0 0 0.75rem; font-size: 0.8rem; color: var(--ob-muted); }
+    .ob-rank-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .ob-rank-table th {
+      background: #f3f1ef; color: var(--ob-muted); font-weight: 600; font-size: 0.78rem;
+      text-align: left; padding: 0.55rem 0.65rem;
+    }
+    .ob-rank-table td {
+      border-bottom: 1px solid var(--ob-line); padding: 0.6rem 0.65rem; vertical-align: top;
+    }
+    .ob-rank-table td.rank { width: 3.2rem; color: var(--ob-muted); }
+    .ob-rank-table td.count { width: 5.5rem; color: #1d6fd8; font-weight: 600; }
+    .ob-rank-table td.title a { color: inherit; text-decoration: none; }
+    .ob-rank-table td.title a:hover { color: var(--ob-accent); text-decoration: underline; }
+    .ob-rank-foot {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 0.65rem; font-size: 0.82rem; color: var(--ob-muted);
+    }
+    .ob-rank-foot button { border: 0; background: none; color: var(--ob-accent); cursor: pointer; font: inherit; }
+    .ob-drawer-backdrop {
+      position: fixed; inset: 0; background: rgba(28, 27, 27, 0.35); z-index: 80;
+      opacity: 0; pointer-events: none; transition: opacity .2s ease;
+    }
+    .ob-drawer-backdrop.is-open { opacity: 1; pointer-events: auto; }
+    .ob-drawer {
+      position: fixed; top: 0; right: 0; height: 100%; width: min(480px, 100%);
+      background: #fff; z-index: 90; box-shadow: -8px 0 28px rgba(0,0,0,.12);
+      transform: translateX(100%); transition: transform .22s ease;
+      display: flex; flex-direction: column;
+    }
+    .ob-drawer.is-open { transform: translateX(0); }
+    .ob-drawer__head {
+      padding: 1.1rem 1.2rem 0.7rem; border-bottom: 1px solid var(--ob-line);
+      display: flex; gap: 0.75rem; align-items: flex-start; justify-content: space-between;
+    }
+    .ob-drawer__head h2 {
+      font-family: "Noto Serif SC", serif; font-size: 1.1rem; margin: 0 0 0.25rem; color: #003460;
+    }
+    .ob-drawer__range { font-size: 0.8rem; color: var(--ob-muted); white-space: nowrap; }
+    .ob-drawer__close {
+      border: 0; background: #f3f1ef; width: 2rem; height: 2rem; border-radius: 999px;
+      cursor: pointer; font-size: 1.1rem; line-height: 1; color: var(--ob-muted);
+    }
+    .ob-drawer__body { padding: 0.5rem 0; overflow: auto; flex: 1; }
+    .ob-drawer__body .ob-rank-table th { position: sticky; top: 0; }
     @media (max-width: 720px) { .ob-steps { grid-template-columns: 1fr; } }
   </style>
 </head>
@@ -99,6 +150,8 @@
                 <th>被提到</th>
                 <th>引用进前十</th>
                 <th>排名</th>
+                <th>引用文章标题</th>
+                <th>引用链接</th>
                 <th>诊断分型</th>
                 <th>备注</th>
               </tr>
@@ -117,7 +170,51 @@
       </form>
       <p class="ob-hint" id="ob-msg"></p>
     </section>
+
+    <section class="ob-card" id="ob-rank-card">
+      <div class="ob-rank-head">
+        <h2>引用域名排行榜</h2>
+        <span class="ob-hint" id="ob-rank-range"></span>
+      </div>
+      <p class="ob-rank-sub">统计当前摸底/复测快照内，各大模型回答中出现的引用域名。</p>
+      <div style="overflow-x:auto">
+        <table class="ob-rank-table" id="ob-domain-table">
+          <thead>
+            <tr><th>排名</th><th>域名</th><th>引用次数</th></tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="3" class="ob-hint">选择策略并回传样本后显示</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="ob-rank-foot">
+        <span id="ob-domain-total">共 0 条</span>
+        <button type="button" id="ob-open-articles">查看引用文章排行 →</button>
+      </div>
+    </section>
   </main>
+
+  <div class="ob-drawer-backdrop" id="ob-drawer-backdrop" hidden></div>
+  <aside class="ob-drawer" id="ob-article-drawer" aria-hidden="true">
+    <div class="ob-drawer__head">
+      <div>
+        <h2>引用文章排行榜</h2>
+        <p class="ob-rank-sub" style="margin:0">统计时间范围内各大模型平台回答中引用的文章排行</p>
+      </div>
+      <div style="display:flex;gap:0.5rem;align-items:center">
+        <span class="ob-drawer__range" id="ob-article-range"></span>
+        <button type="button" class="ob-drawer__close" id="ob-drawer-close" aria-label="关闭">×</button>
+      </div>
+    </div>
+    <div class="ob-drawer__body">
+      <table class="ob-rank-table" id="ob-article-table">
+        <thead>
+          <tr><th>排名</th><th>文章标题</th><th>引用次数</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </aside>
   <script src="/js/common.js"></script>
   <script>
   (function () {
@@ -125,6 +222,7 @@
     let phase = 'baseline';
     let strategies = [];
     let current = null;
+    let rankings = { domains: [], articles: [], domain_total: 0, article_total: 0, range_label: '' };
     const PLATFORM = { doubao: '豆包', yuanbao: '元宝', deepseek: 'DeepSeek' };
 
     function token() {
@@ -179,21 +277,30 @@
       }
       box.innerHTML = html;
     }
+    function escapeHtml(s) {
+      return String(s || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
     function renderTable() {
       const tb = document.querySelector('#ob-table tbody');
       tb.innerHTML = '';
       const variants = (current && current.query_variants) || [];
       if (!variants.length) {
-        tb.innerHTML = '<tr><td colspan="6" class="ob-hint">请先选择有问法的策略</td></tr>';
+        tb.innerHTML = '<tr><td colspan="8" class="ob-hint">请先选择有问法的策略</td></tr>';
         return;
       }
       variants.forEach(function (q, i) {
         const tr = document.createElement('tr');
         tr.innerHTML =
-          '<td><input type="text" data-k="q" value="' + String(q).replace(/"/g, '&quot;') + '"></td>' +
+          '<td><input type="text" data-k="q" value="' + escapeHtml(q) + '"></td>' +
           '<td><input type="checkbox" data-k="mention"></td>' +
           '<td><input type="checkbox" data-k="top10"></td>' +
           '<td><input type="number" data-k="rank" min="1" max="50" placeholder="如 3" style="width:4.5rem"></td>' +
+          '<td><input type="text" data-k="ctitle" placeholder="回答中引用的文章标题"></td>' +
+          '<td><input type="url" data-k="curl" placeholder="https://"></td>' +
           '<td><select data-k="dtype">' +
             '<option value="">自动</option>' +
             '<option value="absent">完全没提</option>' +
@@ -205,6 +312,71 @@
         tr.dataset.qid = (phase === 'baseline' ? 'bq' : 'aq') + (i + 1);
         tb.appendChild(tr);
       });
+    }
+    function renderDomainTable() {
+      const tb = document.querySelector('#ob-domain-table tbody');
+      const rows = (rankings.domains || []).slice(0, 8);
+      if (!rows.length) {
+        tb.innerHTML = '<tr><td colspan="3" class="ob-hint">暂无引用域名。回传样本时请填写引用链接或文章标题。</td></tr>';
+      } else {
+        tb.innerHTML = rows.map(function (r) {
+          return '<tr><td class="rank">' + r.rank + '</td><td>' + escapeHtml(r.domain) +
+            '</td><td class="count">' + r.count + '</td></tr>';
+        }).join('');
+      }
+      document.getElementById('ob-domain-total').textContent = '共 ' + (rankings.domain_total || 0) + ' 条';
+      document.getElementById('ob-rank-range').textContent = rankings.range_label || '';
+    }
+    function renderArticleTable() {
+      const tb = document.querySelector('#ob-article-table tbody');
+      const rows = rankings.articles || [];
+      if (!rows.length) {
+        tb.innerHTML = '<tr><td colspan="3" class="ob-hint">暂无引用文章</td></tr>';
+      } else {
+        tb.innerHTML = rows.map(function (r) {
+          const title = escapeHtml(r.title || '未命名引用文章');
+          const cell = r.url
+            ? '<a href="' + escapeHtml(r.url) + '" target="_blank" rel="noopener">' + title + '</a>'
+            : title;
+          return '<tr><td class="rank">' + r.rank + '</td><td class="title">' + cell +
+            '</td><td class="count">' + r.count + '</td></tr>';
+        }).join('');
+      }
+      document.getElementById('ob-article-range').textContent = rankings.range_label || '';
+    }
+    function openArticleDrawer() {
+      renderArticleTable();
+      const drawer = document.getElementById('ob-article-drawer');
+      const backdrop = document.getElementById('ob-drawer-backdrop');
+      backdrop.hidden = false;
+      requestAnimationFrame(function () {
+        drawer.classList.add('is-open');
+        backdrop.classList.add('is-open');
+        drawer.setAttribute('aria-hidden', 'false');
+      });
+    }
+    function closeArticleDrawer() {
+      const drawer = document.getElementById('ob-article-drawer');
+      const backdrop = document.getElementById('ob-drawer-backdrop');
+      drawer.classList.remove('is-open');
+      backdrop.classList.remove('is-open');
+      drawer.setAttribute('aria-hidden', 'true');
+      setTimeout(function () { backdrop.hidden = true; }, 220);
+    }
+    async function loadRankings() {
+      if (!current) {
+        rankings = { domains: [], articles: [], domain_total: 0, article_total: 0, range_label: '' };
+        renderDomainTable();
+        return;
+      }
+      try {
+        rankings = await api(
+          '/geo-strategies/' + current.id + '/obs-citation-rankings?phase=' + encodeURIComponent(phase) + '&limit=50'
+        );
+      } catch (_) {
+        rankings = { domains: [], articles: [], domain_total: 0, article_total: 0, range_label: '' };
+      }
+      renderDomainTable();
     }
     function pickStrategy(id) {
       current = strategies.find(function (s) { return s.id === id; }) || null;
@@ -218,6 +390,7 @@
       }
       renderAlerts();
       renderTable();
+      void loadRankings();
     }
     async function loadStrategies() {
       const sel = document.getElementById('ob-strategy');
@@ -244,8 +417,12 @@
         phase = btn.getAttribute('data-phase');
         renderAlerts();
         renderTable();
+        void loadRankings();
       });
     });
+    document.getElementById('ob-open-articles').addEventListener('click', openArticleDrawer);
+    document.getElementById('ob-drawer-close').addEventListener('click', closeArticleDrawer);
+    document.getElementById('ob-drawer-backdrop').addEventListener('click', closeArticleDrawer);
     document.getElementById('ob-strategy').addEventListener('change', function (ev) {
       pickStrategy(ev.target.value);
     });
@@ -276,12 +453,16 @@
         if (top10 && !rank) rank = '5';
         if (!top10 && mention) rank = rank || '12';
         const dtype = (tr.querySelector('[data-k="dtype"]') || {}).value || '';
+        const citationTitle = (tr.querySelector('[data-k="ctitle"]') || {}).value || '';
+        const citationUrl = ((tr.querySelector('[data-k="curl"]') || {}).value || '').trim()
+          || current.site_url || '';
         return {
           question_id: tr.dataset.qid,
           question_text: tr.querySelector('[data-k="q"]').value.trim(),
           mention: mention,
           citation_rank: rank ? Number(rank) : null,
-          citation_url: current.site_url || '',
+          citation_url: citationUrl || null,
+          citation_title: citationTitle.trim() || null,
           owned_citation: top10 && mention,
           diagnosis_type: dtype || null,
           answer_text: tr.querySelector('[data-k="note"]').value.trim() || null,
@@ -298,6 +479,7 @@
         strategies = strategies.map(function (s) { return s.id === current.id ? current : s; });
         setMsg('已回传 ' + samples.length + ' 条（' + (phase === 'baseline' ? '摸底' : '复测') + '）', true);
         renderAlerts();
+        void loadRankings();
       } catch (e) {
         setMsg(String(e.message || e), false);
       }
@@ -348,10 +530,12 @@
         strategies = strategies.map(function (s) { return s.id === current.id ? current : s; });
         setMsg('答题卡已导入', true);
         renderAlerts();
+        void loadRankings();
       } catch (e) {
         setMsg(String(e.message || e), false);
       }
     });
+    renderDomainTable();
     loadStrategies();
   })();
   </script>

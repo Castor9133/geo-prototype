@@ -637,11 +637,23 @@ async def record_obs_samples(
         mention = bool(raw.get("mention"))
         rank = raw.get("citation_rank")
         citations: list[dict[str, Any]] = []
-        if rank is not None:
+        if rank is not None or raw.get("citation_url") or raw.get("citation_title"):
+            cite_url = str(raw.get("citation_url") or s.site_url or "").strip()
+            cite_title = str(raw.get("citation_title") or "").strip() or None
+            cite_domain = ""
+            if cite_url:
+                try:
+                    from urllib.parse import urlparse
+
+                    cite_domain = (urlparse(cite_url).hostname or "").lower().lstrip("www.")
+                except Exception:
+                    cite_domain = ""
             citations.append(
                 {
-                    "rank": int(rank),
-                    "url": str(raw.get("citation_url") or s.site_url or ""),
+                    "rank": int(rank) if rank is not None else None,
+                    "url": cite_url,
+                    "domain": cite_domain,
+                    "title": cite_title,
                     "owned": bool(raw.get("owned_citation")),
                 }
             )

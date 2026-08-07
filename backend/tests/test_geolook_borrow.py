@@ -158,5 +158,57 @@ class HandoffHardGateTests(unittest.TestCase):
         self.assertTrue(cl2["ready_for_approve"])
 
 
+class CitationRankingTests(unittest.TestCase):
+    def test_build_citation_rankings_counts_articles_and_domains(self):
+        from app.services.real_obs import build_citation_rankings
+
+        samples = [
+            {
+                "ok": True,
+                "platform": "doubao",
+                "citations": [
+                    {
+                        "url": "https://lemonbox.com.cn/a",
+                        "title": "过敏体质能吃多维维生素吗",
+                        "domain": "lemonbox.com.cn",
+                    }
+                ],
+            },
+            {
+                "ok": True,
+                "platform": "yuanbao",
+                "citations": [
+                    {
+                        "url": "https://lemonbox.com.cn/a",
+                        "title": "过敏体质能吃多维维生素吗",
+                        "domain": "lemonbox.com.cn",
+                    }
+                ],
+            },
+            {
+                "ok": True,
+                "platform": "deepseek",
+                "citations": [
+                    {
+                        "url": "https://foodisgood.com/x",
+                        "title": "Is it Low Histamine?",
+                        "domain": "foodisgood.com",
+                    },
+                    {
+                        "url": "https://foodisgood.com/x",
+                        "title": "Is it Low Histamine?",
+                        "domain": "foodisgood.com",
+                    },
+                ],
+            },
+        ]
+        out = build_citation_rankings(samples)
+        self.assertEqual(out["article_total"], 2)
+        self.assertEqual(out["domain_total"], 2)
+        self.assertEqual(out["articles"][0]["count"], 2)
+        self.assertEqual(out["domains"][0]["count"], 2)
+        self.assertIn(out["domains"][0]["domain"], {"foodisgood.com", "lemonbox.com.cn"})
+
+
 if __name__ == "__main__":
     unittest.main()

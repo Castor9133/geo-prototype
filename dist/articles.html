@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <title>文章管理</title>
+  <meta name="description" content="文章生成、发布、追踪全链路闭环，优化 GEO 可见度。">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/public-tailwind.css?v=20260807-art1">
+  <link rel="stylesheet" href="/css/common.css?v=20260807-art1">
+  <link rel="stylesheet" href="/css/inner-shell.css?v=20260807-art1">
+  <style>
+    :root {
+      --ar-ink: #1c1b1b; --ar-muted: #42474f; --ar-line: #d8d2c6;
+      --ar-paper: #fff; --ar-bg: #fcf9f8; --ar-accent: #1f4b7a; --ar-teal: #2a6f6a;
+    }
+    body.inner-page { background: var(--ar-bg); color: var(--ar-ink); }
+    .ar-page { max-width: 1180px; margin: 0 auto; padding: 5.75rem 1rem 3rem; }
+    .ar-hero h1 { font-family: "Noto Serif SC", serif; font-size: 1.75rem; margin: 0.2rem 0; color: #003460; }
+    .ar-lead { color: var(--ar-muted); margin: 0.4rem 0 1rem; max-width: 42rem; line-height: 1.55; }
+    .ar-toolbar { display: flex; flex-wrap: wrap; gap: 0.55rem; align-items: center; margin-bottom: 0.85rem; }
+    .ar-toolbar input[type="search"] {
+      flex: 1; min-width: 12rem; border: 1px solid var(--ar-line); border-radius: 8px;
+      padding: 0.5rem 0.75rem; font: inherit; background: #fff;
+    }
+    .ar-toolbar label.mine { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.88rem; color: var(--ar-muted); }
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.45rem 0.85rem;
+      border-radius: 10px; border: 1px solid var(--ar-line); background: #fff; cursor: pointer; font: inherit;
+    }
+    .btn.primary { background: var(--ar-accent); color: #fff; border-color: var(--ar-accent); }
+    .btn.teal { background: var(--ar-teal); color: #fff; border-color: var(--ar-teal); }
+    .ar-tabs { display: flex; flex-wrap: wrap; gap: 0.25rem; border-bottom: 1px solid var(--ar-line); margin-bottom: 1rem; }
+    .ar-tabs button {
+      border: 0; background: none; padding: 0.55rem 0.85rem; font: inherit; cursor: pointer;
+      color: var(--ar-muted); border-bottom: 2px solid transparent; margin-bottom: -1px;
+    }
+    .ar-tabs button.is-on { color: var(--ar-accent); border-bottom-color: var(--ar-accent); font-weight: 600; }
+    .ar-layout { display: grid; grid-template-columns: 1fr minmax(240px, 300px); gap: 1rem; }
+    @media (max-width: 900px) { .ar-layout { grid-template-columns: 1fr; } }
+    .ar-card {
+      background: var(--ar-paper); border: 1px solid var(--ar-line); border-radius: 16px;
+      padding: 1rem 1.15rem; box-shadow: 0 4px 16px rgba(26,26,26,.06);
+    }
+    .ar-summary { font-size: 0.85rem; color: var(--ar-muted); margin: 0 0 0.75rem; }
+    .ar-item {
+      padding: 0.85rem 0; border-bottom: 1px solid var(--ar-line);
+    }
+    .ar-item:last-child { border-bottom: 0; }
+    .ar-item__title { font-weight: 600; margin: 0.35rem 0; line-height: 1.4; }
+    .ar-badges { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .ar-badge {
+      font-size: 0.72rem; padding: 0.15rem 0.45rem; border-radius: 999px;
+      background: #eef3f8; color: var(--ar-accent); font-weight: 600;
+    }
+    .ar-badge.tracked { background: #e8f7ef; color: #146c2e; }
+    .ar-badge.draft { background: #f3f1ef; color: var(--ar-muted); }
+    .ar-badge.pending { background: #fff8e6; color: #8a5a00; }
+    .ar-meta { font-size: 0.8rem; color: var(--ar-muted); display: flex; flex-wrap: wrap; gap: 0.75rem; }
+    .ar-side h3 { font-family: "Noto Serif SC", serif; font-size: 1rem; margin: 0 0 0.5rem; color: #003460; }
+    .ar-rank-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+    .ar-rank-table th, .ar-rank-table td { padding: 0.45rem 0.3rem; border-bottom: 1px solid var(--ar-line); text-align: left; }
+    .ar-rank-table th { color: var(--ar-muted); font-size: 0.75rem; }
+    .ar-rank-table .count { color: #1d6fd8; font-weight: 600; white-space: nowrap; }
+    .ar-side-foot { margin-top: 0.65rem; display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--ar-muted); }
+    .ar-side-foot button { border: 0; background: none; color: var(--ar-accent); cursor: pointer; font: inherit; }
+    .ar-empty { color: var(--ar-muted); padding: 1.5rem 0.5rem; text-align: center; }
+    .ar-msg { margin: 0.75rem 0; font-size: 0.9rem; }
+    .ar-msg.ok { color: #146c2e; } .ar-msg.err { color: #b91c1c; }
+    .ar-modal-backdrop {
+      position: fixed; inset: 0; background: rgba(28,27,27,.4); z-index: 80;
+      display: none; align-items: center; justify-content: center; padding: 1rem;
+    }
+    .ar-modal-backdrop.is-open { display: flex; }
+    .ar-modal {
+      background: #fff; border-radius: 16px; max-width: 720px; width: 100%;
+      max-height: 90vh; overflow: auto; padding: 1.25rem 1.35rem;
+      box-shadow: 0 16px 48px rgba(0,0,0,.18);
+    }
+    .ar-modal h2 { font-family: "Noto Serif SC", serif; margin: 0 0 1rem; color: #003460; }
+    .ar-create-grid { display: grid; gap: 0.75rem; }
+    .ar-create-card {
+      border: 1px solid var(--ar-line); border-radius: 12px; padding: 1rem; cursor: pointer;
+      text-align: left; background: #fff; font: inherit; position: relative;
+    }
+    .ar-create-card:hover { border-color: var(--ar-accent); background: #f8fafc; }
+    .ar-create-card strong { display: block; margin-bottom: 0.35rem; }
+    .ar-create-card p { margin: 0; font-size: 0.85rem; color: var(--ar-muted); line-height: 1.45; }
+    .ar-create-card .rec {
+      position: absolute; top: 0.65rem; right: 0.65rem; font-size: 0.7rem;
+      background: var(--ar-accent); color: #fff; padding: 0.1rem 0.4rem; border-radius: 6px;
+    }
+    .ar-flow { margin-top: 0.55rem; font-size: 0.78rem; color: var(--ar-accent); font-weight: 600; }
+    .ar-flow span.dim { color: #b0aaa0; font-weight: 500; }
+    .ar-form { display: grid; gap: 0.65rem; margin-top: 0.5rem; }
+    .ar-form label { display: grid; gap: 0.25rem; font-size: 0.9rem; }
+    .ar-form input, .ar-form select, .ar-form textarea {
+      border: 1px solid var(--ar-line); border-radius: 8px; padding: 0.5rem 0.65rem; font: inherit;
+    }
+    .ar-form textarea { min-height: 8rem; resize: vertical; }
+    .ar-drawer-backdrop {
+      position: fixed; inset: 0; background: rgba(28,27,27,.35); z-index: 85;
+      opacity: 0; pointer-events: none; transition: opacity .2s;
+    }
+    .ar-drawer-backdrop.is-open { opacity: 1; pointer-events: auto; }
+    .ar-drawer {
+      position: fixed; top: 0; right: 0; height: 100%; width: min(460px, 100%);
+      background: #fff; z-index: 90; transform: translateX(100%); transition: transform .22s;
+      display: flex; flex-direction: column; box-shadow: -8px 0 28px rgba(0,0,0,.12);
+    }
+    .ar-drawer.is-open { transform: translateX(0); }
+    .ar-drawer__head { padding: 1.1rem 1.2rem; border-bottom: 1px solid var(--ar-line); display: flex; justify-content: space-between; gap: 0.5rem; }
+    .ar-drawer__head h2 { font-family: "Noto Serif SC", serif; margin: 0; font-size: 1.1rem; color: #003460; }
+    .ar-drawer__body { padding: 0.5rem 1rem 1.5rem; overflow: auto; flex: 1; }
+    .ar-drawer__close { border: 0; background: #f3f1ef; width: 2rem; height: 2rem; border-radius: 999px; cursor: pointer; }
+  </style>
+</head>
+<body class="text-on-surface antialiased inner-page">
+  <div id="header-container"></div>
+  <main class="ar-page">
+    <header class="ar-hero">
+      <p style="margin:0;color:var(--ar-muted);font-size:0.85rem">GEO · 优化中心</p>
+      <h1>文章管理</h1>
+      <p class="ar-lead">文章生成、发布、追踪可在此处全链路闭环：生成 → 发布 → 追踪，持续优化栏目在 AI 回答中的可见度。</p>
+    </header>
+
+    <div class="ar-toolbar">
+      <input type="search" id="ar-search" placeholder="搜索文章标题…">
+      <label class="mine"><input type="checkbox" id="ar-mine"> 仅看我的</label>
+      <button type="button" class="btn primary" id="ar-new">+ 文章</button>
+      <a class="btn" href="/knowledge">知识库</a>
+    </div>
+
+    <div class="ar-tabs" role="tablist" id="ar-tabs">
+      <button type="button" class="is-on" data-filter="all">全部</button>
+      <button type="button" data-filter="pending_publish">待发布</button>
+      <button type="button" data-filter="publishing">发布中</button>
+      <button type="button" data-filter="tracked">已追踪</button>
+      <button type="button" data-filter="origin:platform">平台生成</button>
+      <button type="button" data-filter="origin:user">用户创作</button>
+      <button type="button" data-filter="origin:official_site">官网文章</button>
+    </div>
+
+    <p class="ar-msg" id="ar-msg"></p>
+
+    <div class="ar-layout">
+      <section class="ar-card">
+        <p class="ar-summary" id="ar-summary">共 0 篇文章，0 个链接</p>
+        <div id="ar-list"><p class="ar-empty">加载中…</p></div>
+      </section>
+      <aside class="ar-card ar-side">
+        <h3>引用文章排名</h3>
+        <p style="margin:0 0 0.65rem;font-size:0.8rem;color:var(--ar-muted)">观测样本中被 AI 引用的文章（本库已登记链接优先）</p>
+        <table class="ar-rank-table">
+          <thead><tr><th>排名</th><th>标题</th><th>次数</th></tr></thead>
+          <tbody id="ar-rank-body"><tr><td colspan="3" class="ar-empty">暂无数据</td></tr></tbody>
+        </table>
+        <div class="ar-side-foot">
+          <span id="ar-rank-total">共 0 条</span>
+          <button type="button" id="ar-rank-all">查看全部</button>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <div class="ar-modal-backdrop" id="ar-modal-backdrop">
+    <div class="ar-modal" role="dialog" aria-labelledby="ar-modal-title">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h2 id="ar-modal-title">新建文章</h2>
+        <button type="button" class="btn" id="ar-modal-close">关闭</button>
+      </div>
+      <div id="ar-create-step-pick" class="ar-create-grid">
+        <button type="button" class="ar-create-card" data-create="ai">
+          <span class="rec">推荐</span>
+          <strong>AI 生成文章</strong>
+          <p>选择选题策略与知识库生成初稿，发布后全链路追踪效果。</p>
+          <div class="ar-flow">生成 → 发布 → 追踪</div>
+        </button>
+        <button type="button" class="ar-create-card" data-create="local">
+          <strong>导入本地文章</strong>
+          <p>已有原创内容，上传至平台维护发布，并追踪发布后效果。</p>
+          <div class="ar-flow"><span class="dim">生成</span> → 发布 → 追踪</div>
+        </button>
+        <button type="button" class="ar-create-card" data-create="published_url">
+          <strong>导入已发布文章</strong>
+          <p>文章已在外部发布，粘贴链接即可开启数据追踪。</p>
+          <div class="ar-flow"><span class="dim">生成 → 发布</span> → 追踪</div>
+        </button>
+      </div>
+      <form class="ar-form" id="ar-create-form" hidden>
+        <input type="hidden" name="source_type" id="ar-source-type">
+        <label>标题 <input name="title" id="ar-title" required maxlength="500"></label>
+        <label id="ar-body-label">正文
+          <textarea name="body" id="ar-body" placeholder="粘贴或撰写正文（可选）"></textarea>
+        </label>
+        <label id="ar-url-label" hidden>已发布链接
+          <input name="published_url" id="ar-url" type="url" placeholder="https://">
+        </label>
+        <label id="ar-strategy-label">关联选题策略
+          <select name="strategy_id" id="ar-strategy"><option value="">加载中…</option></select>
+        </label>
+        <label id="ar-kb-label">关联知识库
+          <select name="knowledge_base_id" id="ar-kb"><option value="">可选</option></select>
+        </label>
+        <label>渠道（可选）
+          <select name="channel" id="ar-channel">
+            <option value="">未指定</option>
+            <option value="wechat">微信公众号</option>
+            <option value="site">官网</option>
+            <option value="toutiao">头条号</option>
+            <option value="other">其他</option>
+          </select>
+        </label>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+          <button type="button" class="btn" id="ar-form-back">返回</button>
+          <button type="submit" class="btn teal">创建</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="ar-drawer-backdrop" id="ar-drawer-backdrop" hidden></div>
+  <aside class="ar-drawer" id="ar-drawer" aria-hidden="true">
+    <div class="ar-drawer__head">
+      <div>
+        <h2>引用文章排行榜</h2>
+        <p style="margin:0.25rem 0 0;font-size:0.8rem;color:var(--ar-muted)">各大模型回答中引用的文章排行</p>
+      </div>
+      <button type="button" class="ar-drawer__close" id="ar-drawer-close" aria-label="关闭">×</button>
+    </div>
+    <div class="ar-drawer__body">
+      <table class="ar-rank-table">
+        <thead><tr><th>排名</th><th>文章标题</th><th>引用次数</th></tr></thead>
+        <tbody id="ar-drawer-body"></tbody>
+      </table>
+    </div>
+  </aside>
+
+  <script src="/js/common.js?v=20260807-art1"></script>
+  <script>
+  (function () {
+    'use strict';
+    let filter = 'all';
+    let articles = [];
+    let rankings = { articles: [], article_total: 0 };
+    let strategies = [];
+    let knowledgeBases = [];
+    const LIFE_LABEL = {
+      draft: '草稿', pending_publish: '待发布', publishing: '发布中', tracked: '已追踪'
+    };
+    const ORIGIN_LABEL = {
+      platform: '平台生成', user: '用户创作', official_site: '官网文章'
+    };
+    const SOURCE_LABEL = { ai: 'AI 生成', local: '本地导入', published_url: '已发布导入' };
+
+    function token() {
+      try {
+        return (window.GEOrank && window.GEOrank.Auth && window.GEOrank.Auth.getToken && window.GEOrank.Auth.getToken())
+          || localStorage.getItem('georank_user_token')
+          || localStorage.getItem('georank_token')
+          || '';
+      } catch (_) { return ''; }
+    }
+    async function api(path, opts) {
+      const headers = Object.assign({ 'Content-Type': 'application/json' }, (opts && opts.headers) || {});
+      const t = token();
+      if (t) headers.Authorization = 'Bearer ' + t;
+      const res = await fetch('/api' + path, Object.assign({}, opts || {}, { headers }));
+      const data = await res.json().catch(function () { return {}; });
+      if (!res.ok) {
+        const d = data.detail;
+        throw new Error(typeof d === 'string' ? d : (data.message || res.statusText || '失败'));
+      }
+      return data;
+    }
+    function escapeHtml(s) {
+      return String(s || '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function setMsg(t, ok) {
+      const el = document.getElementById('ar-msg');
+      el.textContent = t || '';
+      el.className = 'ar-msg ' + (ok ? 'ok' : 'err');
+    }
+    function badgeClass(life) {
+      if (life === 'tracked') return 'tracked';
+      if (life === 'pending_publish' || life === 'publishing') return 'pending';
+      return 'draft';
+    }
+    function renderList() {
+      const host = document.getElementById('ar-list');
+      if (!articles.length) {
+        host.innerHTML = '<p class="ar-empty">还没有文章。点击「+ 文章」开始创建。</p>';
+        return;
+      }
+      host.innerHTML = articles.map(function (a) {
+        const life = LIFE_LABEL[a.lifecycle_status] || a.lifecycle_status;
+        const origin = ORIGIN_LABEL[a.origin] || a.origin;
+        const src = SOURCE_LABEL[a.source_type] || a.source_type;
+        const cite = a.citation_count_30d != null ? a.citation_count_30d : 0;
+        const link = a.published_url
+          ? '<a href="' + escapeHtml(a.published_url) + '" target="_blank" rel="noopener">打开链接</a>'
+          : '';
+        const write = a.write_href
+          ? '<a href="' + escapeHtml(a.write_href) + '">去写稿</a>'
+          : '';
+        const publishBtn = a.lifecycle_status !== 'tracked'
+          ? '<button type="button" class="btn" data-attach="' + escapeHtml(a.id) + '">登记发布链接</button>'
+          : '';
+        return '<article class="ar-item">' +
+          '<div class="ar-badges">' +
+            '<span class="ar-badge ' + badgeClass(a.lifecycle_status) + '">' + escapeHtml(life) + '</span>' +
+            '<span class="ar-badge">' + escapeHtml(origin) + '</span>' +
+            '<span class="ar-badge">' + escapeHtml(src) + '</span>' +
+          '</div>' +
+          '<h3 class="ar-item__title">' + escapeHtml(a.title) + '</h3>' +
+          '<div class="ar-meta">' +
+            '<span>近 30 日引用 ' + cite + '</span>' +
+            (a.channel ? '<span>渠道 ' + escapeHtml(a.channel) + '</span>' : '') +
+            (a.created_at ? '<span>' + escapeHtml(String(a.created_at).slice(0, 10)) + '</span>' : '') +
+            link + write + publishBtn +
+          '</div></article>';
+      }).join('');
+      host.querySelectorAll('[data-attach]').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+          const id = btn.getAttribute('data-attach');
+          const url = window.prompt('请粘贴已发布文章链接', '');
+          if (!url || !url.trim()) return;
+          try {
+            await api('/geo-articles/' + id + '/attach-publish', {
+              method: 'POST',
+              body: JSON.stringify({ published_url: url.trim() }),
+            });
+            setMsg('已登记发布链接并开始追踪', true);
+            await loadArticles();
+            await loadRankings();
+          } catch (e) {
+            setMsg(String(e.message || e), false);
+          }
+        });
+      });
+    }
+    function renderRankPreview() {
+      const tb = document.getElementById('ar-rank-body');
+      const rows = (rankings.articles || []).slice(0, 8);
+      if (!rows.length) {
+        tb.innerHTML = '<tr><td colspan="3" class="ar-empty">暂无引用数据</td></tr>';
+      } else {
+        tb.innerHTML = rows.map(function (r) {
+          return '<tr><td>' + r.rank + '</td><td>' + escapeHtml(r.title) +
+            '</td><td class="count">' + r.count + '</td></tr>';
+        }).join('');
+      }
+      document.getElementById('ar-rank-total').textContent = '共 ' + (rankings.article_total || 0) + ' 条';
+    }
+    function renderRankDrawer() {
+      const tb = document.getElementById('ar-drawer-body');
+      const rows = rankings.articles || [];
+      tb.innerHTML = rows.length
+        ? rows.map(function (r) {
+            const title = escapeHtml(r.title || '未命名');
+            const cell = r.url
+              ? '<a href="' + escapeHtml(r.url) + '" target="_blank" rel="noopener">' + title + '</a>'
+              : title;
+            return '<tr><td>' + r.rank + '</td><td>' + cell + '</td><td class="count">' + r.count + '</td></tr>';
+          }).join('')
+        : '<tr><td colspan="3" class="ar-empty">暂无数据</td></tr>';
+    }
+    function openDrawer() {
+      renderRankDrawer();
+      const d = document.getElementById('ar-drawer');
+      const b = document.getElementById('ar-drawer-backdrop');
+      b.hidden = false;
+      requestAnimationFrame(function () {
+        d.classList.add('is-open');
+        b.classList.add('is-open');
+        d.setAttribute('aria-hidden', 'false');
+      });
+    }
+    function closeDrawer() {
+      const d = document.getElementById('ar-drawer');
+      const b = document.getElementById('ar-drawer-backdrop');
+      d.classList.remove('is-open');
+      b.classList.remove('is-open');
+      d.setAttribute('aria-hidden', 'true');
+      setTimeout(function () { b.hidden = true; }, 220);
+    }
+    function openModal() {
+      document.getElementById('ar-modal-backdrop').classList.add('is-open');
+      document.getElementById('ar-create-step-pick').hidden = false;
+      document.getElementById('ar-create-form').hidden = true;
+    }
+    function closeModal() {
+      document.getElementById('ar-modal-backdrop').classList.remove('is-open');
+    }
+    function showCreateForm(source) {
+      document.getElementById('ar-create-step-pick').hidden = true;
+      const form = document.getElementById('ar-create-form');
+      form.hidden = false;
+      document.getElementById('ar-source-type').value = source;
+      document.getElementById('ar-title').value = '';
+      document.getElementById('ar-body').value = '';
+      document.getElementById('ar-url').value = '';
+      const isPub = source === 'published_url';
+      const isAi = source === 'ai';
+      document.getElementById('ar-url-label').hidden = !isPub;
+      document.getElementById('ar-body-label').hidden = isPub;
+      document.getElementById('ar-strategy-label').hidden = !isAi;
+      document.getElementById('ar-kb-label').hidden = !(isAi || source === 'local');
+      document.getElementById('ar-url').required = isPub;
+      document.getElementById('ar-strategy').required = isAi;
+    }
+    function buildQuery() {
+      const params = new URLSearchParams();
+      const q = document.getElementById('ar-search').value.trim();
+      if (q) params.set('q', q);
+      if (document.getElementById('ar-mine').checked) params.set('mine_only', 'true');
+      if (filter.startsWith('origin:')) {
+        params.set('origin', filter.slice(7));
+      } else if (filter !== 'all') {
+        params.set('lifecycle_status', filter);
+      }
+      params.set('limit', '80');
+      return params.toString();
+    }
+    async function loadArticles() {
+      try {
+        const data = await api('/geo-articles?' + buildQuery());
+        articles = data.items || [];
+        document.getElementById('ar-summary').textContent =
+          '共 ' + (data.article_count != null ? data.article_count : articles.length) +
+          ' 篇文章，' + (data.link_count != null ? data.link_count : 0) + ' 个链接';
+        renderList();
+      } catch (e) {
+        document.getElementById('ar-list').innerHTML =
+          '<p class="ar-empty">请先登录后查看文章。' + escapeHtml(e.message || '') + '</p>';
+        setMsg(String(e.message || e), false);
+      }
+    }
+    async function loadRankings() {
+      try {
+        rankings = await api('/geo-articles/citation-ranking?limit=50');
+      } catch (_) {
+        rankings = { articles: [], article_total: 0 };
+      }
+      renderRankPreview();
+    }
+    async function loadOptions() {
+      try {
+        const s = await api('/geo-strategies/?limit=50');
+        strategies = s.items || [];
+        const sel = document.getElementById('ar-strategy');
+        sel.innerHTML = '<option value="">请选择策略</option>' + strategies.map(function (x) {
+          return '<option value="' + escapeHtml(x.id) + '">' +
+            escapeHtml(x.title || x.question_class || x.id) + '</option>';
+        }).join('');
+      } catch (_) {
+        document.getElementById('ar-strategy').innerHTML = '<option value="">请先登录</option>';
+      }
+      try {
+        const opt = await api('/geo-strategies/options');
+        knowledgeBases = opt.knowledge_bases || [];
+        const kb = document.getElementById('ar-kb');
+        kb.innerHTML = '<option value="">可选</option>' + knowledgeBases.map(function (x) {
+          return '<option value="' + escapeHtml(x.id) + '">' + escapeHtml(x.name || x.slug) + '</option>';
+        }).join('');
+      } catch (_) { /* ignore */ }
+    }
+
+    document.getElementById('ar-tabs').addEventListener('click', function (ev) {
+      const btn = ev.target.closest('button[data-filter]');
+      if (!btn) return;
+      document.querySelectorAll('#ar-tabs button').forEach(function (b) { b.classList.remove('is-on'); });
+      btn.classList.add('is-on');
+      filter = btn.getAttribute('data-filter') || 'all';
+      void loadArticles();
+    });
+    let searchTimer = null;
+    document.getElementById('ar-search').addEventListener('input', function () {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(function () { void loadArticles(); }, 280);
+    });
+    document.getElementById('ar-mine').addEventListener('change', function () { void loadArticles(); });
+    document.getElementById('ar-new').addEventListener('click', openModal);
+    document.getElementById('ar-modal-close').addEventListener('click', closeModal);
+    document.getElementById('ar-modal-backdrop').addEventListener('click', function (ev) {
+      if (ev.target === ev.currentTarget) closeModal();
+    });
+    document.querySelectorAll('[data-create]').forEach(function (card) {
+      card.addEventListener('click', function () {
+        showCreateForm(card.getAttribute('data-create'));
+      });
+    });
+    document.getElementById('ar-form-back').addEventListener('click', function () {
+      document.getElementById('ar-create-step-pick').hidden = false;
+      document.getElementById('ar-create-form').hidden = true;
+    });
+    document.getElementById('ar-create-form').addEventListener('submit', async function (ev) {
+      ev.preventDefault();
+      const source = document.getElementById('ar-source-type').value;
+      const body = {
+        title: document.getElementById('ar-title').value.trim(),
+        source_type: source,
+        channel: document.getElementById('ar-channel').value || null,
+        create_write_task: source === 'ai',
+      };
+      const bodyText = document.getElementById('ar-body').value.trim();
+      if (bodyText) body.body = bodyText;
+      const url = document.getElementById('ar-url').value.trim();
+      if (url) body.published_url = url;
+      const sid = document.getElementById('ar-strategy').value;
+      if (sid) body.strategy_id = sid;
+      const kid = document.getElementById('ar-kb').value;
+      if (kid) body.knowledge_base_id = kid;
+      try {
+        setMsg('正在创建…');
+        const created = await api('/geo-articles', { method: 'POST', body: JSON.stringify(body) });
+        setMsg('文章已创建', true);
+        closeModal();
+        await loadArticles();
+        await loadRankings();
+        if (source === 'ai' && created.write_href) {
+          if (window.confirm('已创建 AI 文章并挂接写稿任务。是否前往选题策略写稿？')) {
+            location.href = created.write_href;
+          }
+        }
+      } catch (e) {
+        setMsg(String(e.message || e), false);
+      }
+    });
+    document.getElementById('ar-rank-all').addEventListener('click', openDrawer);
+    document.getElementById('ar-drawer-close').addEventListener('click', closeDrawer);
+    document.getElementById('ar-drawer-backdrop').addEventListener('click', closeDrawer);
+
+    void loadOptions();
+    void loadArticles();
+    void loadRankings();
+  })();
+  </script>
+</body>
+</html>

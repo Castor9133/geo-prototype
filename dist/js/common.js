@@ -72,6 +72,7 @@
                     { id: 'diagnostic', label: '检查', url: '/diagnostic', target: '_self', enabled: true },
                     { id: 'strategies', label: '选题策略', url: '/strategies', target: '_self', enabled: true },
                     { id: 'knowledge', label: '知识', url: '/knowledge', target: '_self', enabled: true },
+                    { id: 'articles', label: '文章', url: '/articles', target: '_self', enabled: true },
                     { id: 'keywords', label: '拓词', url: '/keywords', target: '_self', enabled: true },
                     { id: 'distribute', label: '分发预览', url: '/distribute', target: '_self', enabled: true },
                     { id: 'measure', label: '观测', url: '/observe', target: '_self', enabled: true },
@@ -228,7 +229,7 @@
                 return item;
             });
             // 能力菜单 id 去重，避免历史配置里出现多个「分发」/「选题策略」
-            const pillarIds = new Set(['suite', 'diagnostic', 'strategies', 'knowledge', 'keywords', 'distribute', 'measure', 'config']);
+            const pillarIds = new Set(['suite', 'diagnostic', 'strategies', 'knowledge', 'articles', 'keywords', 'distribute', 'measure', 'config']);
             const seenPillars = new Set();
             next = next.filter((item) => {
                 const id = String(item.id || '').toLowerCase();
@@ -289,6 +290,17 @@
                     ? strategiesIndex + 1
                     : (diagIdx >= 0 ? diagIdx + 1 : Math.min(1, next.length));
                 next = [...next.slice(0, insertAt), knowledge, ...next.slice(insertAt)];
+            }
+            const hasArticles = next.some(item => {
+                const id = String(item.id || '').toLowerCase();
+                const path = String(item.url || '').toLowerCase().split('?')[0].replace(/\/$/, '');
+                return id === 'articles' || path === '/articles' || path.endsWith('/articles.html');
+            });
+            if (!hasArticles) {
+                const articles = { id: 'articles', label: '文章', url: '/articles', target: '_self', enabled: true };
+                const knowledgeIndex = next.findIndex(item => String(item.id || '').toLowerCase() === 'knowledge');
+                const insertAt = knowledgeIndex >= 0 ? knowledgeIndex + 1 : Math.min(next.length, 4);
+                next = [...next.slice(0, insertAt), articles, ...next.slice(insertAt)];
             }
             const hasDistribute = next.some(item => String(item.id || '').toLowerCase() === 'distribute'
                 || String(item.url || '').split('?')[0].replace(/\/$/, '') === '/distribute');
@@ -881,6 +893,7 @@
                 <a href="/diagnostic" data-nav-link data-i18n="nav.diagnostic">检查</a>
                 <a href="/strategies" data-nav-link data-navigation-item="strategies">选题策略</a>
                 <a href="/knowledge" data-nav-link data-navigation-item="knowledge">知识</a>
+                <a href="/articles" data-nav-link data-navigation-item="articles">文章</a>
                 <a href="/keywords" data-nav-link data-i18n="nav.keywords">拓词</a>
                 <a href="/distribute" data-nav-link data-navigation-item="distribute">分发预览</a>
                 <a href="/observe" data-nav-link data-navigation-item="measure">观测</a>
@@ -911,6 +924,7 @@
             <a href="/diagnostic" data-nav-link data-i18n="nav.diagnostic">检查</a>
             <a href="/strategies" data-nav-link data-navigation-item="strategies">选题策略</a>
             <a href="/knowledge" data-nav-link data-navigation-item="knowledge">知识</a>
+            <a href="/articles" data-nav-link data-navigation-item="articles">文章</a>
             <a href="/keywords" data-nav-link data-i18n="nav.keywords">拓词</a>
             <a href="/distribute" data-nav-link data-navigation-item="distribute">分发预览</a>
             <a href="/observe" data-nav-link data-navigation-item="measure">观测</a>
@@ -1613,6 +1627,7 @@ const FOOTER_HTML = `
                 '/diagnostic',
                 '/strategies',
                 '/knowledge',
+                '/articles',
                 '/keywords',
                 '/distribute',
                 '/observe',
@@ -1626,7 +1641,7 @@ const FOOTER_HTML = `
                 prefetch: [{ source: 'list', urls }],
                 prerender: [{
                     source: 'document',
-                    where: { href_matches: ['/suite*', '/diagnostic*', '/strategies*', '/knowledge*', '/keywords*', '/distribute*', '/observe*', '/settings*'] },
+                    where: { href_matches: ['/suite*', '/diagnostic*', '/strategies*', '/knowledge*', '/articles*', '/keywords*', '/distribute*', '/observe*', '/settings*'] },
                     eagerness: 'moderate',
                 }],
             });
@@ -1816,15 +1831,19 @@ const FOOTER_HTML = `
             return user;
         },
 
-        async login({ phone, password, remember = true }) {
-            const normalizedPhone = this.normalizePhone(phone);
+        async login({ phone, account, username, password, remember = true }) {
+            const payload = {
+                password,
+                remember_me: remember,
+            };
+            if (phone) {
+                payload.phone = this.normalizePhone(phone);
+            } else {
+                payload.account = String(account || username || '').trim();
+            }
             const tokenResponse = await this.request('/api/auth/login', {
                 method: 'POST',
-                body: JSON.stringify({
-                    phone: normalizedPhone,
-                    password,
-                    remember_me: remember,
-                }),
+                body: JSON.stringify(payload),
             });
             const user = await this.request('/api/auth/me', {
                 method: 'GET',
@@ -2016,19 +2035,38 @@ const FOOTER_HTML = `
             document.body.classList.remove('auth-modal-open');
         },
 
+        shouldPrefillDemoLogin() {
+            const host = String(window.location.hostname || '');
+            return host === 'localhost' || host === '127.0.0.1';
+        },
+
+        demoLoginCredentials() {
+            return { account: 'admin', password: 'georank-admin-demo' };
+        },
+
         async handleFormSubmit(form) {
             if (!form) return;
             const submitBtn = form.querySelector('.auth-form__submit');
-            const phone = form.elements.phone?.value || '';
+            const accountRaw = String(
+                form.elements.account?.value
+                || form.elements.phone?.value
+                || form.elements.username?.value
+                || ''
+            ).trim();
             const password = form.elements.password?.value || '';
             const remember = Boolean(form.elements.remember?.checked);
-            const normalizedPhone = this.normalizePhone(phone);
+            const normalizedPhone = this.normalizePhone(accountRaw);
+            const isPhoneLogin = /^1\d{10}$/.test(normalizedPhone);
             const boundPhone = this.getBoundPhone();
-            if (boundPhone && boundPhone !== normalizedPhone) {
+            if (isPhoneLogin && boundPhone && boundPhone !== normalizedPhone) {
                 this.showError(I18N.t('auth.invalidBoundPhone', { phone: this.maskPhone(boundPhone) }), form);
                 return;
             }
-            if (!/^1\d{10}$/.test(normalizedPhone)) {
+            if (this.state.mode === 'register' && !isPhoneLogin) {
+                this.showError(I18N.t('auth.invalidPhone'), form);
+                return;
+            }
+            if (this.state.mode === 'login' && !isPhoneLogin && accountRaw.length < 2) {
                 this.showError(I18N.t('auth.invalidPhone'), form);
                 return;
             }
@@ -2046,16 +2084,23 @@ const FOOTER_HTML = `
             try {
                 const user = this.state.mode === 'register'
                     ? await this.register({ phone: normalizedPhone, password, remember })
-                    : await this.login({ phone: normalizedPhone, password, remember });
+                    : await this.login(
+                        isPhoneLogin
+                            ? { phone: normalizedPhone, password, remember }
+                            : { account: accountRaw, password, remember }
+                    );
                 this.closeModal();
                 const currentPath = Routes.normalizePath(window.location.pathname);
                 if (currentPath === '/login' || currentPath === '/register') {
                     const params = new URLSearchParams(window.location.search);
-                    const returnTo = this.safeReturnTo(params.get('return'), '/');
+                    const returnTo = this.safeReturnTo(
+                        params.get('return') || params.get('returnUrl'),
+                        '/'
+                    );
                     window.location.href = returnTo;
                     return;
                 }
-                this.showToast?.(I18N.t('auth.toastSignedIn', { phone: this.maskPhone(user.phone) }));
+                this.showToast?.(I18N.t('auth.toastSignedIn', { phone: this.maskPhone(user.phone || user.username || accountRaw) }));
             } catch (error) {
                 this.showError(error.message || I18N.t('auth.failed'), form);
             } finally {
@@ -2211,6 +2256,17 @@ const FOOTER_HTML = `
 
         mountStandalone(root, mode = 'login') {
             if (!root) return;
+            const demoPrefill = mode === 'login' && this.shouldPrefillDemoLogin();
+            const demo = demoPrefill ? this.demoLoginCredentials() : null;
+            const boundPhone = this.getBoundPhone();
+            const accountValue = demo?.account || boundPhone || '';
+            const passwordValue = demo?.password || '';
+            const accountLabel = mode === 'login' ? '账号（手机号 / 用户名）' : I18N.t('auth.phone');
+            const accountPlaceholder = mode === 'login' ? 'admin 或手机号' : I18N.t('auth.phonePlaceholder');
+            const accountInputType = mode === 'login' ? 'text' : 'tel';
+            const accountInputMode = mode === 'login' ? 'text' : 'numeric';
+            const accountName = mode === 'login' ? 'account' : 'phone';
+            const accountAutocomplete = mode === 'login' ? 'username' : 'tel';
             root.innerHTML = `
                 <div class="auth-standalone">
                     <div class="auth-standalone__card">
@@ -2219,12 +2275,12 @@ const FOOTER_HTML = `
                         <p class="auth-standalone__copy">${mode === 'register' ? I18N.t('auth.standaloneRegisterCopy') : I18N.t('auth.standaloneLoginCopy')}</p>
                         <form class="auth-form auth-form--standalone" data-auth-standalone-form>
                             <label class="auth-form__label">
-                                <span>${I18N.t('auth.phone')}</span>
-                                <input type="tel" inputmode="numeric" autocomplete="tel" name="phone" placeholder="${I18N.t('auth.phonePlaceholder')}" maxlength="20" required />
+                                <span>${accountLabel}</span>
+                                <input type="${accountInputType}" inputmode="${accountInputMode}" autocomplete="${accountAutocomplete}" name="${accountName}" placeholder="${accountPlaceholder}" maxlength="100" value="${accountValue}" required />
                             </label>
                             <label class="auth-form__label">
                                 <span>${I18N.t('auth.password')}</span>
-                                <input type="password" autocomplete="${mode === 'register' ? 'new-password' : 'current-password'}" name="password" placeholder="${I18N.t('auth.passwordPlaceholder')}" minlength="6" maxlength="128" required />
+                                <input type="password" autocomplete="${mode === 'register' ? 'new-password' : 'current-password'}" name="password" placeholder="${I18N.t('auth.passwordPlaceholder')}" minlength="6" maxlength="128" value="${passwordValue}" required />
                             </label>
                             ${mode === 'register' ? `
                             <label class="auth-form__label">
@@ -2247,15 +2303,10 @@ const FOOTER_HTML = `
                 </div>
             `;
             this.state.mode = mode;
-            const boundPhone = this.getBoundPhone();
             root.querySelector('[data-auth-standalone-form]')?.addEventListener('submit', (event) => {
                 event.preventDefault();
                 void this.handleFormSubmit(root.querySelector('[data-auth-standalone-form]'));
             });
-            const phoneInput = root.querySelector('input[name="phone"]');
-            if (boundPhone && phoneInput && !phoneInput.value) {
-                phoneInput.value = boundPhone;
-            }
         },
 
         showToast(message) {

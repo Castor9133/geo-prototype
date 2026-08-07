@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 
 from app.core.deps import CurrentUser, DbSession
-from app.models.content_engine import KnowledgeBase
+from app.models.content_engine import KnowledgeBase, KnowledgeDocument
 from app.models.geo_run import GeoRun
 from app.models.geo_strategy import GeoStrategy
 from app.models.real_obs import RealObsSnapshot
@@ -107,6 +107,7 @@ class ObsSampleItem(BaseModel):
     mention: bool = False
     citation_rank: int | None = None
     citation_url: str | None = None
+    citation_title: str | None = None
     owned_citation: bool = False
     strong_adopted: bool = False
     answer_text: str | None = None
@@ -151,7 +152,7 @@ async def list_strategies(
 
 @router.get("/options")
 async def strategy_form_options(db: DbSession, _: CurrentUser, run_limit: int = 40):
-    """新建/编辑策略用的下拉选项：知识库 + 观测任务（无需手工复制 UUID）。"""
+    """新建/编辑策略用的下拉选项：知识库 + 观测任务 + 已入库素材（无需手工复制 UUID）。"""
     kbs = (
         await db.execute(select(KnowledgeBase).order_by(KnowledgeBase.created_at.desc()).limit(80))
     ).scalars().all()
@@ -160,6 +161,14 @@ async def strategy_form_options(db: DbSession, _: CurrentUser, run_limit: int = 
             select(GeoRun).order_by(GeoRun.created_at.desc()).limit(min(max(run_limit, 1), 80))
         )
     ).scalars().all()
+    docs = (
+        await db.execute(
+            select(KnowledgeDocument)
+            .order_by(KnowledgeDocument.created_at.desc())
+            .limit(200)
+        )
+    ).scalars().all()
+    kb_name = {str(kb.id): (kb.name or kb.slug or "未命名知识库") for kb in kbs}
     return {
         "knowledge_bases": [
             {
@@ -180,6 +189,17 @@ async def strategy_form_options(db: DbSession, _: CurrentUser, run_limit: int = 
                 "created_at": run.created_at.isoformat() if run.created_at else None,
             }
             for run in runs
+        ],
+        "documents": [
+            {
+                "id": str(d.id),
+                "title": d.title or "未命名素材",
+                "knowledge_base_id": str(d.knowledge_base_id),
+                "knowledge_base_name": kb_name.get(str(d.knowledge_base_id), ""),
+                "status": d.status,
+                "tier": getattr(d, "tier", None) or "L2",
+            }
+            for d in docs
         ],
     }
 
@@ -353,6 +373,55 @@ async def download_strategy_obs_sheet(
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+@router.get("/{strategy_id}/obs-citation-rankings")
+async def strategy_obs_citation_rankings(
+    strategy_id: uuid.UUID,
+    db: DbSession,
+    _: CurrentUser,
+    phase: str = "baseline",
+    limit: int = 50,
+):
+    """当前策略摸底/复测快照的引用域名与引用文章排行。"""
+    s = await _get(db, strategy_id)
+    ph = (phase or "baseline").strip().lower()
+    if ph not in ("baseline", "after"):
+        raise HTTPException(400, "phase 须为 baseline 或 after")
+    snap_id = s.baseline_snapshot_id if ph == "baseline" else s.after_snapshot_id
+    if not snap_id:
+        return {
+            "phase": ph,
+            "strategy_id": str(s.id),
+            "snapshot_id": None,
+            "range_label": "",
+            "sample_count": 0,
+            "citation_event_count": 0,
+            "domains": [],
+            "articles": [],
+            "domain_total": 0,
+            "article_total": 0,
+        }
+    snap = await db.get(RealObsSnapshot, snap_id)
+    if not snap:
+        raise HTTPException(404, "快照不存在")
+    samples = await real_obs_svc.list_samples(db, snap_id)
+    rankings = real_obs_svc.build_citation_rankings(samples, limit=limit)
+    start = snap.created_at or snap.started_at
+    end = snap.finished_at or snap.updated_at or start
+    range_label = ""
+    if start:
+        range_label = start.strftime("%Y-%m-%d")
+        if end and end.date() != start.date():
+            range_label += " ~ " + end.strftime("%Y-%m-%d")
+    return {
+        "phase": ph,
+        "strategy_id": str(s.id),
+        "snapshot_id": str(snap.id),
+        "range_label": range_label,
+        "platform": s.platform,
+        **rankings,
+    }
 
 
 @router.post("/{strategy_id}/obs-sample-sheet")

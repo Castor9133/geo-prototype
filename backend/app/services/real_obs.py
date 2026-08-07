@@ -817,6 +817,112 @@ def _phase_stats(samples: list[RealObsSample]) -> dict[str, Any]:
     }
 
 
+def _title_from_url(url: str) -> str:
+    try:
+        path = urlparse(url).path or ""
+    except Exception:
+        path = ""
+    seg = [p for p in path.split("/") if p]
+    if not seg:
+        return ""
+    last = seg[-1].replace("-", " ").replace("_", " ").strip()
+    if last.lower() in {"index.html", "index.htm", "index.php"}:
+        last = seg[-2].replace("-", " ").replace("_", " ").strip() if len(seg) > 1 else last
+    return last[:120]
+
+
+def build_citation_rankings(
+    samples: list[RealObsSample] | list[dict[str, Any]],
+    *,
+    limit: int = 50,
+) -> dict[str, Any]:
+    """从观测样本聚合「引用域名排行」与「引用文章排行」。"""
+    domain_counts: dict[str, int] = {}
+    articles: dict[str, dict[str, Any]] = {}
+    usable = 0
+    citation_events = 0
+
+    for raw in samples:
+        if isinstance(raw, dict):
+            if raw.get("ok") is False:
+                continue
+            cites = list(raw.get("citations") or [])
+            platform = str(raw.get("platform") or "")
+        else:
+            if getattr(raw, "ok", True) is False:
+                continue
+            cites = list(getattr(raw, "citations", None) or [])
+            platform = str(getattr(raw, "platform", "") or "")
+        usable += 1
+        for c in cites:
+            if isinstance(c, str):
+                url = c.strip()
+                title = None
+                domain = _norm_host(url)
+                owned = False
+            elif isinstance(c, dict):
+                url = str(c.get("url") or c.get("href") or "").strip()
+                title = str(c.get("title") or "").strip() or None
+                domain = str(c.get("domain") or "").strip().lower() or _norm_host(url)
+                owned = bool(c.get("owned"))
+            else:
+                continue
+            if not url and not title and not domain:
+                continue
+            citation_events += 1
+            if domain:
+                domain_counts[domain] = domain_counts.get(domain, 0) + 1
+            display_title = title or (_title_from_url(url) if url else "") or "未命名引用文章"
+            key = (url.lower() if url else "") or f"title:{display_title.lower()}"
+            row = articles.get(key)
+            if not row:
+                row = {
+                    "title": display_title,
+                    "url": url,
+                    "domain": domain,
+                    "count": 0,
+                    "owned": owned,
+                    "platforms": set(),
+                }
+                articles[key] = row
+            row["count"] += 1
+            row["owned"] = bool(row["owned"] or owned)
+            if platform:
+                row["platforms"].add(platform)
+            if title and (not row["title"] or row["title"] == "未命名引用文章"):
+                row["title"] = title
+
+    domain_rows = [
+        {"rank": i + 1, "domain": d, "count": n}
+        for i, (d, n) in enumerate(sorted(domain_counts.items(), key=lambda x: (-x[1], x[0])))
+    ]
+    article_rows = []
+    for i, art in enumerate(
+        sorted(articles.values(), key=lambda x: (-int(x["count"]), str(x["title"])))
+    ):
+        article_rows.append(
+            {
+                "rank": i + 1,
+                "title": art["title"],
+                "url": art["url"],
+                "domain": art["domain"],
+                "count": int(art["count"]),
+                "owned": bool(art["owned"]),
+                "platforms": sorted(art["platforms"]),
+            }
+        )
+
+    lim = max(1, min(int(limit or 50), 200))
+    return {
+        "sample_count": usable,
+        "citation_event_count": citation_events,
+        "domains": domain_rows[:lim],
+        "articles": article_rows[:lim],
+        "domain_total": len(domain_rows),
+        "article_total": len(article_rows),
+    }
+
+
 def build_action_cards(
     *,
     after_stats: dict[str, Any],

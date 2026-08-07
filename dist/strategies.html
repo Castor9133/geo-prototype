@@ -138,6 +138,17 @@
     .st-force { margin-top: 1rem; border-top: 1px dashed var(--st-line); padding-top: 0.75rem; }
     .st-force summary { cursor: pointer; color: var(--st-muted); font-size: 0.88rem; }
     .st-section-title { font-family: "Noto Serif SC", serif; font-size: 1.1rem; margin: 0 0 0.5rem; }
+    .st-doc-pick {
+      display: flex; flex-direction: column; gap: 0.35rem;
+      max-height: 14rem; overflow: auto; padding: 0.55rem 0.65rem;
+      border: 1px solid var(--st-line); border-radius: 8px; background: #fff;
+    }
+    .st-doc-pick__item {
+      display: flex; gap: 0.45rem; align-items: flex-start;
+      margin: 0; font-size: 0.9rem; line-height: 1.35; cursor: pointer;
+    }
+    .st-doc-pick__item input { margin-top: 0.2rem; flex: 0 0 auto; }
+    .st-doc-pick__meta { color: var(--st-muted); font-size: 0.78rem; }
   </style>
 </head>
 <body class="text-on-surface antialiased inner-page">
@@ -195,39 +206,39 @@
     <!-- 定策 -->
     <section class="st-tab-panel" id="panel-craft" role="tabpanel">
       <div class="st-card">
-        <h3 class="st-section-title">新建一条</h3>
-        <p class="st-hint">先选平台和用户常问的问题，写清「现在缺什么」。建好后再补全要写什么、发到哪里、怎样算有效。</p>
+        <h3 class="st-section-title">新建选题策略</h3>
+        <p class="st-hint">选择目标平台与核心问法，说明内容缺口；创建后可完善内容方案、发布渠道与成效标准。</p>
         <form class="st-form" id="seed-form">
           <div class="st-row">
-            <label>盯哪个问答平台
+            <label>目标问答平台
               <select name="platform" required>
                 <option value="doubao">豆包</option>
                 <option value="yuanbao">元宝</option>
                 <option value="deepseek">DeepSeek</option>
               </select>
             </label>
-            <label>用户常问什么
+            <label>核心问法
               <input name="question_class" required placeholder="例如：第一现场是什么栏目" value="第一现场是什么栏目">
             </label>
           </div>
-          <label>现在缺什么、打算补什么
-            <textarea name="gap_note" required>页面缺少常见问答结构，需要官网一篇栏目说明 + 一篇问答，并同步发到公众号。</textarea>
+          <label>内容缺口与补齐计划
+            <textarea name="gap_note" required>当前页面缺少常见问答结构，拟补充栏目说明与 FAQ，并同步发布至微信公众号。</textarea>
           </label>
           <div class="st-row">
-            <label>用哪个知识库（可稍后填）
-              <select name="knowledge_base_id" id="seed-kb"><option value="">稍后填写</option></select>
+            <label>关联知识库（可选）
+              <select name="knowledge_base_id" id="seed-kb"><option value="">暂不选择</option></select>
             </label>
-            <label>关联哪次摸底/复测（可稍后填）
-              <select name="geo_run_id" id="seed-run"><option value="">稍后填写</option></select>
+            <label>关联摸底/复测记录（可选）
+              <select name="geo_run_id" id="seed-run"><option value="">暂不选择</option></select>
             </label>
           </div>
-          <button type="submit" class="btn primary">创建草稿</button>
+          <button type="submit" class="btn primary">创建策略草稿</button>
         </form>
       </div>
 
       <div class="st-card" id="craft-edit-card">
-        <h3 class="st-section-title">补全并送审</h3>
-        <div id="craft-empty" class="st-empty">请先在「总览」选一条策略，或新建草稿后再回来补全。</div>
+        <h3 class="st-section-title">完善策略并送审</h3>
+        <div id="craft-empty" class="st-empty">请先在「总览」选择一条策略，或新建草稿后在此完善。</div>
         <div id="craft-body" hidden></div>
       </div>
     </section>
@@ -281,7 +292,8 @@
     let strategies = [];
     let currentId = '';
     let diagHistory = [];
-    let formOptions = { knowledge_bases: [], geo_runs: [] };
+    let formOptions = { knowledge_bases: [], geo_runs: [], documents: [] };
+    const docsByKb = {};
     let poolSummary = null;
 
     const STATUS_LABEL = {
@@ -297,7 +309,7 @@
     };
     const ROLE_LABEL = { editor: '编写', reviewer: '审核', risk: '风控', admin: '技术支持' };
     const ACTION_OK = {
-      '/attach-diagnostic': '已挂上查页面结果',
+      '/attach-diagnostic': '已关联页面诊断',
       '/register-baseline': '已确认摸底完成',
       '/submit': '已送审',
       '/approve': '已批准，可以写稿了',
@@ -378,13 +390,13 @@
       if (/无效或过期的认证令牌|Not authenticated|Could not validate/i.test(s)) {
         return '登录已失效，请到下方「账号与权限」重新登录后再刷新列表。';
       }
-      if (/geo_run/i.test(s)) return '请先选择「关联哪次摸底/复测」，再确认摸底。';
-      if (/诊断/.test(s)) return '请先挂上查页面结果，再送审或批准。';
+      if (/geo_run/i.test(s)) return '请先选择「关联摸底/复测记录」，再确认摸底完成。';
+      if (/诊断/.test(s)) return '请先关联页面诊断结果，再送审或批准。';
       if (/baseline|摸底|初次观测/i.test(s)) return '请先完成投放前摸底，再批准策略。';
       if (/起草人|自己的策略/.test(s)) return '不能自己审自己写的策略，请换审核账号。';
       if (/editor|reviewer|业务角色|需要 reviewer|需要 editor/i.test(s)) return '当前账号岗位不对。编写用编写账号，批准用审核账号。';
       if (/全部执行物|ready|过审/.test(s)) return '请至少准备两篇稿，并全部过审后，才能登记已发布。';
-      if (/六元组|问法|标签|文档/.test(s)) return '请先补全策略内容：至少3种问法、要写什么稿、用哪些素材。';
+      if (/六元组|问法|标签|文档/.test(s)) return '请先完善策略内容：至少 3 条观测问法、内容方向与素材。';
       return s;
     }
     async function api(path, opts) {
@@ -495,8 +507,8 @@
       const hasBase = !!s.baseline_snapshot_id;
       const qv = (s.query_variants || []).filter(Boolean).length;
       if (s.status === 'draft' || s.status === 'pending_review') {
-        if (qv < 3 || !s.content_orientation) return '还差：补全要写什么稿、至少3种问法';
-        if (!hasDiag) return '还差：挂上查页面结果';
+        if (qv < 3 || !s.content_orientation) return '还差：完善内容方向，并填写至少 3 条观测问法';
+        if (!hasDiag) return '还差：关联页面诊断结果';
         if (!hasBase) return '还差：完成投放前摸底';
         if (s.status === 'draft') return '内容已齐，可以送审';
         return '已送审，等审核批准';
@@ -551,7 +563,7 @@
 
     function kbSelectHtml(selectedId, nameAttr) {
       const sel = String(selectedId || '');
-      let html = '<select name="' + nameAttr + '"><option value="">稍后填写</option>';
+      let html = '<select name="' + nameAttr + '"><option value="">暂不选择</option>';
       const seen = new Set();
       (formOptions.knowledge_bases || []).forEach(function (kb) {
         seen.add(kb.id);
@@ -566,7 +578,7 @@
     }
     function runSelectHtml(selectedId, nameAttr) {
       const sel = String(selectedId || '');
-      let html = '<select name="' + nameAttr + '"><option value="">稍后填写</option>';
+      let html = '<select name="' + nameAttr + '"><option value="">暂不选择</option>';
       const seen = new Set();
       (formOptions.geo_runs || []).forEach(function (run) {
         seen.add(run.id);
@@ -579,9 +591,90 @@
       }
       return html + '</select>';
     }
+    function mergedDocuments(kbId) {
+      const fromOptions = formOptions.documents || [];
+      const fromKb = kbId && docsByKb[kbId] ? docsByKb[kbId] : [];
+      const map = {};
+      fromOptions.concat(fromKb).forEach(function (d) {
+        if (!d || !d.id) return;
+        map[String(d.id)] = d;
+      });
+      return Object.keys(map).map(function (k) { return map[k]; });
+    }
+
+    function docsPickHtml(selectedIds, kbId, loading) {
+      const selected = new Set((selectedIds || []).map(function (x) { return String(x); }));
+      if (loading) {
+        return '<p class="st-hint" data-doc-pick-empty>正在加载已入库素材…</p>';
+      }
+      if (!kbId) {
+        return '<p class="st-hint" data-doc-pick-empty>请先选择关联知识库，再勾选素材；也可暂不选择。</p>';
+      }
+      let docs = mergedDocuments(kbId).filter(function (d) {
+        return String(d.knowledge_base_id || kbId) === String(kbId) || selected.has(String(d.id));
+      });
+      if (!docs.length) {
+        return '<p class="st-hint" data-doc-pick-empty>该知识库暂无已入库素材，可先去知识库导入。</p>';
+      }
+      let html = '<div class="st-doc-pick" data-doc-pick>';
+      docs.forEach(function (d) {
+        const id = String(d.id);
+        html += '<label class="st-doc-pick__item">' +
+          '<input type="checkbox" name="docs" value="' + escapeHtml(id) + '"' +
+          (selected.has(id) ? ' checked' : '') + '>' +
+          '<span>' + escapeHtml(d.title || '未命名素材') + '</span>' +
+          '</label>';
+      });
+      return html + '</div>';
+    }
+
+    function collectDocIds(form) {
+      return Array.prototype.slice.call(form.querySelectorAll('input[name="docs"]:checked'))
+        .map(function (el) { return String(el.value || '').trim(); })
+        .filter(Boolean);
+    }
+
+    async function ensureKbDocuments(kbId) {
+      const id = String(kbId || '').trim();
+      if (!id) return [];
+      if (docsByKb[id]) return docsByKb[id];
+      try {
+        const data = await api('/content-engine/knowledge-bases/' + encodeURIComponent(id) + '/documents-geo');
+        const items = (data.items || []).map(function (d) {
+          return {
+            id: String(d.id),
+            title: d.title || '未命名素材',
+            knowledge_base_id: String(d.knowledge_base_id || id),
+            status: d.status,
+            tier: d.tier || 'L2',
+          };
+        });
+        docsByKb[id] = items;
+        return items;
+      } catch (_) {
+        docsByKb[id] = [];
+        return [];
+      }
+    }
+
+    async function refreshDocPick(form, selectedIds) {
+      if (!form) return;
+      const kb = String(form.querySelector('[name="knowledge_base_id"]')?.value || '').trim();
+      const host = form.querySelector('[data-doc-pick-host]');
+      if (!host) return;
+      const keep = selectedIds || collectDocIds(form);
+      if (!kb) {
+        host.innerHTML = docsPickHtml(keep, '');
+        return;
+      }
+      host.innerHTML = docsPickHtml(keep, kb, true);
+      await ensureKbDocuments(kb);
+      host.innerHTML = docsPickHtml(keep, kb, false);
+    }
+
     function diagSelectHtml(selectedId) {
       const sel = String(selectedId || '');
-      let html = '<select id="craft-diag-select"><option value="">请选择查页面结果</option>';
+      let html = '<select id="craft-diag-select"><option value="">请选择页面诊断结果</option>';
       const seen = new Set();
       diagHistory.forEach(function (r) {
         const id = r.report_id || r.id;
@@ -592,7 +685,7 @@
           + escapeHtml((r.url || '未命名页面') + (when ? ' · ' + when : '') + (st ? ' · ' + st : '')) + '</option>';
       });
       if (sel && !seen.has(sel)) {
-        html += '<option value="' + escapeHtml(sel) + '" selected>当前已挂上</option>';
+        html += '<option value="' + escapeHtml(sel) + '" selected>当前已关联</option>';
       }
       return html + '</select>';
     }
@@ -638,7 +731,7 @@
         media_types: (cm.media_types || ['wechat']).join(','),
         success_mode: ss.mode || 'mention_top10',
         top_n: ss.top_n || 10,
-        docs: (s.knowledge_document_ids || []).join('\n'),
+        docs: (s.knowledge_document_ids || []).map(function (x) { return String(x); }),
         site_id: tags.site_id || 'diyixianchang',
         theme: tags.theme || tags.task_bajua || '栏目认知',
         task_bajua: tags.task_bajua || '栏目认知',
@@ -721,19 +814,19 @@
       const cl = s.handoff_checklist || {};
       const mediaSelected = (d.media_types || 'wechat').split(',')[0] || 'wechat';
       body.innerHTML =
-        '<p class="st-hint">正在补全：<strong>' + escapeHtml(s.title || s.question_class) + '</strong> · ' +
+        '<p class="st-hint">当前策略：<strong>' + escapeHtml(s.title || s.question_class) + '</strong> · ' +
           escapeHtml(labelPlatform(s.platform)) + '</p>' +
         '<form class="st-form" id="craft-edit-form">' +
           '<label>策略名称<input name="title" value="' + escapeHtml(d.title) + '"></label>' +
-          '<label>打算写什么稿<textarea name="content_orientation">' + escapeHtml(d.content_orientation) + '</textarea></label>' +
-          '<label>摸底用问法草案（每行一句，至少3句；批准后请再去拓词确认终稿）<textarea name="query_variants">' + escapeHtml(d.query_variants) + '</textarea></label>' +
+          '<label>内容方向<textarea name="content_orientation">' + escapeHtml(d.content_orientation) + '</textarea></label>' +
+          '<label>观测问法（每行一句，至少 3 句；批准后请至拓词确认终稿）<textarea name="query_variants">' + escapeHtml(d.query_variants) + '</textarea></label>' +
           (s.status === 'executable'
             ? '<p class="st-hint">' + (s.query_pack_confirmed
-              ? '<span class="st-ok">观测问法已确认，可以写稿（还须备齐知识）</span>'
-              : '策略已批准。请确认观测问法后再写稿。') + '</p>'
+              ? '<span class="st-ok">观测问法已确认，可进入写稿（仍须备齐知识素材）</span>'
+              : '策略已批准。请确认观测问法后再进入写稿。') + '</p>'
             : '') +
           '<div class="st-row">' +
-            '<label>同步发到哪个媒体号<select name="media_types">' +
+            '<label>同步发布渠道<select name="media_types">' +
               '<option value="wechat"' + (mediaSelected === 'wechat' ? ' selected' : '') + '>微信公众号</option>' +
               '<option value="toutiao"' + (mediaSelected === 'toutiao' ? ' selected' : '') + '>头条号</option>' +
               '<option value="douyin"' + (mediaSelected === 'douyin' ? ' selected' : '') + '>抖音</option>' +
@@ -741,72 +834,79 @@
               '<option value="baijiahao"' + (mediaSelected === 'baijiahao' ? ' selected' : '') + '>百家号</option>' +
               '<option value="other"' + (mediaSelected === 'other' ? ' selected' : '') + '>其他</option>' +
             '</select></label>' +
-            '<label>怎样算有效<select name="success_mode">' +
-              '<option value="mention_top10"' + (d.success_mode === 'mention_top10' ? ' selected' : '') + '>被提到，且引用进前10</option>' +
-              '<option value="strong_adopt"' + (d.success_mode === 'strong_adopt' ? ' selected' : '') + '>被提到并引用到我们自己的官网</option>' +
+            '<label>成效判定标准<select name="success_mode">' +
+              '<option value="mention_top10"' + (d.success_mode === 'mention_top10' ? ' selected' : '') + '>AI 回答中被提及，且引用进入前 10</option>' +
+              '<option value="strong_adopt"' + (d.success_mode === 'strong_adopt' ? ' selected' : '') + '>AI 回答中被提及，并引用自有官网</option>' +
             '</select></label>' +
           '</div>' +
           '<div class="st-row">' +
-            '<label>引用排名进入前几算有效<input name="top_n" type="number" min="1" max="20" value="' + escapeHtml(d.top_n) + '"></label>' +
-            '<label>用哪个知识库' + kbSelectHtml(d.knowledge_base_id, 'knowledge_base_id') + '</label>' +
+            '<label>引用排名阈值（前 N 名）<input name="top_n" type="number" min="1" max="20" value="' + escapeHtml(d.top_n) + '"></label>' +
+            '<label>关联知识库' + kbSelectHtml(d.knowledge_base_id, 'knowledge_base_id') + '</label>' +
           '</div>' +
-          '<label>本策略要用哪些已入库素材（每行一个编号，可稍后填）<textarea name="docs">' + escapeHtml(d.docs) + '</textarea></label>' +
+          '<label>引用已入库素材（可选）' +
+            '<span data-doc-pick-host>' + docsPickHtml(d.docs, d.knowledge_base_id) + '</span>' +
+          '</label>' +
           '<div class="st-row">' +
-            '<label>栏目/站点简称<input name="site_id" value="' + escapeHtml(d.site_id) + '"></label>' +
+            '<label>栏目 / 站点简称<input name="site_id" value="' + escapeHtml(d.site_id) + '"></label>' +
             '<label>主题标签<input name="task_bajua" value="' + escapeHtml(d.task_bajua) + '"></label>' +
           '</div>' +
           '<div class="st-row">' +
             '<label>主题说明<input name="theme" value="' + escapeHtml(d.theme) + '"></label>' +
-            '<label>关联哪次摸底/复测' + runSelectHtml(d.geo_run_id, 'geo_run_id') + '</label>' +
+            '<label>关联摸底/复测记录' + runSelectHtml(d.geo_run_id, 'geo_run_id') + '</label>' +
           '</div>' +
-          '<label>缺口与补救说明<textarea name="gap_note">' + escapeHtml(d.gap_note) + '</textarea></label>' +
+          '<label>内容缺口说明<textarea name="gap_note">' + escapeHtml(d.gap_note) + '</textarea></label>' +
           '<button type="submit" class="btn primary">保存策略内容</button>' +
         '</form>' +
         '<div class="st-group" style="margin-top:1rem;padding-top:0.85rem;border-top:1px dashed var(--st-line)">' +
-          '<h4>查页面与摸底（批准前须完成）</h4>' +
+          '<h4>页面诊断与摸底（批准前须完成）</h4>' +
           '<div class="st-form">' +
-            '<label>挂上查页面结果' + diagSelectHtml(s.diagnostic_report_id) + '</label>' +
+            '<label>关联页面诊断' + diagSelectHtml(s.diagnostic_report_id) + '</label>' +
             '<div class="st-actions" style="margin:0">' +
-              '<button type="button" class="btn teal" id="btn-attach-diag">确认挂上</button>' +
-              '<a class="btn" href="/diagnostic">先去查页面</a>' +
+              '<button type="button" class="btn teal" id="btn-attach-diag">确认关联</button>' +
+              '<a class="btn" href="/diagnostic">前往页面诊断</a>' +
             '</div>' +
-            '<p class="st-hint">' + (s.diagnostic_report_id ? '<span class="st-ok">已挂上查页面结果</span>' : '尚未挂上查页面结果') + '</p>' +
+            '<p class="st-hint">' + (s.diagnostic_report_id ? '<span class="st-ok">已关联页面诊断</span>' : '尚未关联页面诊断') + '</p>' +
             '<div class="st-actions">' +
-              '<a class="btn primary" href="/observe?strategy=' + encodeURIComponent(s.id) + '">去做摸底并回传</a>' +
+              '<a class="btn primary" href="/observe?strategy=' + encodeURIComponent(s.id) + '">进行摸底并回传</a>' +
               '<button type="button" class="btn teal" id="btn-reg-base">确认摸底已完成</button>' +
             '</div>' +
-            '<p class="st-hint">' + (s.baseline_snapshot_id ? '<span class="st-ok">已确认摸底完成</span>' : '摸底回传后，再点「确认摸底已完成」') + '</p>' +
+            '<p class="st-hint">' + (s.baseline_snapshot_id ? '<span class="st-ok">已确认摸底完成</span>' : '摸底结果回传后，请点击「确认摸底已完成」') + '</p>' +
           '</div>' +
           (!(cl.ready_for_approve)
-            ? '<div class="st-gate"><strong>还不能批准可以写稿</strong><div>' +
+            ? '<div class="st-gate"><strong>尚不具备批准条件</strong><div>' +
               (cl.demo_metrics
-                ? '请先完成：查页面 + 投放前摸底（演示模式可占位）'
-                : '请先完成：查页面 + ≥3 条真实摸底样本（正式模式硬拦门）') +
+                ? '请先完成：页面诊断 + 投放前摸底（演示模式可使用占位数据）'
+                : '请先完成：页面诊断 + 至少 3 条真实摸底样本') +
               '</div></div>'
             : '') +
           (cl.demo_metrics
-            ? '<p class="st-hint">演示指标已开启：可用占位摸底；上线请关闭 GEORANK_DEMO_METRICS</p>'
-            : '<p class="st-hint">正式指标：摸底样本不足时批准按钮不可用（管理员可填理由强开）</p>') +
+            ? '<p class="st-hint">当前为演示指标模式：允许使用占位摸底数据；正式上线请关闭演示开关。</p>'
+            : '<p class="st-hint">正式指标模式：摸底样本不足时不可批准（管理员可填写理由后强制批准）。</p>') +
           '<div class="st-actions">' +
             '<button type="button" class="btn primary" id="btn-submit">送审</button>' +
             '<button type="button" class="btn teal" id="btn-approve"' +
-              (!(cl.ready_for_approve) ? ' disabled title="前置未齐"' : '') +
-              '>批准可以开工</button>' +
+              (!(cl.ready_for_approve) ? ' disabled title="前置条件未满足"' : '') +
+              '>批准策略</button>' +
             (!(cl.ready_for_approve)
-              ? '<button type="button" class="btn" id="btn-approve-force">管理员强开批准</button>'
+              ? '<button type="button" class="btn" id="btn-approve-force">管理员强制批准</button>'
               : '') +
             (s.status === 'executable'
-              ? '<button type="button" class="btn primary" id="btn-confirm-queries">确认上方问法用于写稿</button>'
-                + '<a class="btn" href="/keywords?strategy=' + encodeURIComponent(s.id) + '">去拓词页确认</a>'
+              ? '<button type="button" class="btn primary" id="btn-confirm-queries">确认观测问法用于写稿</button>'
+                + '<a class="btn" href="/keywords?strategy=' + encodeURIComponent(s.id) + '">前往拓词确认</a>'
               : '') +
           '</div>' +
         '</div>';
 
-      body.querySelector('#craft-edit-form').addEventListener('submit', async function (ev) {
+      const craftForm = body.querySelector('#craft-edit-form');
+      craftForm.querySelector('[name="knowledge_base_id"]')?.addEventListener('change', function () {
+        void refreshDocPick(craftForm, collectDocIds(craftForm));
+      });
+      void refreshDocPick(craftForm, d.docs);
+      craftForm.addEventListener('submit', async function (ev) {
         ev.preventDefault();
         const fd = new FormData(ev.target);
         const qv = String(fd.get('query_variants') || '').split(/\r?\n/).map(function (x) { return x.trim(); }).filter(Boolean);
-        const docs = String(fd.get('docs') || '').split(/\r?\n/).map(function (x) { return x.trim(); }).filter(Boolean);
+        const docs = collectDocIds(ev.target);
         const media = String(fd.get('media_types') || 'wechat').trim();
         const bodyPatch = {
           title: String(fd.get('title') || '').trim() || undefined,
@@ -834,20 +934,20 @@
       });
       body.querySelector('#btn-attach-diag').onclick = function () {
         const id = document.getElementById('craft-diag-select').value;
-        if (!id) { showMsg('请先选择一条查页面结果', 'err'); return; }
-        act(s.id, '/attach-diagnostic', { diagnostic_report_id: id }, '正在挂上查页面结果…');
+        if (!id) { showMsg('请先选择一条页面诊断结果', 'err'); return; }
+        act(s.id, '/attach-diagnostic', { diagnostic_report_id: id }, '正在关联页面诊断…');
       };
       body.querySelector('#btn-reg-base').onclick = function () {
-        act(s.id, '/register-baseline', null, '正在确认摸底…');
+        act(s.id, '/register-baseline', null, '正在确认摸底完成…');
       };
       body.querySelector('#btn-submit').onclick = function () { act(s.id, '/submit', null, '正在送审…'); };
       body.querySelector('#btn-approve').onclick = function () { act(s.id, '/approve', {}, '正在批准…'); };
       const forceApprove = body.querySelector('#btn-approve-force');
       if (forceApprove) {
         forceApprove.onclick = function () {
-          const reason = window.prompt('管理员强开批准：请填写理由（必填）', '');
-          if (!reason || !String(reason).trim()) { showMsg('须填写强开理由', 'err'); return; }
-          act(s.id, '/approve', { force_reason: String(reason).trim() }, '正在强开批准…');
+          const reason = window.prompt('管理员强制批准：请填写理由（必填）', '');
+          if (!reason || !String(reason).trim()) { showMsg('须填写强制批准理由', 'err'); return; }
+          act(s.id, '/approve', { force_reason: String(reason).trim() }, '正在强制批准…');
         };
       }
       const confirmBtn = body.querySelector('#btn-confirm-queries');
@@ -974,7 +1074,7 @@
       const canWrite = statusOk && expandOk && knowledgeOk;
       let gateHtml = '';
       if (!statusOk) {
-        gateHtml = '<div class="st-gate"><strong>策略批准后才能写稿</strong><div>请先在「定策」补全并送审，由审核账号批准。</div></div>';
+        gateHtml = '<div class="st-gate"><strong>策略批准后才能写稿</strong><div>请先在「定策」完善策略并送审，由审核账号批准。</div></div>';
       } else if (!expandOk) {
         gateHtml = '<div class="st-gate"><strong>请先确认观测问法</strong><div>拓词完成后把至少 3 句问法写回本选题，才能写稿。</div>'
           + '<div class="st-actions" style="margin-top:0.65rem"><a class="btn primary" href="/keywords?strategy='
@@ -1242,7 +1342,11 @@
     async function loadFormOptions() {
       try {
         const data = await api('/geo-strategies/options');
-        formOptions = { knowledge_bases: data.knowledge_bases || [], geo_runs: data.geo_runs || [] };
+        formOptions = {
+          knowledge_bases: data.knowledge_bases || [],
+          geo_runs: data.geo_runs || [],
+          documents: data.documents || [],
+        };
         fillSeedSelects();
       } catch (_) {
         fillSeedSelects();
@@ -1313,7 +1417,7 @@
       if (run) body.geo_run_id = run;
       try {
         const created = await api('/geo-strategies/seed', { method: 'POST', body: JSON.stringify(body) });
-        showMsg('草稿已创建。请在下方「补全并送审」里写全内容。', 'ok');
+        showMsg('策略草稿已创建。请在下方「完善策略并送审」中填写完整内容。', 'ok');
         await load();
         if (created && created.id) {
           setCurrentId(created.id);

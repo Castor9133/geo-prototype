@@ -11,7 +11,7 @@
 
         if (auth.isAuthenticated()) {
             const params = new URLSearchParams(window.location.search);
-            window.location.replace(auth.safeReturnTo(params.get('return'), '/profile'));
+            window.location.replace(auth.safeReturnTo(params.get('return') || params.get('returnUrl'), '/profile'));
             return;
         }
 
